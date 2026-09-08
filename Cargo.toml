@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.104"
 gpui-kit = "0.6"
 tracing = "0.1.44"
 dirs = "7.0.0"
@@ -11,3 +12,24 @@ serde = "1.0.229"
 serde_json = "1.0.151"
 rust-i18n = "4.2.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Fast iteration: skip most optimization, keep debug info light,
+# and (most impactful) build dependencies with some optimization
+# once so you're not re-optimizing GPUI/wgpu on every change.
+[profile.dev]
+opt-level = 0
+debug = "line-tables-only"  # enough for backtraces, much faster than full debuginfo
+incremental = true
+codegen-units = 4          # more parallel codegen units = faster compile
+
+[profile.dev.package."*"]
+opt-level = 2                 # your deps (gpui, wgpu, etc.) only get optimized once,
+                               # cached, and re-linked fast on every rebuild of your own code
+
+# Small, optimized release binary.
+[profile.release]
+opt-level = "z"       # optimize for size ("s" is size-focused too but less aggressive)
+lto = true            # link-time optimization, strips dead code across crates
+codegen-units = 1     # required for LTO to be maximally effective
+panic = "abort"       # drops unwinding tables — real size win, but no catch_unwind
+strip = true          # strips symbols from the final binary

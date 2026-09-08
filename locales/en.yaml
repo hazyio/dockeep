@@ -1,0 +1,20 @@
+theme:
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
+title:
+  home: Dockeep Home
+  settings: Settings
+  appearance: Appearance
+  general: General
+  add_new_project: Add New Project
+label:
+  theme: Theme
+  back: Back
+  save: Save
+  search_projects: Search Projects
+  add_project: Add Project
+  no_projects: No projects found
+  loading_projects: Loading projects...
+  no_projects_found: No projects found, use the add button to add one.
+  select_project_folder: Select Project Folder

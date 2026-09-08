@@ -11,7 +11,7 @@ pub struct AppConfig {
 impl AppConfig {
     const CONFIG_FILE: &'static str = "app_config.json";
     const CONFIG_DIR: &'static str = "hazyio_dockeep";
-    fn config_dir() -> PathBuf {
+    pub fn config_dir() -> PathBuf {
         dirs::config_dir()
             .expect("Could not find a platform config directory; using defaults")
             .join(Self::CONFIG_DIR)
@@ -32,13 +32,13 @@ impl AppConfig {
                         "Could not parse app config; using defaults"
                     );
                     let config = Self::default();
-                    Self::save(&config);
+                    config.save();
                     config
                 }
             },
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 let config = Self::default();
-                Self::save(&config);
+                config.save();
                 config
             }
             Err(error) => {
@@ -52,11 +52,11 @@ impl AppConfig {
         }
     }
 
-    fn save(config: &Self) {
+    pub fn save(&self) {
         let app_dir = Self::config_dir();
         let config_path = Self::config_path();
         if let Err(error) = fs::create_dir_all(app_dir)
-            .and_then(|_| serde_json::to_string_pretty(config).map_err(std::io::Error::other))
+            .and_then(|_| serde_json::to_string_pretty(self).map_err(std::io::Error::other))
             .and_then(|contents| fs::write(config_path.clone(), contents))
         {
             tracing::warn!(

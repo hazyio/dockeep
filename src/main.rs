@@ -27,14 +27,18 @@ fn main() {
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
+    
     gpui_kit::application().with_assets(Assets).run(move |cx| {
         setup(cx);
         cx.spawn(async move |cx| {
             cx.open_window(WindowOptions::default(), |window, cx| {
-                let home = cx.new(|_| Home);
-                let view = cx.new(|_| MyApp { view: home.into() });
+                let view = cx.new(|app| {
+                    let my_app_handle = app.weak_entity();
+                    let home = app.new(|cx| Home::new(my_app_handle, window, cx));
+                    MyApp { view: home.into() }
+                });
                 // This first level on the window, should be a Root.
-                cx.new(|cx| Root::new(view, window, cx))
+                cx.new(|cx| Root::new(view, window, cx).bordered(false))
             })
             .expect("Failed to open window");
         })
