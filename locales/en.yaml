@@ -18,3 +18,5 @@ label:
   loading_projects: Loading projects...
   no_projects_found: No projects found, use the add button to add one.
   select_project_folder: Select Project Folder
+  project_name: Project Name
+  project_path: Project Path

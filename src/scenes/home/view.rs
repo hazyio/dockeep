@@ -21,6 +21,7 @@ pub struct Home {
     loading: bool,
     app_projects: AppProjects,
     error: Option<Error>,
+    add_project_dialog: Entity<AddProjectDialog>,
 }
 
 impl Home {
@@ -28,7 +29,6 @@ impl Home {
         let search =
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_projects")));
         // kick off the background load
-
         Self::load_projects(cx);
 
         Self {
@@ -37,6 +37,7 @@ impl Home {
             loading: true,
             app_projects: AppProjects::new(),
             error: None,
+            add_project_dialog: cx.new(|cx| AddProjectDialog::new(window, cx)),
         }
     }
     fn load_projects(cx: &mut Context<Self>) {
@@ -65,6 +66,7 @@ impl Render for Home {
 
         let loading = self.loading;
         let search = self.search.clone();
+        let add_project_dialog = self.add_project_dialog.clone();
         let error = self.error.as_ref().map(|error| error.to_string());
         let project_to_show = self.app_projects.projects.clone();
         div()
@@ -101,13 +103,15 @@ impl Render for Home {
                         div().h_flex().gap_2().child(Input::new(&search)).child(
                             Button::new("add-project")
                                 .label(t!("label.add_project"))
-                                .on_click(|_, window, cx| {
-                                    window.open_dialog(cx, |dialog, _, _| {
+                                .on_click(move |_, window, cx| {
+                                    let add_project_dialog = add_project_dialog.clone();
+
+                                    window.open_dialog(cx, move |dialog, _, _| {
                                         dialog
                                             .title(t!("title.add_new_project"))
                                             .h_1_2()
                                             .w_1_3()
-                                            .child(AddProjectDialog::new())
+                                            .child(add_project_dialog.clone())
                                     })
                                 }),
                         ),
