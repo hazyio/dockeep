@@ -87,7 +87,8 @@ impl Render for AddProjectDialog {
             .when_some(self.new_project_info.clone(), |el, info| {
                 let path_input = cx.new(|cx| InputState::new(window, cx).default_value(info.path));
 
-                el.mt_3().gap_3()
+                el.mt_3()
+                    .gap_3()
                     .child(
                         input_wrapper(cx, &t!("label.project_name")).child(Input::new(&info.name)),
                     )

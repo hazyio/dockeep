@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+git2 = "0.21.0"
 gpui-kit = "0.6"
 tracing = "0.1.44"
 dirs = "7.0.0"

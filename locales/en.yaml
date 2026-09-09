@@ -20,3 +20,5 @@ label:
   select_project_folder: Select Project Folder
   project_name: Project Name
   project_path: Project Path
+  language: Language
+  

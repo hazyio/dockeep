@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 
-use crate::utils::app_theme::AppTheme;
+use crate::utils::{app_theme::AppTheme, lanuages::Lanuages};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone,  Serialize, Deserialize, Default)]
 pub struct AppConfig {
     pub theme: AppTheme,
+    pub language: Lanuages,
 }
 
 impl AppConfig {

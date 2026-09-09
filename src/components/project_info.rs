@@ -1,15 +1,21 @@
+use std::path::PathBuf;
+
 use gpui_kit::component::*;
 use gpui_kit::*;
+#[derive(Clone)]
 
-use crate::utils::app_projects::AppProjectInfo;
+pub struct LoadedProjectInfo {
+    pub name: String,
+    pub path: Option<PathBuf>,
+}
 
 #[derive(IntoElement)]
 pub struct ProjectInfo {
-    pub info: AppProjectInfo,
+    pub info: LoadedProjectInfo,
 }
 impl ProjectInfo {
-    pub fn new(info: AppProjectInfo) -> Self {
-        Self { info }
+    pub fn new(info: LoadedProjectInfo) -> Self {
+        Self { info}
     }
 }
 impl RenderOnce for ProjectInfo {

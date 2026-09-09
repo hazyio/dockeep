@@ -2,6 +2,7 @@ use crate::scenes::app::MyApp;
 use crate::scenes::home::view::Home;
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_theme::AppTheme;
+use crate::utils::lanuages::Lanuages;
 use gpui_kit::component::TitleBar;
 use gpui_kit::component::button::*;
 use gpui_kit::component::setting::{
@@ -20,9 +21,10 @@ impl SettingsPage {
     }
 }
 impl Render for SettingsPage {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         let config = AppConfig::load();
         let current_theme_name: SharedString = config.theme.name().into();
+        let current_language: SharedString = config.language.name_short().into();
         let app = self.app.clone();
 
         div()
@@ -62,6 +64,33 @@ impl Render for SettingsPage {
                         SettingGroup::new()
                             .title(t!("title.appearance"))
                             .item(SettingItem::new(
+                                t!("label.language"),
+                                SettingField::dropdown(
+                                    Lanuages::all()
+                                        .iter()
+                                        .map(|lang| {
+                                            (lang.name_short().into(), lang.name_long().into())
+                                        })
+                                        .collect(),
+                                    move |_cx: &App| current_language.clone(),
+                                    move |val: SharedString, cx: &mut App| {
+                                        tracing::info!("{}", val);
+
+                                        if let Some(lang) = Lanuages::all()
+                                            .iter()
+                                            .find(|t| t.name_short() == val.as_ref())
+                                        {
+                                            let mut config = AppConfig::load();
+                                            tracing::info!("found at {}", lang.name_long());
+                                            config.language = *lang;
+                                            config.save();
+                                            lang.set(cx);
+                                        }
+                                    },
+                                )
+                                .default_value(config.language.name_short()),
+                            ))
+                            .item(SettingItem::new(
                                 t!("label.theme"),
                                 SettingField::dropdown(
                                     AppTheme::all()
@@ -70,18 +99,18 @@ impl Render for SettingsPage {
                                         .collect(),
                                     move |_cx: &App| current_theme_name.clone(),
                                     move |val: SharedString, cx: &mut App| {
-                                        let mut config = AppConfig::load();
                                         if let Some(theme) = AppTheme::all()
                                             .iter()
                                             .find(|t| t.name() == val.as_ref())
                                         {
+                                            let mut config = AppConfig::load();
                                             config.theme = *theme;
                                             config.save();
                                             theme.switch_to(cx);
                                         }
                                     },
                                 )
-                                .default_value(config.theme.name()),
+                                .default_value(config.theme.name())
                             )),
                     ),
                 ),

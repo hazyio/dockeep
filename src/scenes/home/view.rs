@@ -10,16 +10,16 @@ use gpui_kit::*;
 use rust_i18n::t;
 
 use crate::components::add_project_dialog::AddProjectDialog;
-use crate::components::project_info::ProjectInfo;
+use crate::components::project_info::{LoadedProjectInfo, ProjectInfo};
 use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_projects::AppProjects;
-
+use crate::utils::prelude::path_exists_or_none;
 pub struct Home {
     app: WeakEntity<MyApp>,
     search: Entity<InputState>,
     loading: bool,
-    app_projects: AppProjects,
+    projects: Vec<LoadedProjectInfo>,
     error: Option<Error>,
     add_project_dialog: Entity<AddProjectDialog>,
 }
@@ -35,7 +35,7 @@ impl Home {
             app,
             search,
             loading: true,
-            app_projects: AppProjects::new(),
+            projects: Vec::new(),
             error: None,
             add_project_dialog: cx.new(|cx| AddProjectDialog::new(window, cx)),
         }
@@ -45,10 +45,17 @@ impl Home {
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
                 .await;
-
+            let projects = result
+                .0
+                .iter()
+                .map(|info| LoadedProjectInfo {
+                    name: info.name.clone(),
+                    path: path_exists_or_none(&info.path.clone()),
+                })
+                .collect();
             entity
                 .update(cx, |this, cx| {
-                    this.app_projects.projects = result.0;
+                    this.projects = projects;
                     this.loading = false;
                     this.error = result.1;
 
@@ -68,7 +75,7 @@ impl Render for Home {
         let search = self.search.clone();
         let add_project_dialog = self.add_project_dialog.clone();
         let error = self.error.as_ref().map(|error| error.to_string());
-        let project_to_show = self.app_projects.projects.clone();
+        let project_to_show = self.projects;
         div()
             .v_flex()
             .gap_2()
@@ -136,9 +143,9 @@ impl Render for Home {
                                         .grid_cols(3)
                                         .gap_2()
                                         .children(
-                                            project_to_show.iter().map(|project| {
-                                                ProjectInfo::new((*project).clone())
-                                            }),
+                                            project_to_show
+                                                .iter()
+                                                .map(|project| ProjectInfo::new(project.clone())),
                                         ),
                                 )
                             })
