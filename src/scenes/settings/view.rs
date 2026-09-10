@@ -2,7 +2,7 @@ use crate::scenes::app::MyApp;
 use crate::scenes::home::view::Home;
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_theme::AppTheme;
-use crate::utils::lanuages::Lanuages;
+use crate::utils::lanuages::Languages;
 use gpui_kit::component::TitleBar;
 use gpui_kit::component::button::*;
 use gpui_kit::component::setting::{
@@ -66,7 +66,7 @@ impl Render for SettingsPage {
                             .item(SettingItem::new(
                                 t!("label.language"),
                                 SettingField::dropdown(
-                                    Lanuages::all()
+                                    Languages::all()
                                         .iter()
                                         .map(|lang| {
                                             (lang.name_short().into(), lang.name_long().into())
@@ -74,17 +74,14 @@ impl Render for SettingsPage {
                                         .collect(),
                                     move |_cx: &App| current_language.clone(),
                                     move |val: SharedString, cx: &mut App| {
-                                        tracing::info!("{}", val);
-
-                                        if let Some(lang) = Lanuages::all()
+                                        if let Some(lang) = Languages::all()
                                             .iter()
                                             .find(|t| t.name_short() == val.as_ref())
                                         {
                                             let mut config = AppConfig::load();
-                                            tracing::info!("found at {}", lang.name_long());
                                             config.language = *lang;
                                             config.save();
-                                            lang.set(cx);
+                                            lang.set_for_app(cx);
                                         }
                                     },
                                 )
@@ -110,7 +107,7 @@ impl Render for SettingsPage {
                                         }
                                     },
                                 )
-                                .default_value(config.theme.name())
+                                .default_value(config.theme.name()),
                             )),
                     ),
                 ),

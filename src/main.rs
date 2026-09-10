@@ -19,6 +19,7 @@ fn setup(cx: &mut App) {
     AppTheme::load_all(cx);
     let config = AppConfig::load();
     config.theme.switch_to(cx);
+    config.language.set();
 }
 
 fn main() {
@@ -27,9 +28,10 @@ fn main() {
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
-    
+
     gpui_kit::application().with_assets(Assets).run(move |cx| {
         setup(cx);
+
         cx.spawn(async move |cx| {
             cx.open_window(WindowOptions::default(), |window, cx| {
                 let view = cx.new(|app| {

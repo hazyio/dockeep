@@ -91,4 +91,12 @@ impl AppProjects {
     pub fn set_projects(&mut self, projects: Vec<AppProjectInfo>) {
         self.projects = projects;
     }
+    pub fn add_project(project: AppProjectInfo) -> Result<()> {
+        let (mut projects, error) = Self::load();
+        if let Some(error) = error {
+            return Err(error);
+        }
+        projects.push(project);
+        AppProjects { projects }.save()
+    }
 }

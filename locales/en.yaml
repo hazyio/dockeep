@@ -21,4 +21,7 @@ label:
   project_name: Project Name
   project_path: Project Path
   language: Language
-  
+  cancel: Cancel
+error:
+  name_cannot_be_empty: Name cannot be empty
+  name_too_short: Name must be at least 2 characters long

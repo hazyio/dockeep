@@ -9,7 +9,7 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rust_i18n::t;
 
-use crate::components::add_project_dialog::AddProjectDialog;
+use crate::components::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
 use crate::components::project_info::{LoadedProjectInfo, ProjectInfo};
 use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
@@ -22,6 +22,7 @@ pub struct Home {
     projects: Vec<LoadedProjectInfo>,
     error: Option<Error>,
     add_project_dialog: Entity<AddProjectDialog>,
+    _project_saved_subscription: Subscription, // keep it alive
 }
 
 impl Home {
@@ -30,14 +31,26 @@ impl Home {
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_projects")));
         // kick off the background load
         Self::load_projects(cx);
-
+        let add_project_dialog = cx.new(|cx| AddProjectDialog::new(window, cx));
+        // watch for project saved events
+        let _project_saved_subscription = cx.subscribe_in(
+            &add_project_dialog,
+            window,
+            |_this, _dialog, event: &AddProjectDialogEvent, window, cx| match event {
+                AddProjectDialogEvent::ProjectSaved => {
+                    window.close_dialog(cx);
+                    Home::load_projects(cx);
+                }
+            },
+        );
         Self {
             app,
             search,
             loading: true,
             projects: Vec::new(),
             error: None,
-            add_project_dialog: cx.new(|cx| AddProjectDialog::new(window, cx)),
+            add_project_dialog: add_project_dialog,
+            _project_saved_subscription,
         }
     }
     fn load_projects(cx: &mut Context<Self>) {
@@ -75,14 +88,14 @@ impl Render for Home {
         let search = self.search.clone();
         let add_project_dialog = self.add_project_dialog.clone();
         let error = self.error.as_ref().map(|error| error.to_string());
-        let project_to_show = self.projects;
+        let project_to_show = self.projects.clone();
         div()
             .v_flex()
             .gap_2()
             .size_full()
             .child(
                 TitleBar::new()
-                    .p_3()
+                    .p_4()
                     .child(div().flex().items_center().child(t!("title.home")))
                     .child(
                         div().flex().items_center().child(

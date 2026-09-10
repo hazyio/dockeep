@@ -1,0 +1,23 @@
+theme:
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
+title:
+  home: Dockeep Startseite
+  settings: Einstellungen
+  appearance: Erscheinungsbild
+  general: Allgemein
+  add_new_project: Neues Projekt hinzufügen
+label:
+  theme: Thema
+  back: Zurück
+  save: Speichern
+  search_projects: Projekte suchen
+  add_project: Projekt hinzufügen
+  no_projects: Keine Projekte gefunden
+  loading_projects: Projekte werden geladen...
+  no_projects_found: Keine Projekte gefunden. Verwenden Sie die Schaltfläche „Hinzufügen“, um eines hinzuzufügen.
+  select_project_folder: Projektordner auswählen
+  project_name: Projektname
+  project_path: Projektpfad
+  language: Sprache

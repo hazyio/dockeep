@@ -15,7 +15,7 @@ pub struct ProjectInfo {
 }
 impl ProjectInfo {
     pub fn new(info: LoadedProjectInfo) -> Self {
-        Self { info}
+        Self { info }
     }
 }
 impl RenderOnce for ProjectInfo {
