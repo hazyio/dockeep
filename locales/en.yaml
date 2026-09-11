@@ -22,6 +22,8 @@ label:
   project_path: Project Path
   language: Language
   cancel: Cancel
+  loading: Loading...
 error:
   name_cannot_be_empty: Name cannot be empty
   name_too_short: Name must be at least 2 characters long
+  project_already_exists: "A project with that path already exists: %{name}"

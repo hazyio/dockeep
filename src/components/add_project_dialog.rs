@@ -7,7 +7,7 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rfd::AsyncFileDialog;
 
-use crate::utils::app_projects::{AppProjectInfo, AppProjects};
+use crate::utils::app_projects::{AppProjectError, AppProjectInfo, AppProjects};
 
 pub enum AddProjectDialogEvent {
     ProjectSaved,
@@ -120,7 +120,11 @@ impl AddProjectDialog {
                     self._input_subscription = None;
                     cx.notify();
                 }
-                Err(e) => {
+                Err(AppProjectError::AlreadyExists(name)) => {
+                    self.error = Some(t!("error.project_already_exists", name = name).into());
+                    cx.notify();
+                }
+                Err(AppProjectError::Other(e)) => {
                     self.error = Some(e.to_string().into());
                     cx.notify();
                 }

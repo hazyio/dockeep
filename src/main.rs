@@ -1,9 +1,9 @@
+
 pub mod components;
 pub mod scenes;
 pub mod utils;
-use gpui_kit::assets::Assets;
-use gpui_kit::component::*;
 use gpui_kit::*;
+use gpui_kit::component::*;
 use tracing_subscriber::EnvFilter;
 
 use crate::{
@@ -29,21 +29,23 @@ fn main() {
         )
         .init();
 
-    gpui_kit::application().with_assets(Assets).run(move |cx| {
-        setup(cx);
+    gpui_kit::application()
+        .with_assets(components::asset_source::Assets)
+        .run(move |cx| {
+            setup(cx);
 
-        cx.spawn(async move |cx| {
-            cx.open_window(WindowOptions::default(), |window, cx| {
-                let view = cx.new(|app| {
-                    let my_app_handle = app.weak_entity();
-                    let home = app.new(|cx| Home::new(my_app_handle, window, cx));
-                    MyApp { view: home.into() }
-                });
-                // This first level on the window, should be a Root.
-                cx.new(|cx| Root::new(view, window, cx).bordered(false))
+            cx.spawn(async move |cx| {
+                cx.open_window(WindowOptions::default(), |window, cx| {
+                    let view = cx.new(|app| {
+                        let my_app_handle = app.weak_entity();
+                        let home = app.new(|cx| Home::new(my_app_handle, window, cx));
+                        MyApp { view: home.into() }
+                    });
+                    // This first level on the window, should be a Root.
+                    cx.new(|cx| Root::new(view, window, cx).bordered(false))
+                })
+                .expect("Failed to open window");
             })
-            .expect("Failed to open window");
-        })
-        .detach();
-    });
+            .detach();
+        });
 }

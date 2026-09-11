@@ -6,6 +6,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::app_config::AppConfig;
 
+#[derive(Debug)]
+pub enum AppProjectError {
+    AlreadyExists(String),
+    Other(anyhow::Error),
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AppProjectInfo {
     pub name: String,
@@ -91,12 +97,17 @@ impl AppProjects {
     pub fn set_projects(&mut self, projects: Vec<AppProjectInfo>) {
         self.projects = projects;
     }
-    pub fn add_project(project: AppProjectInfo) -> Result<()> {
+    pub fn add_project(project: AppProjectInfo) -> Result<(), AppProjectError> {
         let (mut projects, error) = Self::load();
         if let Some(error) = error {
-            return Err(error);
+            return Err(AppProjectError::Other(error));
+        }
+        if let Some(existing) = projects.iter().find(|p| p.path == project.path) {
+            return Err(AppProjectError::AlreadyExists(existing.name.clone()));
         }
         projects.push(project);
-        AppProjects { projects }.save()
+        AppProjects { projects }
+            .save()
+            .map_err(AppProjectError::Other)
     }
 }

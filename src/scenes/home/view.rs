@@ -10,16 +10,16 @@ use gpui_kit::*;
 use rust_i18n::t;
 
 use crate::components::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
-use crate::components::project_info::{LoadedProjectInfo, ProjectInfo};
+use crate::components::project_info::ProjectInfo;
 use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
+use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
-use crate::utils::prelude::path_exists_or_none;
 pub struct Home {
     app: WeakEntity<MyApp>,
     search: Entity<InputState>,
     loading: bool,
-    projects: Vec<LoadedProjectInfo>,
+    projects: Vec<Entity<ProjectInfo>>,
     error: Option<Error>,
     add_project_dialog: Entity<AddProjectDialog>,
     _project_saved_subscription: Subscription, // keep it alive
@@ -61,9 +61,8 @@ impl Home {
             let projects = result
                 .0
                 .iter()
-                .map(|info| LoadedProjectInfo {
-                    name: info.name.clone(),
-                    path: path_exists_or_none(&info.path.clone()),
+                .map(|project| {
+                    cx.new(|cx| ProjectInfo::new(project.name.clone(), project.path.clone(), cx))
                 })
                 .collect();
             entity
@@ -101,7 +100,7 @@ impl Render for Home {
                         div().flex().items_center().child(
                             Button::new("back")
                                 .ghost()
-                                .child(IconName::Settings)
+                                .child(AppIcons::Settings)
                                 .on_click(move |_, _, cx| {
                                     if let Some(app) = app.upgrade() {
                                         let settings_view: AnyView =
@@ -155,11 +154,7 @@ impl Render for Home {
                                         .grid()
                                         .grid_cols(3)
                                         .gap_2()
-                                        .children(
-                                            project_to_show
-                                                .iter()
-                                                .map(|project| ProjectInfo::new(project.clone())),
-                                        ),
+                                        .children(project_to_show.clone()),
                                 )
                             })
                             .when(!loading && project_to_show.is_empty(), |cx| {
