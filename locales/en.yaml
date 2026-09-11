@@ -9,6 +9,7 @@ title:
   general: General
   add_new_project: Add New Project
 label:
+  close: Close
   theme: Theme
   back: Back
   save: Save
@@ -23,7 +24,14 @@ label:
   language: Language
   cancel: Cancel
   loading: Loading...
+  open_in_editor: Open in Editor
+  open_in_file_manager: Open in File Manager
+  not_repo: Not repo
+  clean: Clean
+  dirty: Dirty
+  last_accessed: Last Accessed %{datetime}
 error:
   name_cannot_be_empty: Name cannot be empty
   name_too_short: Name must be at least 2 characters long
   project_already_exists: "A project with that path already exists: %{name}"
+  unknown_error: Unknown error

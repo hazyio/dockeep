@@ -1,5 +1,5 @@
 use crate::scenes::app::MyApp;
-use crate::scenes::home::view::Home;
+use crate::scenes::home::view::HomePage;
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_theme::AppTheme;
 use crate::utils::lanuages::Languages;
@@ -48,7 +48,7 @@ impl Render for SettingsPage {
                                 .on_click(move |_, window, cx| {
                                     if let Some(app) = app.upgrade() {
                                         let home_view: AnyView = cx
-                                            .new(|cx| Home::new(app.downgrade(), window, cx))
+                                            .new(|cx| HomePage::new(app.downgrade(), window, cx))
                                             .into();
                                         app.update(cx, |app, cx| {
                                             app.navigate_to(home_view, cx);

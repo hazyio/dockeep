@@ -1,13 +1,12 @@
-
 pub mod components;
 pub mod scenes;
 pub mod utils;
-use gpui_kit::*;
 use gpui_kit::component::*;
+use gpui_kit::*;
 use tracing_subscriber::EnvFilter;
 
 use crate::{
-    scenes::{app::MyApp, home::view::Home},
+    scenes::{app::MyApp, home::view::HomePage},
     utils::{app_config::AppConfig, app_theme::AppTheme},
 };
 #[macro_use]
@@ -30,7 +29,7 @@ fn main() {
         .init();
 
     gpui_kit::application()
-        .with_assets(components::asset_source::Assets)
+        .with_assets(utils::asset_source::Assets)
         .run(move |cx| {
             setup(cx);
 
@@ -38,7 +37,7 @@ fn main() {
                 cx.open_window(WindowOptions::default(), |window, cx| {
                     let view = cx.new(|app| {
                         let my_app_handle = app.weak_entity();
-                        let home = app.new(|cx| Home::new(my_app_handle, window, cx));
+                        let home = app.new(|cx| HomePage::new(my_app_handle, window, cx));
                         MyApp { view: home.into() }
                     });
                     // This first level on the window, should be a Root.

@@ -24,7 +24,19 @@ impl AssetSource for Assets {
             "icons/chevron-down.svg" => Some(include_bytes!("../../assets/svg/chevron-down.svg")),
             "icons/check.svg" | "check.svg" => Some(include_bytes!("../../assets/svg/check.svg")),
             "icons/close.svg" | "close.svg" => Some(include_bytes!("../../assets/svg/close.svg")),
-            
+            "icons/external-link.svg" | "external-link.svg" => {
+                Some(include_bytes!("../../assets/svg/external-link.svg"))
+            }
+            "icons/folder.svg" | "folder.svg" => {
+                Some(include_bytes!("../../assets/svg/folder.svg"))
+            }
+            "icons/git-commit-horizontal.svg" | "git-commit-horizontal.svg" => {
+                Some(include_bytes!("../../assets/svg/git-commit-horizontal.svg"))
+            }
+            "icons/rotate-ccw-clock.svg" | "rotate-ccw-clock.svg" => {
+                Some(include_bytes!("../../assets/svg/rotate-ccw-clock.svg"))
+            }
+
             _ => {
                 tracing::error!("could not find asset at path \"{}\"", path);
                 None

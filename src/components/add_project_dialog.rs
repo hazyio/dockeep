@@ -1,13 +1,16 @@
-use gpui_kit::base::input::*;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::InputEvent;
+use gpui_kit::component::input::*;
 use gpui_kit::component::label::Label;
 use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rfd::AsyncFileDialog;
 
-use crate::utils::app_projects::{AppProjectError, AppProjectInfo, AppProjects};
+use crate::utils::{
+    app_projects::{AppProjectError, AppProjectInfo, AppProjects},
+    prelude::now_timestamp,
+};
 
 pub enum AddProjectDialogEvent {
     ProjectSaved,
@@ -26,6 +29,16 @@ pub struct AddProjectDialog {
 impl EventEmitter<AddProjectDialogEvent> for AddProjectDialog {}
 
 impl AddProjectDialog {
+    pub fn open(window: &mut Window, cx: &mut App, add_project_dialog: Entity<AddProjectDialog>) {
+        window.open_dialog(cx, move |dialog, _, _| {
+            dialog
+                .title(t!("title.add_new_project"))
+                .h_1_2()
+                .w_1_3()
+                .child(add_project_dialog.clone())
+        })
+    }
+
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
         Self {
             new_project_info: None,
@@ -43,6 +56,7 @@ impl AddProjectDialog {
         cx.spawn_in(window, async move |entity, cx| {
             let result = cx
                 .background_spawn(async move {
+                    // open select file window
                     AsyncFileDialog::new()
                         .set_title(t!("label.select_project_folder"))
                         .pick_folder()
@@ -56,19 +70,11 @@ impl AddProjectDialog {
 
                 entity
                     .update_in(cx, |this, window, cx| {
-                        Theme::global_mut(cx).colors.accent = cx.theme().blue;
-
-                        let path_state = cx.new(|cx| {
-                            let mut state =
-                                InputState::new(window, cx).placeholder(t!("label.project_path"));
-                            state.set_disabled(true, cx);
-                            state.set_value(path, window, cx);
-                            state
-                        });
+                        let path_state =
+                            cx.new(|cx| InputState::new(window, cx).default_value(path));
 
                         let name_state: Entity<InputState> = cx.new(|cx| {
                             InputState::new(window, cx)
-                                .placeholder(t!("label.project_name"))
                                 .pattern(regex::Regex::new(r"^[a-zA-Z0-9 ]*$").unwrap())
                         });
 
@@ -109,6 +115,7 @@ impl AddProjectDialog {
             match AppProjects::add_project(AppProjectInfo {
                 name: value.to_string(),
                 path: new_project_info.path.read(cx).value().clone().to_string(),
+                last_accessed: now_timestamp(),
             }) {
                 Ok(_) => {
                     tracing::info!("Project added successfully");
@@ -118,23 +125,25 @@ impl AddProjectDialog {
                     self.new_project_info = None;
                     self.error = None;
                     self._input_subscription = None;
-                    cx.notify();
                 }
                 Err(AppProjectError::AlreadyExists(name)) => {
                     self.error = Some(t!("error.project_already_exists", name = name).into());
-                    cx.notify();
                 }
                 Err(AppProjectError::Other(e)) => {
                     self.error = Some(e.to_string().into());
-                    cx.notify();
+                }
+                _ => {
+                    self.error = Some(t!("error.unknown_error").into());
                 }
             };
+            cx.notify();
         }
     }
-    fn cancel(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
+    fn cancel(&mut self, _: &ClickEvent, win: &mut Window, cx: &mut Context<Self>) {
         self.new_project_info = None;
         self.error = None;
         self._input_subscription = None;
+        win.close_dialog(cx);
         cx.notify();
     }
 }
@@ -143,80 +152,56 @@ impl Render for AddProjectDialog {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .v_flex()
-            .flex_1()
-            .min_h_0()
             .size_full()
+            .items_center()
+            .justify_center()
             .when_none(&self.new_project_info, |el| {
-                el.items_center().justify_center().child(
-                    div()
-                        .v_flex()
-                        .flex_1()
-                        .min_h_0()
-                        .size_full()
-                        .items_center()
-                        .justify_center()
-                        .child(
-                            Button::new("select-project")
-                                .label(t!("label.select_project_folder"))
-                                .on_click(cx.listener(Self::select_folder_location)),
-                        ),
+                el.child(
+                    Button::new("select-project")
+                        .label(t!("label.select_project_folder"))
+                        .on_click(cx.listener(Self::select_folder_location)),
                 )
             })
             .when_some(self.new_project_info.clone(), |el, info| {
-                el.h_full()
-                    .mt_3()
-                    .gap_3()
-                    .child(
-                        input_wrapper(cx, &t!("label.project_name")).child(Input::new(&info.name)),
-                    )
-                    .child(
-                        input_wrapper(cx, &t!("label.project_path")).child(Input::new(&info.path)),
-                    )
-                    .when_some(self.error.clone(), |el, error| {
-                        el.mt_3()
-                            .child(Label::new(error).text_color(cx.theme().danger))
-                    })
-                    .child(
-                        div()
-                            .h_flex()
-                            .mt_auto()
-                            .gap_2()
-                            .child(
-                                Button::new("cancel")
-                                    .secondary()
-                                    .flex_grow_1()
-                                    .ghost()
-                                    .label(t!("label.cancel"))
-                                    .on_click(cx.listener(Self::cancel)),
-                            )
-                            .child(
-                                Button::new("select-project")
-                                    .secondary()
-                                    .flex_grow_1()
-                                    .label(t!("label.save"))
-                                    .on_click(cx.listener(Self::save)),
-                            ),
-                    )
+                el.child(
+                    div()
+                        .mt_5()
+                        .flex_1()
+                        .v_flex()
+                        .w_full()
+                        .gap_3()
+                        .child(Label::new(t!("label.project_name")))
+                        .child(Input::new(&info.name))
+                        .child(Label::new(t!("label.project_path")))
+                        .child(Input::new(&info.path).readonly(true))
+                        .child(
+                            Label::new(self.error.clone().unwrap_or("default".into()))
+                                .text_color(cx.theme().danger)
+                                .when_some(self.error.clone(), |el, _| el.visible())
+                                .when_none(&self.error.clone(), |el| el.invisible()),
+                        )
+                        .child(
+                            div()
+                                .h_flex()
+                                .mt_auto()
+                                .gap_2()
+                                .child(
+                                    Button::new("cancel")
+                                        .secondary()
+                                        .flex_grow_1()
+                                        .ghost()
+                                        .label(t!("label.cancel"))
+                                        .on_click(cx.listener(Self::cancel)),
+                                )
+                                .child(
+                                    Button::new("select-project")
+                                        .secondary()
+                                        .flex_grow_1()
+                                        .label(t!("label.save"))
+                                        .on_click(cx.listener(Self::save)),
+                                ),
+                        ),
+                )
             })
     }
-}
-
-fn input_wrapper(cx: &mut App, label: &str) -> Div {
-    div()
-        .v_flex()
-        .gap_1()
-        .w_full()
-        .px(px(10.))
-        .py(px(8.))
-        .bg(cx.theme().input_background())
-        .border_1()
-        .border_color(cx.theme().input)
-        .rounded(cx.theme().radius)
-        .in_focus(|style| style.border_color(cx.theme().ring))
-        .child(
-            Label::new(label)
-                .text_xs()
-                .text_color(cx.theme().muted_foreground),
-        )
-        .into()
 }

@@ -1,6 +1,8 @@
 pub mod app_config;
+pub mod app_icons;
 pub mod app_projects;
 pub mod app_theme;
+pub mod asset_source;
+pub mod git;
 pub mod lanuages;
 pub mod prelude;
-pub mod app_icons;

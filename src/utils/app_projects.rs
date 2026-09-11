@@ -9,6 +9,7 @@ use crate::utils::app_config::AppConfig;
 #[derive(Debug)]
 pub enum AppProjectError {
     AlreadyExists(String),
+    ProjectNotFound,
     Other(anyhow::Error),
 }
 
@@ -16,6 +17,10 @@ pub enum AppProjectError {
 pub struct AppProjectInfo {
     pub name: String,
     pub path: String,
+    /// Unix timestamp (seconds since epoch) when the project was added.
+    /// Defaults to 0 (the Unix epoch) when not present in stored data.
+    #[serde(default)]
+    pub last_accessed: u64,
 }
 
 #[derive(Serialize, Deserialize, Default)]

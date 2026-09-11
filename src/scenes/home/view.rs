@@ -1,7 +1,7 @@
 use anyhow::Error;
-use gpui_kit::base::input::InputState;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::Input;
+use gpui_kit::component::input::InputState;
 use gpui_kit::component::scroll::ScrollableElement;
 use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
@@ -15,7 +15,9 @@ use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
-pub struct Home {
+use crate::utils::git::get_git_repo_info;
+use crate::utils::prelude::to_human_datetime;
+pub struct HomePage {
     app: WeakEntity<MyApp>,
     search: Entity<InputState>,
     loading: bool,
@@ -25,21 +27,23 @@ pub struct Home {
     _project_saved_subscription: Subscription, // keep it alive
 }
 
-impl Home {
+impl HomePage {
     pub fn new(app: WeakEntity<MyApp>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let search =
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_projects")));
+        let app_for_subscription = app.clone();
+
         // kick off the background load
-        Self::load_projects(cx);
+        Self::load_projects(app.clone(), cx);
         let add_project_dialog = cx.new(|cx| AddProjectDialog::new(window, cx));
         // watch for project saved events
         let _project_saved_subscription = cx.subscribe_in(
             &add_project_dialog,
             window,
-            |_this, _dialog, event: &AddProjectDialogEvent, window, cx| match event {
+            move |_this, _dialog, event: &AddProjectDialogEvent, window, cx| match event {
                 AddProjectDialogEvent::ProjectSaved => {
                     window.close_dialog(cx);
-                    Home::load_projects(cx);
+                    HomePage::load_projects(app_for_subscription.clone(), cx);
                 }
             },
         );
@@ -53,7 +57,7 @@ impl Home {
             _project_saved_subscription,
         }
     }
-    fn load_projects(cx: &mut Context<Self>) {
+    fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
@@ -61,8 +65,21 @@ impl Home {
             let projects = result
                 .0
                 .iter()
-                .map(|project| {
-                    cx.new(|cx| ProjectInfo::new(project.name.clone(), project.path.clone(), cx))
+                .enumerate()
+                .map(|(index, project)| {
+                    cx.new(|_| {
+                        let app = app.clone();
+
+                        let path = std::path::Path::new(&project.path).to_path_buf();
+                        ProjectInfo {
+                            app: app,
+                            index: index as u16,
+                            name: project.name.clone(),
+                            repo_info: get_git_repo_info(&path),
+                            path,
+                            last_accessed: to_human_datetime(project.last_accessed),
+                        }
+                    })
                 })
                 .collect();
             entity
@@ -78,7 +95,7 @@ impl Home {
         .detach();
     }
 }
-impl Render for Home {
+impl Render for HomePage {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let app = self.app.clone();
         let dialog_layer = Root::render_dialog_layer(window, cx);
@@ -123,15 +140,7 @@ impl Render for Home {
                             Button::new("add-project")
                                 .label(t!("label.add_project"))
                                 .on_click(move |_, window, cx| {
-                                    let add_project_dialog = add_project_dialog.clone();
-
-                                    window.open_dialog(cx, move |dialog, _, _| {
-                                        dialog
-                                            .title(t!("title.add_new_project"))
-                                            .h_1_2()
-                                            .w_1_3()
-                                            .child(add_project_dialog.clone())
-                                    })
+                                    AddProjectDialog::open(window, cx, add_project_dialog.clone());
                                 }),
                         ),
                     )
