@@ -10,7 +10,7 @@ use gpui_kit::*;
 use rust_i18n::t;
 
 use crate::components::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
-use crate::components::project_info::ProjectInfo;
+use crate::components::project_info::{ProjectInfo, ProjectInfoEvent};
 use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
@@ -24,7 +24,8 @@ pub struct HomePage {
     projects: Vec<Entity<ProjectInfo>>,
     error: Option<Error>,
     add_project_dialog: Entity<AddProjectDialog>,
-    _project_saved_subscription: Subscription, // keep it alive
+    _project_saved_subscription: Subscription,
+    _project_delete_subscriptions: Vec<Subscription>,
 }
 
 impl HomePage {
@@ -47,6 +48,7 @@ impl HomePage {
                 }
             },
         );
+
         Self {
             app,
             search,
@@ -55,6 +57,7 @@ impl HomePage {
             error: None,
             add_project_dialog: add_project_dialog,
             _project_saved_subscription,
+            _project_delete_subscriptions: Vec::new(),
         }
     }
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
@@ -62,7 +65,7 @@ impl HomePage {
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
                 .await;
-            let projects = result
+            let projects: Vec<Entity<ProjectInfo>> = result
                 .0
                 .iter()
                 .enumerate()
@@ -84,10 +87,25 @@ impl HomePage {
                 .collect();
             entity
                 .update(cx, |this, cx| {
+                    this._project_delete_subscriptions = projects
+                        .iter()
+                        .map(|project_entity| {
+                            cx.subscribe(project_entity, |this, _, event: &ProjectInfoEvent, cx| {
+                                match event {
+                                    ProjectInfoEvent::Delete(path) => {
+                                        this.projects.retain(|p| {
+                                            p.read(cx).path.to_string_lossy().as_ref()
+                                                != path.as_str()
+                                        });
+                                        cx.notify();
+                                    }
+                                }
+                            })
+                        })
+                        .collect();
                     this.projects = projects;
                     this.loading = false;
                     this.error = result.1;
-
                     cx.notify();
                 })
                 .ok();

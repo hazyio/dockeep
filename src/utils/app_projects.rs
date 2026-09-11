@@ -5,6 +5,7 @@ use anyhow::{Context, Error, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::utils::app_config::AppConfig;
+use crate::utils::prelude::now_timestamp;
 
 #[derive(Debug)]
 pub enum AppProjectError {
@@ -21,6 +22,26 @@ pub struct AppProjectInfo {
     /// Defaults to 0 (the Unix epoch) when not present in stored data.
     #[serde(default)]
     pub last_accessed: u64,
+}
+
+impl AppProjectInfo {
+    /// Updates `last_accessed` for this project in persistent storage.
+    /// Loads all projects, patches the matching entry by path, and saves.
+    /// Errors are logged as warnings and never propagate to the caller.
+    pub fn update_lastaccess(&self) {
+        let now = now_timestamp();
+        let (mut projects, error) = AppProjects::load();
+        if let Some(e) = error {
+            tracing::warn!("update_lastaccess: failed to load projects: {e}");
+            return;
+        }
+        if let Some(p) = projects.iter_mut().find(|p| p.path == self.path) {
+            p.last_accessed = now;
+        }
+        if let Err(e) = (AppProjects { projects }).save() {
+            tracing::warn!("update_lastaccess: failed to save projects: {e}");
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -102,6 +123,21 @@ impl AppProjects {
     pub fn set_projects(&mut self, projects: Vec<AppProjectInfo>) {
         self.projects = projects;
     }
+    pub fn remove_project(path: &str) -> Result<(), AppProjectError> {
+        let (mut projects, error) = Self::load();
+        if let Some(error) = error {
+            return Err(AppProjectError::Other(error));
+        }
+        let before = projects.len();
+        projects.retain(|p| p.path != path);
+        if projects.len() == before {
+            return Err(AppProjectError::ProjectNotFound);
+        }
+        AppProjects { projects }
+            .save()
+            .map_err(AppProjectError::Other)
+    }
+
     pub fn add_project(project: AppProjectInfo) -> Result<(), AppProjectError> {
         let (mut projects, error) = Self::load();
         if let Some(error) = error {
