@@ -9,6 +9,7 @@ pub enum AppIcons {
     GitCommit,
     Check,
     RotateCcwClock,
+    Refresh,
 }
 
 impl RenderOnce for AppIcons {
@@ -22,6 +23,7 @@ impl RenderOnce for AppIcons {
             AppIcons::GitCommit => Icon::default().path("git-commit-horizontal.svg"),
             AppIcons::Check => Icon::default().path("check.svg"),
             AppIcons::RotateCcwClock => Icon::default().path("rotate-ccw-clock.svg"),
+            AppIcons::Refresh => Icon::default().path("refresh.svg"),
         }
     }
 }

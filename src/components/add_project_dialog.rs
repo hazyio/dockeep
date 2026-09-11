@@ -33,7 +33,6 @@ impl AddProjectDialog {
         window.open_dialog(cx, move |dialog, _, _| {
             dialog
                 .title(t!("title.add_new_project"))
-                .h_1_2()
                 .w_1_3()
                 .child(add_project_dialog.clone())
         })
@@ -152,12 +151,11 @@ impl Render for AddProjectDialog {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .v_flex()
-            .size_full()
-            .items_center()
-            .justify_center()
+            .w_full()
             .when_none(&self.new_project_info, |el| {
-                el.child(
+                el.h(px(150.0)).justify_center().items_center().child(
                     Button::new("select-project")
+                        .primary()
                         .label(t!("label.select_project_folder"))
                         .on_click(cx.listener(Self::select_folder_location)),
                 )

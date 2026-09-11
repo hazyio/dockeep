@@ -1,5 +1,9 @@
 use std::path::PathBuf;
 
+use gpui_kit::base::{
+    AlertDialog, AlertDialogAction, AlertDialogBackdrop, AlertDialogCancel, AlertDialogDescription,
+    AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger,
+};
 use gpui_kit::component::button::{Button, ButtonVariants};
 use gpui_kit::component::label::Label;
 use gpui_kit::component::tag::Tag;
@@ -32,12 +36,6 @@ impl EventEmitter<ProjectInfoEvent> for ProjectInfo {}
 
 impl Render for ProjectInfo {
     fn render(&mut self, _: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
-        let open = self.open_delete_dialog;
-        let entity = element_cx.entity().downgrade();
-        let open_entity = entity.clone();
-        let ok_entity = entity.clone();
-        let cancel_entity = entity.clone();
-        let action_entity = entity.clone();
         div()
             .p_3()
             .rounded_md()
@@ -49,95 +47,102 @@ impl Render for ProjectInfo {
             .child(self.title(element_cx))
             .child(self.repo_info())
             .child(self.body(element_cx))
-            .child(AlertDialog::new(cx)
-                                .open(open)
-                                .on_open_change(move |open, _, _, cx| {
-                                    _ = entity.update(cx, |this, cx| {
-                                        this.alert_dialog_open = open;
-                                        cx.notify();
-                                    });
-                                })
-                                .on_ok(move |_, _, cx| {
-                                    _ = ok_entity.update(cx, |this, cx| {
-                                        this.alert_dialog_open = false;
-                                        cx.notify();
-                                    });
-                                    true
-                                })
-                                .backdrop(
-                                    AlertDialogBackdrop::new()
-                                        .absolute()
-                                        .inset_0()
-                                        .bg(super::example_rgb(0x000000))
-                                        .opacity(0.18),
-                                ) .popup(
-                                                       AlertDialogPopup::new()
-                                                           .flex()
-                                                           .items_center()
-                                                           .justify_center()
-                                                           .child(
-                                                               div()
-                                                                   .w_72()
-                                                                   .p_3()
-                                                                   .bg(super::example_rgb(0xffffff))
-                                                                   .border_1()
-                                                                   .border_color(super::example_rgb(0x171717))
-                                                                   .child(
-                                                                       AlertDialogTitle::new()
-                                                                           .child("Delete project?"),
-                                                                   )
-                                                                   .child(
-                                                                       AlertDialogDescription::new()
-                                                                           .mt_2()
-                                                                           .text_xs()
-                                                                           .text_color(super::example_rgb(0x525252))
-                                                                           .child(
-                                                                               "This permanently deletes Acme Studio and all of its data.",
-                                                                           ),
-                                                                   )  .child(
-                                                                                                         div()
-                                                                                                             .mt_3()
-                                                                                                             .flex()
-                                                                                                             .justify_end()
-                                                                                                             .gap_2()
-                                                                                                             .child(AlertDialogCancel::new().child(
-                                                                                                                 Button::new("cancel-delete")
-                                                                                                                     .px_3()
-                                                                                                                     .h_7()
-                                                                                                                     .flex()
-                                                                                                                     .items_center()
-                                                                                                                     .text_xs()
-                                                                                                                     .border_1()
-                                                                                                                     .border_color(super::example_rgb(0xd4d4d4))
-                                                                                                                     .on_click(move |_, _, cx| {
-                                                                                                                         _ = cancel_entity.update(cx, |this, cx| {
-                                                                                                                             this.alert_dialog_open = false;
-                                                                                                                             cx.notify();
-                                                                                                                         });
-                                                                                                                     })
-                                                                                                                     .child("Cancel"),
-                                                                                                             )) .child(AlertDialogAction::new().child(
-                                                                                                                                                            Button::new("confirm-delete")
-                                                                                                                                                                .px_3()
-                                                                                                                                                                .h_7()
-                                                                                                                                                                .flex()
-                                                                                                                                                                .items_center()
-                                                                                                                                                                .text_xs()
-                                                                                                                                                                .border_1()
-                                                                                                                                                                .border_color(super::example_rgb(0x171717))
-                                                                                                                                                                .bg(super::example_rgb(0x171717))
-                                                                                                                                                                .text_color(super::example_rgb(0xffffff))
-                                                                                                                                                                .on_click(move |_, _, cx| {
-                                                                                                                                                                    _ = action_entity.update(cx, |this, cx| {
-                                                                                                                                                                        this.alert_dialog_open = false;
-                                                                                                                                                                        cx.notify();
-                                                                                                                                                                    });
-                                                                                                                                                                })
-                                                                                                                                                                .child("Delete"),
-                                                                                                                                                        )))
+            .child(self.delete_dialog(element_cx))
     }
 }
 impl ProjectInfo {
+    fn delete_dialog(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let open = self.open_delete_dialog;
+        let name = self.name.clone();
+        let entity = cx.entity().downgrade();
+        let cancel_entity = entity.clone();
+        let action_entity = entity.clone();
+        let backdrop_color = cx.theme().popover;
+        let popover_color = cx.theme().popover;
+        let border_color = cx.theme().border;
+
+        AlertDialog::new(cx)
+            .open(open)
+            .on_open_change(move |open, _, _, cx| {
+                _ = entity.update(cx, |this, cx| {
+                    this.open_delete_dialog = open;
+                    cx.notify();
+                });
+            })
+            .backdrop(
+                AlertDialogBackdrop::new()
+                    .absolute()
+                    .inset_0()
+                    .bg(backdrop_color)
+                    .opacity(0.5),
+            )
+            .popup(
+                AlertDialogPopup::new()
+                    .size_full()
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(
+                        div()
+                            .w(px(440.))
+                            .p_6()
+                            .rounded_lg()
+                            .bg(popover_color)
+                            .border_1()
+                            .border_color(border_color)
+                            .child(AlertDialogTitle::new().child(t!("dialog.delete_title")))
+                            .child(
+                                AlertDialogDescription::new()
+                                    .mt_2()
+                                    .child(t!("dialog.delete_description", name = name)),
+                            )
+                            .child(
+                                div()
+                                    .mt_3()
+                                    .flex()
+                                    .justify_end()
+                                    .gap_2()
+                                    .child(
+                                        AlertDialogCancel::new().child(
+                                            Button::new("cancel-delete")
+                                                .outline()
+                                                .label(t!("label.cancel"))
+                                                .on_click(move |_, _, cx| {
+                                                    _ = cancel_entity.update(cx, |this, cx| {
+                                                        this.open_delete_dialog = false;
+                                                        cx.notify();
+                                                    });
+                                                }),
+                                        ),
+                                    )
+                                    .child(
+                                        AlertDialogAction::new().child(
+                                            Button::new("confirm-delete")
+                                                .danger()
+                                                .label(t!("label.delete"))
+                                                .on_click(move |_, _, cx| {
+                                                    _ = action_entity.update(cx, |this, cx| {
+                                                        let path =
+                                                            this.path.to_string_lossy().to_string();
+                                                        if let Err(e) =
+                                                            AppProjects::remove_project(&path)
+                                                        {
+                                                            tracing::warn!(
+                                                                "remove_project failed: {e:?}"
+                                                            );
+                                                        }
+                                                        this.open_delete_dialog = false;
+                                                        cx.emit(ProjectInfoEvent::Delete(path));
+                                                        cx.notify();
+                                                    });
+                                                }),
+                                        ),
+                                    ),
+                            ),
+                    ),
+            )
+    }
+
     fn repo_info(&self) -> impl IntoElement {
         let repo_info = self.repo_info.clone();
         div()
@@ -179,7 +184,6 @@ impl ProjectInfo {
     fn title(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let name = self.name.clone();
         let index = self.index.clone();
-        let path = self.path.to_string_lossy().to_string();
         let danger = cx.theme().danger;
 
         div().child(
@@ -193,11 +197,9 @@ impl ProjectInfo {
                         .child(AppIcons::Trash)
                         .cursor_pointer()
                         .text_color(danger)
-                        .on_click(cx.listener(move |_, _, _, cx| {
-                            if let Err(e) = AppProjects::remove_project(&path) {
-                                tracing::warn!("remove_project failed: {e:?}");
-                            }
-                            cx.emit(ProjectInfoEvent::Delete(path.clone()));
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            this.open_delete_dialog = true;
+                            cx.notify();
                         })),
                 )
                 .text_lg(),

@@ -1,0 +1,41 @@
+theme:
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
+title:
+  home: Главная Dockeep
+  settings: Настройки
+  appearance: Внешний вид
+  general: Общие
+  add_new_project: Добавить новый проект
+label:
+  close: Закрыть
+  delete: Удалить
+  theme: Тема
+  back: Назад
+  save: Сохранить
+  search_projects: Поиск проектов
+  add_project: Добавить проект
+  no_projects: Проекты не найдены
+  loading_projects: Загрузка проектов...
+  no_projects_found: Проекты не найдены. Используйте кнопку «Добавить», чтобы создать проект.
+  select_project_folder: Выберите папку проекта
+  project_name: Название проекта
+  project_path: Путь к проекту
+  language: Язык
+  cancel: Отмена
+  loading: Загрузка...
+  open_in_editor: Открыть в редакторе
+  open_in_file_manager: Открыть в файловом менеджере
+  not_repo: Не репозиторий
+  clean: Чистый
+  dirty: Изменен
+  last_accessed: Последний доступ %{datetime}
+dialog:
+  delete_title: Удалить проект?
+  delete_description: Это удалит «%{name}» из списка ваших проектов, файлы удалены не будут.
+error:
+  name_cannot_be_empty: Имя не может быть пустым
+  name_too_short: Имя должно содержать не менее 2 символов
+  project_already_exists: "Проект с таким путем уже существует: %{name}"
+  unknown_error: Неизвестная ошибка

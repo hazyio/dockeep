@@ -81,6 +81,7 @@ impl HomePage {
                             repo_info: get_git_repo_info(&path),
                             path,
                             last_accessed: to_human_datetime(project.last_accessed),
+                            open_delete_dialog: false,
                         }
                     })
                 })
@@ -114,15 +115,27 @@ impl HomePage {
     }
 }
 impl Render for HomePage {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
         let app = self.app.clone();
-        let dialog_layer = Root::render_dialog_layer(window, cx);
+
+        let dialog_layer = Root::render_dialog_layer(window, element_cx);
 
         let loading = self.loading;
         let search = self.search.clone();
         let add_project_dialog = self.add_project_dialog.clone();
         let error = self.error.as_ref().map(|error| error.to_string());
-        let project_to_show = self.projects.clone();
+        let query = self.search.read(element_cx).value().to_lowercase();
+        let project_to_show: Vec<_> = self
+            .projects
+            .iter()
+            .filter(|p| {
+                let info = p.read(element_cx);
+                query.is_empty()
+                    || info.name.to_lowercase().contains(&query)
+                    || info.path.to_string_lossy().to_lowercase().contains(&query)
+            })
+            .cloned()
+            .collect();
         div()
             .v_flex()
             .gap_2()
@@ -154,13 +167,28 @@ impl Render for HomePage {
                     .gap_2()
                     .p_2()
                     .child(
-                        div().h_flex().gap_2().child(Input::new(&search)).child(
-                            Button::new("add-project")
-                                .label(t!("label.add_project"))
-                                .on_click(move |_, window, cx| {
-                                    AddProjectDialog::open(window, cx, add_project_dialog.clone());
-                                }),
-                        ),
+                        div()
+                            .h_flex()
+                            .gap_2()
+                            .child(Input::new(&search))
+                            .child(
+                                Button::new("add-project")
+                                    .label(t!("label.add_project"))
+                                    .on_click(move |_, window, cx| {
+                                        AddProjectDialog::open(
+                                            window,
+                                            cx,
+                                            add_project_dialog.clone(),
+                                        );
+                                    }),
+                            )
+                            .child(
+                                Button::new("reload-projects")
+                                    .child(AppIcons::Refresh)
+                                    .on_click(element_cx.listener(|this, _, _, cx| {
+                                        Self::load_projects(this.app.clone(), cx);
+                                    })),
+                            ),
                     )
                     .size_full()
                     .child(

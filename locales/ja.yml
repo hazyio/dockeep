@@ -1,0 +1,41 @@
+theme:
+  aurora_light: オーロラライト
+  ayu_light: Ayu ライト
+  ayu_dark: Ayu ダーク
+title:
+  home: Dockeep ホーム
+  settings: 設定
+  appearance: 外観
+  general: 一般
+  add_new_project: 新規プロジェクトの追加
+label:
+  close: 閉じる
+  delete: 削除
+  theme: テーマ
+  back: 戻る
+  save: 保存
+  search_projects: プロジェクトを検索
+  add_project: プロジェクトを追加
+  no_projects: プロジェクトが見つかりません
+  loading_projects: プロジェクトを読み込み中...
+  no_projects_found: プロジェクトが見つかりません。追加ボタンから追加してください。
+  select_project_folder: プロジェクトフォルダを選択
+  project_name: プロジェクト名
+  project_path: プロジェクトパス
+  language: 言語
+  cancel: キャンセル
+  loading: 読み込み中...
+  open_in_editor: エディタで開く
+  open_in_file_manager: ファイルマネージャーで開く
+  not_repo: リポジトリではありません
+  clean: クリーン
+  dirty: 変更あり
+  last_accessed: 最終アクセス日時 %{datetime}
+dialog:
+  delete_title: プロジェクトを削除しますか？
+  delete_description: プロジェクトから "%{name}" を削除します（ファイルは削除されません）。
+error:
+  name_cannot_be_empty: 名前を入力してください
+  name_too_short: 名前は2文字以上で入力してください
+  project_already_exists: "このパスのプロジェクトは既に存在します: %{name}"
+  unknown_error: 不明なエラー

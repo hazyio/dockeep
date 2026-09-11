@@ -36,6 +36,9 @@ impl AssetSource for Assets {
             "icons/rotate-ccw-clock.svg" | "rotate-ccw-clock.svg" => {
                 Some(include_bytes!("../../assets/svg/rotate-ccw-clock.svg"))
             }
+            "icons/refresh.svg" | "refresh.svg" => {
+                Some(include_bytes!("../../assets/svg/refresh.svg"))
+            }
 
             _ => {
                 tracing::error!("could not find asset at path \"{}\"", path);

@@ -10,6 +10,7 @@ title:
   add_new_project: Add New Project
 label:
   close: Close
+  delete: Delete
   theme: Theme
   back: Back
   save: Save
@@ -17,7 +18,7 @@ label:
   add_project: Add Project
   no_projects: No projects found
   loading_projects: Loading projects...
-  no_projects_found: No projects found, use the add button to add one.
+  no_projects_found: No projects found, use the Add Project button to add one or change the search query.
   select_project_folder: Select Project Folder
   project_name: Project Name
   project_path: Project Path
@@ -30,6 +31,9 @@ label:
   clean: Clean
   dirty: Dirty
   last_accessed: Last Accessed %{datetime}
+dialog:
+  delete_title: Delete project?
+  delete_description: This will remove "%{name}" from your projects, no file will be deleted.
 error:
   name_cannot_be_empty: Name cannot be empty
   name_too_short: Name must be at least 2 characters long
