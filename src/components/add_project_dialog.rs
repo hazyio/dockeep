@@ -64,6 +64,13 @@ impl AddProjectDialog {
                 .await;
 
             if let Some(handle) = result {
+                let folder_name: SharedString = handle
+                    .path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_string()
+                    .into();
                 let path: SharedString = handle.path().display().to_string().into();
                 tracing::info!(?path, "Selected folder");
 
@@ -71,10 +78,10 @@ impl AddProjectDialog {
                     .update_in(cx, |this, window, cx| {
                         let path_state =
                             cx.new(|cx| InputState::new(window, cx).default_value(path));
-
                         let name_state: Entity<InputState> = cx.new(|cx| {
                             InputState::new(window, cx)
                                 .pattern(regex::Regex::new(r"^[a-zA-Z0-9 ]*$").unwrap())
+                                .default_value(folder_name)
                         });
 
                         let subscription =

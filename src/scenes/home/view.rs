@@ -23,6 +23,7 @@ pub struct HomePage {
     loading: bool,
     projects: Vec<Entity<ProjectInfo>>,
     error: Option<Error>,
+
     add_project_dialog: Entity<AddProjectDialog>,
     _project_saved_subscription: Subscription,
     _project_delete_subscriptions: Vec<Subscription>,
@@ -36,6 +37,7 @@ impl HomePage {
 
         // kick off the background load
         Self::load_projects(app.clone(), cx);
+        // Add project dialog
         let add_project_dialog = cx.new(|cx| AddProjectDialog::new(window, cx));
         // watch for project saved events
         let _project_saved_subscription = cx.subscribe_in(
@@ -43,6 +45,7 @@ impl HomePage {
             window,
             move |_this, _dialog, event: &AddProjectDialogEvent, window, cx| match event {
                 AddProjectDialogEvent::ProjectSaved => {
+                    // reload projects when any saved
                     window.close_dialog(cx);
                     HomePage::load_projects(app_for_subscription.clone(), cx);
                 }
@@ -88,15 +91,18 @@ impl HomePage {
                 .collect();
             entity
                 .update(cx, |this, cx| {
+                    // attach delete subscriptions
                     this._project_delete_subscriptions = projects
                         .iter()
                         .map(|project_entity| {
                             cx.subscribe(project_entity, |this, _, event: &ProjectInfoEvent, cx| {
                                 match event {
                                     ProjectInfoEvent::Delete(path) => {
+                                        // remove project from filesystem
+                                        let _ = AppProjects::remove_project(path);
+                                        // remove project from view
                                         this.projects.retain(|p| {
-                                            p.read(cx).path.to_string_lossy().as_ref()
-                                                != path.as_str()
+                                            p.read(cx).path.as_path() != path.as_path()
                                         });
                                         cx.notify();
                                     }
@@ -114,6 +120,7 @@ impl HomePage {
         .detach();
     }
 }
+
 impl Render for HomePage {
     fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
         let app = self.app.clone();
@@ -175,11 +182,13 @@ impl Render for HomePage {
                                 Button::new("add-project")
                                     .label(t!("label.add_project"))
                                     .on_click(move |_, window, cx| {
-                                        AddProjectDialog::open(
-                                            window,
-                                            cx,
-                                            add_project_dialog.clone(),
-                                        );
+                                        let add_project_dialog = add_project_dialog.clone();
+                                        window.open_dialog(cx, move |dialog, _, _| {
+                                            dialog
+                                                .title(t!("title.add_new_project"))
+                                                // .w_1_3()
+                                                .child(add_project_dialog.clone())
+                                        });
                                     }),
                             )
                             .child(

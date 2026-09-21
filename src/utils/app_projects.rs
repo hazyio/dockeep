@@ -123,13 +123,13 @@ impl AppProjects {
     pub fn set_projects(&mut self, projects: Vec<AppProjectInfo>) {
         self.projects = projects;
     }
-    pub fn remove_project(path: &str) -> Result<(), AppProjectError> {
+    pub fn remove_project(path: &PathBuf) -> Result<(), AppProjectError> {
         let (mut projects, error) = Self::load();
         if let Some(error) = error {
             return Err(AppProjectError::Other(error));
         }
         let before = projects.len();
-        projects.retain(|p| p.path != path);
+        projects.retain(|p| p.path != path.to_string_lossy().as_ref());
         if projects.len() == before {
             return Err(AppProjectError::ProjectNotFound);
         }

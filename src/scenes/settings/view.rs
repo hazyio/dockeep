@@ -1,6 +1,7 @@
 use crate::scenes::app::MyApp;
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_config::AppConfig;
+use crate::utils::app_icons::AppIcons;
 use crate::utils::app_theme::AppTheme;
 use crate::utils::lanuages::Languages;
 use gpui_kit::component::TitleBar;
@@ -42,8 +43,9 @@ impl Render for SettingsPage {
                     )
                     .child(
                         div().flex().items_center().gap_2().child(
-                            Button::new("back")
+                            Button::new("save")
                                 .ghost()
+                                .child(AppIcons::Check)
                                 .label(t!("label.save"))
                                 .on_click(move |_, window, cx| {
                                     if let Some(app) = app.upgrade() {

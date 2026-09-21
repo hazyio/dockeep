@@ -1,9 +1,5 @@
 use std::path::PathBuf;
 
-use gpui_kit::base::{
-    AlertDialog, AlertDialogAction, AlertDialogBackdrop, AlertDialogCancel, AlertDialogDescription,
-    AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger,
-};
 use gpui_kit::component::button::{Button, ButtonVariants};
 use gpui_kit::component::label::Label;
 use gpui_kit::component::tag::Tag;
@@ -14,11 +10,11 @@ use gpui_kit::*;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
-use crate::utils::app_projects::{AppProjectInfo, AppProjects};
+use crate::utils::app_projects::AppProjectInfo;
 use crate::utils::git::GitRepoInfo;
 use crate::utils::prelude::open_in_file_explorer;
 pub enum ProjectInfoEvent {
-    Delete(String),
+    Delete(PathBuf),
 }
 
 #[derive(Clone)]
@@ -47,100 +43,46 @@ impl Render for ProjectInfo {
             .child(self.title(element_cx))
             .child(self.repo_info())
             .child(self.body(element_cx))
-            .child(self.delete_dialog(element_cx))
     }
 }
 impl ProjectInfo {
-    fn delete_dialog(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let open = self.open_delete_dialog;
+    fn open_delete_dialog(&self, window: &mut Window, cx: &mut Context<Self>) {
         let name = self.name.clone();
         let entity = cx.entity().downgrade();
-        let cancel_entity = entity.clone();
         let action_entity = entity.clone();
-        let backdrop_color = cx.theme().popover;
-        let popover_color = cx.theme().popover;
-        let border_color = cx.theme().border;
+        window.open_dialog(cx, move |dialog, _, _| {
+            let action_entity = action_entity.clone();
+            dialog
+                .title(t!("dialog.delete_title"))
+                .child(t!("dialog.delete_description", name = name))
+                .child(
+                    div()
+                        .h_flex()
+                        .justify_end()
+                        .gap_2()
+                        .child(
+                            Button::new("cancel-delete")
+                                .outline()
+                                .label(t!("label.cancel"))
+                                .on_click(|_, window, cx| {
+                                    window.close_dialog(cx);
+                                }),
+                        )
+                        .child(
+                            Button::new("confirm-delete")
+                                .danger()
+                                .label(t!("label.delete"))
+                                .on_click(move |_, window, cx| {
+                                    _ = action_entity.update(cx, |this, cx| {
+                                        cx.emit(ProjectInfoEvent::Delete(this.path.clone()));
 
-        AlertDialog::new(cx)
-            .open(open)
-            .on_open_change(move |open, _, _, cx| {
-                _ = entity.update(cx, |this, cx| {
-                    this.open_delete_dialog = open;
-                    cx.notify();
-                });
-            })
-            .backdrop(
-                AlertDialogBackdrop::new()
-                    .absolute()
-                    .inset_0()
-                    .bg(backdrop_color)
-                    .opacity(0.5),
-            )
-            .popup(
-                AlertDialogPopup::new()
-                    .size_full()
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .child(
-                        div()
-                            .w(px(440.))
-                            .p_6()
-                            .rounded_lg()
-                            .bg(popover_color)
-                            .border_1()
-                            .border_color(border_color)
-                            .child(AlertDialogTitle::new().child(t!("dialog.delete_title")))
-                            .child(
-                                AlertDialogDescription::new()
-                                    .mt_2()
-                                    .child(t!("dialog.delete_description", name = name)),
-                            )
-                            .child(
-                                div()
-                                    .mt_3()
-                                    .flex()
-                                    .justify_end()
-                                    .gap_2()
-                                    .child(
-                                        AlertDialogCancel::new().child(
-                                            Button::new("cancel-delete")
-                                                .outline()
-                                                .label(t!("label.cancel"))
-                                                .on_click(move |_, _, cx| {
-                                                    _ = cancel_entity.update(cx, |this, cx| {
-                                                        this.open_delete_dialog = false;
-                                                        cx.notify();
-                                                    });
-                                                }),
-                                        ),
-                                    )
-                                    .child(
-                                        AlertDialogAction::new().child(
-                                            Button::new("confirm-delete")
-                                                .danger()
-                                                .label(t!("label.delete"))
-                                                .on_click(move |_, _, cx| {
-                                                    _ = action_entity.update(cx, |this, cx| {
-                                                        let path =
-                                                            this.path.to_string_lossy().to_string();
-                                                        if let Err(e) =
-                                                            AppProjects::remove_project(&path)
-                                                        {
-                                                            tracing::warn!(
-                                                                "remove_project failed: {e:?}"
-                                                            );
-                                                        }
-                                                        this.open_delete_dialog = false;
-                                                        cx.emit(ProjectInfoEvent::Delete(path));
-                                                        cx.notify();
-                                                    });
-                                                }),
-                                        ),
-                                    ),
-                            ),
-                    ),
-            )
+                                        cx.notify();
+                                    });
+                                    window.close_dialog(cx);
+                                }),
+                        ),
+                )
+        });
     }
 
     fn repo_info(&self) -> impl IntoElement {
@@ -185,7 +127,6 @@ impl ProjectInfo {
         let name = self.name.clone();
         let index = self.index.clone();
         let danger = cx.theme().danger;
-
         div().child(
             div()
                 .h_flex()
@@ -197,15 +138,15 @@ impl ProjectInfo {
                         .child(AppIcons::Trash)
                         .cursor_pointer()
                         .text_color(danger)
-                        .on_click(cx.listener(move |this, _, _, cx| {
-                            this.open_delete_dialog = true;
-                            cx.notify();
-                        })),
+                        .on_click(
+                            cx.listener(move |this, _, win, cx| this.open_delete_dialog(win, cx)),
+                        ),
                 )
                 .text_lg(),
         )
     }
     fn body(&self, cx: &mut App) -> impl IntoElement {
+        let name = self.name.clone();
         let path = self.path.clone();
         let index = self.index.clone();
         let last_accessed = self.last_accessed.clone();
@@ -273,9 +214,14 @@ impl ProjectInfo {
                             .child(AppIcons::ExternalLink)
                             .on_click(move |_, _, cx| {
                                 project_info.update_lastaccess();
+                                let name = name.clone();
+                                let path = path.clone();
                                 if let Some(app) = app.upgrade() {
-                                    let settings_view: AnyView =
-                                        cx.new(|cx| EditPage::new(app.downgrade(), cx)).into();
+                                    let settings_view: AnyView = cx
+                                        .new(|cx| {
+                                            EditPage::new(path.clone(), name, app.downgrade(), cx)
+                                        })
+                                        .into();
                                     app.update(cx, |app, cx| {
                                         app.navigate_to(settings_view, cx);
                                     });
