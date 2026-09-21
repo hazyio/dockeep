@@ -30,12 +30,63 @@ impl EventEmitter<AddProjectDialogEvent> for AddProjectDialog {}
 
 impl AddProjectDialog {
     pub fn open(window: &mut Window, cx: &mut App, add_project_dialog: Entity<AddProjectDialog>) {
-        window.open_dialog(cx, move |dialog, _, _| {
-            dialog
-                .title(t!("title.add_new_project"))
-                .w_1_3()
-                .child(add_project_dialog.clone())
-        })
+        // do in background
+        window
+            .spawn(cx, async move |cx| {
+                // select project folder
+                let picked = AsyncFileDialog::new()
+                    .set_title(t!("label.select_project_folder"))
+                    .pick_folder()
+                    .await;
+                if let Some(picked) = picked {
+                    add_project_dialog
+                        .update_in(cx, |this, window, cx| {
+                            let folder_name: SharedString = picked
+                                .path()
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("")
+                                .to_string()
+                                .into();
+                            let path: SharedString = picked.path().display().to_string().into();
+                            let path_state =
+                                cx.new(|cx| InputState::new(window, cx).default_value(path));
+                            let name_state: Entity<InputState> = cx.new(|cx| {
+                                InputState::new(window, cx)
+                                    .pattern(regex::Regex::new(r"^[a-zA-Z0-9 ]*$").unwrap())
+                                    .default_value(folder_name)
+                            });
+
+                            let subscription =
+                                cx.subscribe(&name_state, |this, _, event: &InputEvent, cx| {
+                                    // clear error on change
+                                    if matches!(event, InputEvent::Change) {
+                                        this.error = None;
+                                        cx.notify();
+                                    }
+                                });
+                            // update input subscription
+                            this.new_project_info = Some(NewProjectInfo {
+                                path: path_state,
+                                name: name_state,
+                            });
+                            this._input_subscription = Some(subscription);
+                            cx.notify();
+                        })
+                        .ok();
+                    // open dialog
+                    cx.update(|window, cx| {
+                        window.open_dialog(cx, move |dialog, _, _| {
+                            dialog
+                                .title(t!("title.add_new_project"))
+                                .w_1_3()
+                                .child(add_project_dialog.clone())
+                        })
+                    })
+                    .ok();
+                }
+            })
+            .detach();
     }
 
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
@@ -46,65 +97,6 @@ impl AddProjectDialog {
         }
     }
 
-    fn select_folder_location(
-        &mut self,
-        _: &ClickEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        cx.spawn_in(window, async move |entity, cx| {
-            let result = cx
-                .background_spawn(async move {
-                    // open select file window
-                    AsyncFileDialog::new()
-                        .set_title(t!("label.select_project_folder"))
-                        .pick_folder()
-                        .await
-                })
-                .await;
-
-            if let Some(handle) = result {
-                let folder_name: SharedString = handle
-                    .path()
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("")
-                    .to_string()
-                    .into();
-                let path: SharedString = handle.path().display().to_string().into();
-                tracing::info!(?path, "Selected folder");
-
-                entity
-                    .update_in(cx, |this, window, cx| {
-                        let path_state =
-                            cx.new(|cx| InputState::new(window, cx).default_value(path));
-                        let name_state: Entity<InputState> = cx.new(|cx| {
-                            InputState::new(window, cx)
-                                .pattern(regex::Regex::new(r"^[a-zA-Z0-9 ]*$").unwrap())
-                                .default_value(folder_name)
-                        });
-
-                        let subscription =
-                            cx.subscribe(&name_state, |this, _, event: &InputEvent, cx| {
-                                // clear error on change
-                                if matches!(event, InputEvent::Change) {
-                                    this.error = None;
-                                    cx.notify();
-                                }
-                            });
-
-                        this.new_project_info = Some(NewProjectInfo {
-                            path: path_state,
-                            name: name_state,
-                        });
-                        this._input_subscription = Some(subscription);
-                        cx.notify();
-                    })
-                    .ok();
-            }
-        })
-        .detach();
-    }
     fn save(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(new_project_info) = self.new_project_info.as_ref() {
             let value: SharedString = new_project_info.name.read(cx).value().clone().trim().into();
@@ -160,12 +152,10 @@ impl Render for AddProjectDialog {
             .v_flex()
             .w_full()
             .when_none(&self.new_project_info, |el| {
-                el.h(px(150.0)).justify_center().items_center().child(
-                    Button::new("select-project")
-                        .primary()
-                        .label(t!("label.select_project_folder"))
-                        .on_click(cx.listener(Self::select_folder_location)),
-                )
+                el.h(px(150.0))
+                    .justify_center()
+                    .items_center()
+                    .child(Label::new(t!("dialog.add_project_folder_missing")))
             })
             .when_some(self.new_project_info.clone(), |el, info| {
                 el.child(

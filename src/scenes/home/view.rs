@@ -23,7 +23,6 @@ pub struct HomePage {
     loading: bool,
     projects: Vec<Entity<ProjectInfo>>,
     error: Option<Error>,
-
     add_project_dialog: Entity<AddProjectDialog>,
     _project_saved_subscription: Subscription,
     _project_delete_subscriptions: Vec<Subscription>,
@@ -123,6 +122,15 @@ impl HomePage {
 
 impl Render for HomePage {
     fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
+        let width = window.viewport_size().width;
+
+        let cols = if width < px(640.) {
+            1
+        } else if width < px(1024.) {
+            2
+        } else {
+            3
+        };
         let app = self.app.clone();
 
         let dialog_layer = Root::render_dialog_layer(window, element_cx);
@@ -183,12 +191,7 @@ impl Render for HomePage {
                                     .label(t!("label.add_project"))
                                     .on_click(move |_, window, cx| {
                                         let add_project_dialog = add_project_dialog.clone();
-                                        window.open_dialog(cx, move |dialog, _, _| {
-                                            dialog
-                                                .title(t!("title.add_new_project"))
-                                                // .w_1_3()
-                                                .child(add_project_dialog.clone())
-                                        });
+                                        AddProjectDialog::open(window, cx, add_project_dialog);
                                     }),
                             )
                             .child(
@@ -216,7 +219,7 @@ impl Render for HomePage {
                                         .overflow_y_scrollbar()
                                         .size_full()
                                         .grid()
-                                        .grid_cols(3)
+                                        .grid_cols(cols)
                                         .gap_2()
                                         .children(project_to_show.clone()),
                                 )

@@ -31,11 +31,15 @@ label:
   clean: Clean
   dirty: Dirty
   last_accessed: Last Accessed %{datetime}
+  loading_project: Loading project ...
+
 dialog:
   delete_title: Delete project?
   delete_description: This will remove "%{name}" from your projects, no file will be deleted.
+  add_project_folder_missing: Something went wrong, close the dialog and try again.
 error:
   name_cannot_be_empty: Name cannot be empty
   name_too_short: Name must be at least 2 characters long
   project_already_exists: "A project with that path already exists: %{name}"
   unknown_error: Unknown error
+  no_image_found: No image found .
