@@ -11,6 +11,7 @@ use rust_i18n::t;
 
 use crate::components::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
 use crate::components::project_info::{ProjectInfo, ProjectInfoEvent};
+use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
@@ -156,25 +157,20 @@ impl Render for HomePage {
             .gap_2()
             .size_full()
             .child(
-                TitleBar::new()
-                    .p_4()
-                    .child(div().flex().items_center().child(t!("title.home")))
-                    .child(
-                        div().flex().items_center().child(
-                            Button::new("back")
-                                .ghost()
-                                .child(AppIcons::Settings)
-                                .on_click(move |_, _, cx| {
-                                    if let Some(app) = app.upgrade() {
-                                        let settings_view: AnyView =
-                                            cx.new(|_| SettingsPage::new(app.downgrade())).into();
-                                        app.update(cx, |app, cx| {
-                                            app.navigate_to(settings_view, cx);
-                                        });
-                                    }
-                                }),
-                        ),
-                    ),
+                WindowDecor::new(t!("title.home")).before_decor(
+                    Button::new("back")
+                        .ghost()
+                        .child(AppIcons::Settings)
+                        .on_click(move |_, _, cx| {
+                            if let Some(app) = app.upgrade() {
+                                let settings_view: AnyView =
+                                    cx.new(|_| SettingsPage::new(app.downgrade())).into();
+                                app.update(cx, |app, cx| {
+                                    app.navigate_to(settings_view, cx);
+                                });
+                            }
+                        }),
+                ),
             )
             .child(
                 div()

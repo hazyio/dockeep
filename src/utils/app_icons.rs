@@ -10,6 +10,11 @@ pub enum AppIcons {
     Check,
     RotateCcwClock,
     Refresh,
+    Pencil,
+    Expand,
+    Eye,
+    SquareExclamationPoint,
+    Minus
 }
 
 impl RenderOnce for AppIcons {
@@ -24,6 +29,13 @@ impl RenderOnce for AppIcons {
             AppIcons::Check => Icon::default().path("check.svg"),
             AppIcons::RotateCcwClock => Icon::default().path("rotate-ccw-clock.svg"),
             AppIcons::Refresh => Icon::default().path("refresh.svg"),
+            AppIcons::Pencil => Icon::default().path("pencil.svg"),
+            AppIcons::Expand => Icon::default().path("expand.svg"),
+            AppIcons::Eye => Icon::default().path("eye.svg"),
+            AppIcons::SquareExclamationPoint => {
+                Icon::default().path("square-exclamation-point.svg")
+            }
+            AppIcons::Minus => Icon::default().path("minus.svg"),
         }
     }
 }

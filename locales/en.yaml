@@ -10,6 +10,7 @@ title:
   add_new_project: Add New Project
 label:
   close: Close
+  done: Done
   delete: Delete
   theme: Theme
   back: Back
@@ -32,7 +33,11 @@ label:
   dirty: Dirty
   last_accessed: Last Accessed %{datetime}
   loading_project: Loading project ...
-
+  editing_project: Editing %{name}
+  opening_in_file_manager: Opening in File Manager
+  edit_image: Edit Image
+  close_popup: Close Popup
+  open_in_fullscreen: Open in Fullscreen
 dialog:
   delete_title: Delete project?
   delete_description: This will remove "%{name}" from your projects, no file will be deleted.

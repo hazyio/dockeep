@@ -1,3 +1,4 @@
+use std::ops::{Div, Sub};
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -12,8 +13,10 @@ use gpui_kit::*;
 use gpui_kit::{Pixels, Size, px, size};
 use rust_i18n::t;
 
+use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
-use crate::scenes::edit::edit_item::EditItem;
+use crate::scenes::edit::image_full_view::ImageFullView;
+use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
@@ -24,8 +27,10 @@ pub struct EditPage {
     error: Option<Error>,
     pub path: PathBuf,
     title: String,
-    items: Vec<Entity<EditItem>>,
+    image_full_view: Entity<ImageFullView>,
+    items: Vec<Entity<ImageView>>,
     scroll_handle: VirtualListScrollHandle,
+    _image_action_subscription: Vec<Subscription>,
 }
 
 impl EditPage {
@@ -46,62 +51,54 @@ impl EditPage {
             title,
             items: Vec::new(),
             scroll_handle: VirtualListScrollHandle::new(),
+            _image_action_subscription: Vec::new(),
+            image_full_view: cx.new(|_| ImageFullView::new(None)),
         }
+    }
+    fn build_image_subscription(
+        &mut self,
+        entity: &Entity<ImageView>,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe(entity, |this, _, event: &ImageViewEvents, cx| match event {
+            ImageViewEvents::Edit(path) => {
+                tracing::debug!("Editing Image: {:?}", path);
+            }
+        })
     }
     fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
         let path = path.clone();
         cx.spawn(async move |entity, cx| {
-            // let mut sizing = 0;
-            let reads = files::read_images(&path)
-                .iter()
-                .map(|f| {
-                    cx.new(|_| {
-                        // sizing = sizing + 1;
-                        EditItem { path: f.clone() }
-                    })
-                })
-                .collect();
-            // let item_sizes = Rc::new((0..sizing).map(|_| size(px(200.), px(30.))).collect());
+            // Runs on a background thread, why? UI stays responsive.
 
+            let paths = cx
+                .background_spawn(async move { files::read_images(&path) })
+                .await;
+            // Back on the foreground executor.
             entity
                 .update(cx, |entity, cx| {
+                    let mut entities = Vec::new();
+                    let mut entities_subscriptions = Vec::new();
+                    for (index, path) in paths.iter().enumerate() {
+                        // build the entity and subscribe to it
+                        let built_entity = cx.new(move |_| ImageView::new(path.clone(), index));
+                        entities_subscriptions
+                            .push(entity.build_image_subscription(&built_entity, cx));
+                        entities.push(built_entity);
+                    }
+                    entity.items = entities;
+                    entity._image_action_subscription = entities_subscriptions;
                     entity.loading = false;
-                    entity.items = reads;
-                    // entity.item_sizes = item_sizes;
                     cx.notify();
                 })
                 .ok();
         })
         .detach();
     }
-    fn header(&self) -> impl IntoElement {
-        let app = self.app.clone();
-        div().child(
-            div()
-                .h_flex()
-                .child(Label::new(self.title.clone()).text_3xl().flex_grow_1())
-                .child(
-                    Button::new("close-edit-project")
-                        .danger()
-                        .child(AppIcons::Close)
-                        .child(t!("label.close"))
-                        .on_click(move |_, window, cx| {
-                            if let Some(app) = app.upgrade() {
-                                let settings_view: AnyView = cx
-                                    .new(|cx| HomePage::new(app.downgrade(), window, cx))
-                                    .into();
-                                app.update(cx, |app, cx| {
-                                    app.navigate_to(settings_view, cx);
-                                });
-                            }
-                        }),
-                ),
-        )
-    }
 }
 impl Render for EditPage {
     fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
-        let width = window.viewport_size().width;
+        let width = window.viewport_size().width.sub(px(12.)); //remove padding
 
         let cols: usize = if width < px(640.) {
             1
@@ -118,21 +115,38 @@ impl Render for EditPage {
         let sizing = items.len();
         let rows = (sizing + cols - 1) / cols; // ceil division
         let row_height = px(250.);
-        let row_width = px(150.);
-        let row_gap = px(6.);
-        let row_size = size(row_width, row_height + row_gap);
+        let col_width = width.div(cols as f32).sub(px(12.)); //remove gap
+
+        let row_gap = px(8.);
+        let row_size = size(col_width, row_height + row_gap);
+        let app = self.app.clone();
         let item_sizes = Rc::new((0..rows).map(|_| row_size).collect());
         div()
-            .p_3()
             .size_full()
-            .bg(element_cx.theme().background)
-            .v_flex()
-            .gap_2()
-            .child(self.header())
+            .child(
+                WindowDecor::new(t!("label.editing_project", name = self.title.clone()))
+                    .before_decor(
+                        Button::new("close-edit-project")
+                            .danger()
+                            .child(AppIcons::Close)
+                            .child(t!("label.close"))
+                            .on_click(move |_, window, cx| {
+                                if let Some(app) = app.upgrade() {
+                                    let settings_view: AnyView = cx
+                                        .new(|cx| HomePage::new(app.downgrade(), window, cx))
+                                        .into();
+                                    app.update(cx, |app, cx| {
+                                        app.navigate_to(settings_view, cx);
+                                    });
+                                }
+                            }),
+                    ),
+            )
             .child(
                 div()
+                    .p_3()
+                    .pb_12()
                     .size_full()
-                    .mt_10()
                     .when_some(error.clone(), |cx, error| {
                         cx.child(div().child(error.to_string()))
                     })
@@ -156,15 +170,18 @@ impl Render for EditPage {
                                     element_cx.entity().clone(),
                                     "my-list",
                                     item_sizes,
-                                    move |view, visible_range, _, cx| {
+                                    move |view, visible_range, _, _| {
                                         visible_range
                                             .map(|row_ix| {
                                                 div().h_flex().gap_2().w_full().children(
                                                     (0..cols).filter_map(|col| {
                                                         let item_ix = row_ix * cols + col; // both usize
-                                                        view.items
-                                                            .get(item_ix)
-                                                            .map(|item| item.clone())
+                                                        view.items.get(item_ix).map(|item| {
+                                                            div()
+                                                                .w(col_width)
+                                                                .flex_none()
+                                                                .child(item.clone())
+                                                        })
                                                     }),
                                                 )
                                             })

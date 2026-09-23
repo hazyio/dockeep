@@ -12,7 +12,15 @@ impl MyApp {
 }
 
 impl Render for MyApp {
-    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        div().v_flex().gap_2().size_full().child(self.view.clone())
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let notification_layer = Root::render_notification_layer(window, cx);
+
+        div()
+            .v_flex()
+            .gap_2()
+            .size_full()
+            .child(self.view.clone())
+            // Render the notification layer on top of the app content
+            .children(notification_layer)
     }
 }

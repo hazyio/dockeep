@@ -55,7 +55,7 @@ impl ProjectInfo {
             dialog
                 .title(t!("dialog.delete_title"))
                 .child(t!("dialog.delete_description", name = name))
-                .child(
+                .footer(
                     div()
                         .h_flex()
                         .justify_end()
@@ -203,7 +203,9 @@ impl ProjectInfo {
                         Button::new(format!("open-in-local-{}", index))
                             .label(t!("label.open_in_file_manager"))
                             .outline()
-                            .on_click(move |_, _, _| {
+                            .on_click(move |_, window, cx| {
+                                window.push_notification(t!("label.opening_in_file_manager"), cx);
+
                                 let _ = open_in_file_explorer(path.as_path());
                             })
                     })

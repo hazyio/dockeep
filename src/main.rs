@@ -34,15 +34,22 @@ fn main() {
             setup(cx);
 
             cx.spawn(async move |cx| {
-                cx.open_window(WindowOptions::default(), |window, cx| {
-                    let view = cx.new(|app| {
-                        let my_app_handle = app.weak_entity();
-                        let home = app.new(|cx| HomePage::new(my_app_handle, window, cx));
-                        MyApp { view: home.into() }
-                    });
-                    // This first level on the window, should be a Root.
-                    cx.new(|cx| Root::new(view, window, cx).bordered(false))
-                })
+                cx.open_window(
+                    WindowOptions {
+                        titlebar: None,                                      // no title bar
+                        window_decorations: Some(WindowDecorations::Client), // no WM frame
+                        ..Default::default()
+                    },
+                    |window, cx| {
+                        let view = cx.new(|app| {
+                            let my_app_handle = app.weak_entity();
+                            let home = app.new(|cx| HomePage::new(my_app_handle, window, cx));
+                            MyApp { view: home.into() }
+                        });
+                        // This first level on the window, should be a Root.
+                        cx.new(|cx| Root::new(view, window, cx).bordered(false))
+                    },
+                )
                 .expect("Failed to open window");
             })
             .detach();

@@ -1,3 +1,4 @@
+use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_config::AppConfig;
@@ -33,32 +34,21 @@ impl Render for SettingsPage {
             .gap_2()
             .size_full()
             .child(
-                TitleBar::new()
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap_3()
-                            .child(t!("title.settings")),
-                    )
-                    .child(
-                        div().flex().items_center().gap_2().child(
-                            Button::new("save")
-                                .ghost()
-                                .child(AppIcons::Check)
-                                .label(t!("label.save"))
-                                .on_click(move |_, window, cx| {
-                                    if let Some(app) = app.upgrade() {
-                                        let home_view: AnyView = cx
-                                            .new(|cx| HomePage::new(app.downgrade(), window, cx))
-                                            .into();
-                                        app.update(cx, |app, cx| {
-                                            app.navigate_to(home_view, cx);
-                                        });
-                                    }
-                                }),
-                        ),
-                    ),
+                WindowDecor::new(t!("title.settings")).before_decor(
+                    Button::new("done")
+                        .child(AppIcons::Check)
+                        .label(t!("label.done"))
+                        .on_click(move |_, window, cx| {
+                            if let Some(app) = app.upgrade() {
+                                let home_view: AnyView = cx
+                                    .new(|cx| HomePage::new(app.downgrade(), window, cx))
+                                    .into();
+                                app.update(cx, |app, cx| {
+                                    app.navigate_to(home_view, cx);
+                                });
+                            }
+                        }),
+                ),
             )
             .child(
                 Settings::new("my-settings").page(

@@ -84,7 +84,7 @@ pub fn read_dir(path: &PathBuf) -> Vec<PathBuf> {
             if entry.file_type().is_dir() {
                 return None;
             }
-            tracing::info!("{}", entry.path().display());
+            tracing::debug!("{}", entry.path().display());
             Some(entry.path().to_path_buf())
         })
         .collect()

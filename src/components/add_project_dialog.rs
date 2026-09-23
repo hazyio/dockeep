@@ -30,7 +30,6 @@ impl EventEmitter<AddProjectDialogEvent> for AddProjectDialog {}
 
 impl AddProjectDialog {
     pub fn open(window: &mut Window, cx: &mut App, add_project_dialog: Entity<AddProjectDialog>) {
-        // do in background
         window
             .spawn(cx, async move |cx| {
                 // select project folder
@@ -77,10 +76,11 @@ impl AddProjectDialog {
                     // open dialog
                     cx.update(|window, cx| {
                         window.open_dialog(cx, move |dialog, _, _| {
+                            let add_project_dialog = add_project_dialog.clone();
                             dialog
                                 .title(t!("title.add_new_project"))
                                 .w_1_3()
-                                .child(add_project_dialog.clone())
+                                .child(add_project_dialog)
                         })
                     })
                     .ok();
