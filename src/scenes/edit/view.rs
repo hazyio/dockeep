@@ -3,8 +3,10 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::Error;
+use gpui_kit::base::Scrollbar;
 use gpui_kit::component::button::*;
 use gpui_kit::component::label::Label;
+use gpui_kit::component::popover::Popover;
 use gpui_kit::component::scroll::ScrollableElement;
 use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
@@ -27,7 +29,7 @@ pub struct EditPage {
     error: Option<Error>,
     pub path: PathBuf,
     title: String,
-    image_full_view: Entity<ImageFullView>,
+    show_image_full_view: Option<PathBuf>,
     items: Vec<Entity<ImageView>>,
     scroll_handle: VirtualListScrollHandle,
     _image_action_subscription: Vec<Subscription>,
@@ -52,7 +54,7 @@ impl EditPage {
             items: Vec::new(),
             scroll_handle: VirtualListScrollHandle::new(),
             _image_action_subscription: Vec::new(),
-            image_full_view: cx.new(|_| ImageFullView::new(None)),
+            show_image_full_view: None,
         }
     }
     fn build_image_subscription(
@@ -63,6 +65,11 @@ impl EditPage {
         cx.subscribe(entity, |this, _, event: &ImageViewEvents, cx| match event {
             ImageViewEvents::Edit(path) => {
                 tracing::debug!("Editing Image: {:?}", path);
+            }
+            ImageViewEvents::OpenInFullscreen(path) => {
+                tracing::debug!("Opening Image in Fullscreen: {:?}", path);
+                this.show_image_full_view = Some(path.clone());
+                cx.notify();
             }
         })
     }
@@ -107,7 +114,6 @@ impl Render for EditPage {
         } else {
             3
         };
-        let dialog_layer = Root::render_dialog_layer(window, element_cx);
 
         let loading = self.loading;
         let error = self.error.as_ref().map(|error| error.to_string());
@@ -121,8 +127,11 @@ impl Render for EditPage {
         let row_size = size(col_width, row_height + row_gap);
         let app = self.app.clone();
         let item_sizes = Rc::new((0..rows).map(|_| row_size).collect());
+        let show_image_full_view = self.show_image_full_view.clone();
+
         div()
             .size_full()
+            .relative()
             .child(
                 WindowDecor::new(t!("label.editing_project", name = self.title.clone()))
                     .before_decor(
@@ -144,6 +153,7 @@ impl Render for EditPage {
             )
             .child(
                 div()
+                    .relative()
                     .p_3()
                     .pb_12()
                     .size_full()
@@ -191,8 +201,38 @@ impl Render for EditPage {
                                 .track_scroll(&self.scroll_handle),
                             )
                         })
-                    }),
+                    }) .vertical_scrollbar(
+                        &self.scroll_handle
+                       ),
             )
-            .children(dialog_layer)
+            .when_some(show_image_full_view, |this, value| {
+                this.child(
+                    div()
+                        .id("image-full-view-backdrop")
+                        .absolute()
+                        .inset_0() // top/right/bottom/left = 0
+                        .v_flex()
+                        .size_full()
+                        .items_center()
+                        .justify_center()
+                        .p_4()
+                        .bg(element_cx.theme().background.opacity(0.9)) // dim backdrop
+                        .occlude() // block clicks reaching content below
+                        .child(
+                            div().size_full().v_flex().child(
+                                div()
+                                    .flex_grow_1()
+                                    .v_flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .child(img(value).max_h(relative(0.9))),
+                            ),
+                        )
+                        .on_click(element_cx.listener(|this, _, _, cx| {
+                            this.show_image_full_view = None;
+                            cx.notify();
+                        })),
+                )
+            })
     }
 }

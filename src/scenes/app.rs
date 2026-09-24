@@ -16,8 +16,6 @@ impl Render for MyApp {
         let notification_layer = Root::render_notification_layer(window, cx);
 
         div()
-            .v_flex()
-            .gap_2()
             .size_full()
             .child(self.view.clone())
             // Render the notification layer on top of the app content

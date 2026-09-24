@@ -26,7 +26,6 @@ impl RenderOnce for WindowDecor {
         _: &mut gpui_kit::App,
     ) -> impl gpui_kit::prelude::IntoElement {
         TitleBar::new()
-            .py_4()
             .child(div().flex().items_center().child(self.title))
             .when_some(self.before_decor, |parent, value| parent.child(value))
     }
