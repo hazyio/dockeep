@@ -150,15 +150,16 @@ impl BrowserActions {
 
         match &self.browser {
             Some(browser) => {
-                if Self::is_browser_alive(browser) {
-                    Some(browser)
-                } else {
-                    // return state to stopped
-                    self.state = BrowserActionsState::Stopped;
-                    cx.notify();
-                    window.push_notification(t!("error.browser_is_not_running"), cx);
-                    None
-                }
+                Some(browser)
+                // if Self::is_browser_alive(browser) {
+                //     Some(browser)
+                // } else {
+                //     // return state to stopped
+                //     self.state = BrowserActionsState::Stopped;
+                //     cx.notify();
+                //     window.push_notification(t!("error.browser_is_not_running"), cx);
+                //     None
+                // }
             }
             None => {
                 // return state to stopped
@@ -252,6 +253,8 @@ impl BrowserActions {
         self.get_active_tab(window, cx, move |tab, _window, cx| {
             let working_dir = working_dir.clone();
             let replace_path = replace_path.clone();
+            tracing::info!("Capturing screenshot, replace_path: {:?}", replace_path);
+            
             let entity = entity.clone(); // move a clone into the async block below
 
             cx.spawn(async move |cx| {

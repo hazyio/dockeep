@@ -17,15 +17,27 @@ pub enum ImageViewEvents {
 pub struct ImageView {
     pub path: PathBuf,
     pub index: usize,
+    image_cache: Entity<RetainAllImageCache>,
 }
 
 impl ImageView {
-    pub fn new(path: PathBuf, index: usize) -> Self {
-        Self { path, index }
+    pub fn new(path: PathBuf, index: usize, cx: &mut Context<Self>) -> Self {
+        Self {
+            path,
+            index,
+            image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
+        }
     }
 }
 
 impl EventEmitter<ImageViewEvents> for ImageView {}
+
+impl ImageView {
+    /// Replaces the image cache so the next render reloads the file from disk.
+    pub fn bust_cache(&mut self, cx: &mut Context<Self>) {
+        self.image_cache = RetainAllImageCache::new(cx);
+    }
+}
 
 impl Render for ImageView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
@@ -44,7 +56,12 @@ impl Render for ImageView {
             .bg(cx.theme().muted)
             .rounded_md()
             .border_1()
-            .child(img(path.clone()).flex_grow_1().w(relative(1.0)))
+            .child(
+                img(path.clone())
+                    .image_cache(&self.image_cache)
+                    .flex_grow_1()
+                    .w(relative(1.0)),
+            )
             .child(
                 div()
                     .v_flex()

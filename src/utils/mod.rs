@@ -7,3 +7,4 @@ pub mod files;
 pub mod git;
 pub mod lanuages;
 pub mod prelude;
+pub mod random;

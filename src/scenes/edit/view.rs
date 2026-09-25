@@ -84,7 +84,11 @@ impl EditPage {
                 BrowserActionsEvents::Replace(p) => {
                     tracing::debug!("Replacing Image: {:?}", p);
                     if let Some(entity) = this.items.iter().find(|item| item.read(cx).path == *p) {
-                        entity.update(cx, |_, cx| cx.notify());
+                        entity.update(cx, |image_view, cx| {
+                            // Replace the cache so the next render picks up the new file contents.
+                            image_view.bust_cache(cx);
+                            cx.notify();
+                        });
                     }
                 }
             },
@@ -123,7 +127,7 @@ impl EditPage {
         cx: &mut Context<Self>,
     ) -> Entity<ImageView> {
         let path = path.clone();
-        cx.new(move |_| ImageView::new(path, index))
+        cx.new(move |cx| ImageView::new(path, index, cx))
     }
     fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
         let path = path.clone();
