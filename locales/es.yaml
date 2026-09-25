@@ -31,7 +31,9 @@ label:
   clean: Limpio
   dirty: Con cambios sin guardar
   last_accessed: Último acceso %{datetime}
+  screenshot_saved: Captura guardada
 dialog:
+  select_tab: Seleccionar pestaña
   delete_title: ¿Eliminar proyecto?
   delete_description: Esto eliminará "%{name}" de tus proyectos, no se borrará ningún archivo.
 error:
@@ -39,3 +41,5 @@ error:
   name_too_short: El nombre debe tener al menos 2 caracteres
   project_already_exists: "Ya existe un proyecto con esa ruta: %{name}"
   unknown_error: Error desconocido
+  failed_to_save_screenshot: No se pudo guardar la captura de pantalla
+  failed_to_capture_screenshot: No se pudo realizar la captura de pantalla

@@ -31,7 +31,9 @@ label:
   clean: Sauber
   dirty: Geändert
   last_accessed: Zuletzt aufgerufen %{datetime}
+  screenshot_saved: Screenshot gespeichert
 dialog:
+  select_tab: Tab auswählen
   delete_title: Projekt löschen?
   delete_description: Dadurch wird "%{name}" aus deinen Projekten entfernt, es werden keine Dateien gelöscht.
 error:
@@ -39,3 +41,5 @@ error:
   name_too_short: Name muss mindestens 2 Zeichen lang sein
   project_already_exists: "Ein Projekt mit diesem Pfad existiert bereits: %{name}"
   unknown_error: Unbekannter Fehler
+  failed_to_save_screenshot: Screenshot konnte nicht gespeichert werden
+  failed_to_capture_screenshot: Screenshot konnte nicht aufgenommen werden

@@ -15,7 +15,7 @@ use rust_i18n::t;
 
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
-use crate::scenes::edit::browser_actions::BrowserActions;
+use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_icons::AppIcons;
@@ -32,6 +32,7 @@ pub struct EditPage {
     scroll_handle: VirtualListScrollHandle,
     _image_action_subscription: Vec<Subscription>,
     browser_action: Entity<BrowserActions>,
+    _browser_action_subscription: Subscription,
 }
 
 impl EditPage {
@@ -43,6 +44,8 @@ impl EditPage {
     ) -> Self {
         // kick off the background load
         Self::load_project(cx, &path);
+        let m_path = path.clone();
+        let browser_action = cx.new(move |_| BrowserActions::new(m_path.clone()));
 
         Self {
             app,
@@ -54,8 +57,38 @@ impl EditPage {
             scroll_handle: VirtualListScrollHandle::new(),
             _image_action_subscription: Vec::new(),
             show_image_full_view: None,
-            browser_action: cx.new(|_| BrowserActions::new()),
+            _browser_action_subscription: Self::build_browser_action_subscription(
+                &browser_action,
+                cx,
+            ),
+            browser_action: browser_action,
         }
+    }
+    fn build_browser_action_subscription(
+        entity: &Entity<BrowserActions>,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe(
+            entity,
+            |this, _, event: &BrowserActionsEvents, cx| match event {
+                BrowserActionsEvents::Add(p) => {
+                    tracing::debug!("Adding Image: {:?}", p);
+                    tracing::info!("Adding Image: {:?}", p);
+                    let entity = this.build_image_entity(p, this.items.len(), cx);
+                    let subscription = this.build_image_subscription(&entity, cx);
+                    this._image_action_subscription.push(subscription);
+                    this.items.push(entity);
+
+                    cx.notify();
+                }
+                BrowserActionsEvents::Replace(p) => {
+                    tracing::debug!("Replacing Image: {:?}", p);
+                    if let Some(entity) = this.items.iter().find(|item| item.read(cx).path == *p) {
+                        entity.update(cx, |_, cx| cx.notify());
+                    }
+                }
+            },
+        )
     }
     fn build_image_subscription(
         &mut self,
@@ -65,13 +98,32 @@ impl EditPage {
         cx.subscribe(entity, |this, _, event: &ImageViewEvents, cx| match event {
             ImageViewEvents::Edit(path) => {
                 tracing::debug!("Editing Image: {:?}", path);
+                this.browser_action.update(cx, |action, cx| {
+                    action.queue_replace_path(path.clone());
+                    cx.notify();
+                });
+                cx.notify();
             }
             ImageViewEvents::OpenInFullscreen(path) => {
                 tracing::debug!("Opening Image in Fullscreen: {:?}", path);
                 this.show_image_full_view = Some(path.clone());
                 cx.notify();
             }
+            ImageViewEvents::Delete(path) => {
+                tracing::debug!("Deleting Image: {:?}", path);
+                this.items.retain(|item| item.read(cx).path != *path);
+                cx.notify();
+            }
         })
+    }
+    fn build_image_entity(
+        &mut self,
+        path: &PathBuf,
+        index: usize,
+        cx: &mut Context<Self>,
+    ) -> Entity<ImageView> {
+        let path = path.clone();
+        cx.new(move |_| ImageView::new(path, index))
     }
     fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
         let path = path.clone();
@@ -88,7 +140,7 @@ impl EditPage {
                     let mut entities_subscriptions = Vec::new();
                     for (index, path) in paths.iter().enumerate() {
                         // build the entity and subscribe to it
-                        let built_entity = cx.new(move |_| ImageView::new(path.clone(), index));
+                        let built_entity = entity.build_image_entity(path, index, cx);
                         entities_subscriptions
                             .push(entity.build_image_subscription(&built_entity, cx));
                         entities.push(built_entity);
@@ -105,6 +157,7 @@ impl EditPage {
 }
 impl Render for EditPage {
     fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
+        let dialog_layer = Root::render_dialog_layer(window, element_cx);
         let width = window.viewport_size().width.sub(px(12.)); //remove padding
 
         let cols: usize = if width < px(640.) {
@@ -242,5 +295,6 @@ impl Render for EditPage {
                         })),
                 )
             })
+            .children(dialog_layer)
     }
 }

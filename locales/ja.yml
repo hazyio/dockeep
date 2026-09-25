@@ -31,7 +31,9 @@ label:
   clean: クリーン
   dirty: 変更あり
   last_accessed: 最終アクセス日時 %{datetime}
+  screenshot_saved: スクリーンショットを保存しました
 dialog:
+  select_tab: タブを選択
   delete_title: プロジェクトを削除しますか？
   delete_description: プロジェクトから "%{name}" を削除します（ファイルは削除されません）。
 error:
@@ -39,3 +41,5 @@ error:
   name_too_short: 名前は2文字以上で入力してください
   project_already_exists: "このパスのプロジェクトは既に存在します: %{name}"
   unknown_error: 不明なエラー
+  failed_to_save_screenshot: スクリーンショットの保存に失敗しました
+  failed_to_capture_screenshot: スクリーンショットの取得に失敗しました

@@ -31,7 +31,9 @@ label:
   clean: Чистый
   dirty: Изменен
   last_accessed: Последний доступ %{datetime}
+  screenshot_saved: Снимок экрана сохранён
 dialog:
+  select_tab: Выбрать вкладку
   delete_title: Удалить проект?
   delete_description: Это удалит «%{name}» из списка ваших проектов, файлы удалены не будут.
 error:
@@ -39,3 +41,5 @@ error:
   name_too_short: Имя должно содержать не менее 2 символов
   project_already_exists: "Проект с таким путем уже существует: %{name}"
   unknown_error: Неизвестная ошибка
+  failed_to_save_screenshot: Не удалось сохранить снимок экрана
+  failed_to_capture_screenshot: Не удалось сделать снимок экрана

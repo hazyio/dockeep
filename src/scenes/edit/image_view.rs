@@ -1,4 +1,6 @@
+use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use gpui_kit::component::button::Button;
 use gpui_kit::component::*;
@@ -9,6 +11,7 @@ use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
     Edit(PathBuf),
     OpenInFullscreen(PathBuf),
+    Delete(PathBuf),
 }
 
 pub struct ImageView {
@@ -86,6 +89,43 @@ impl Render for ImageView {
                                         let path = this.path.clone();
                                         tracing::debug!("Edit Image: {:?}", path);
                                         cx.emit(ImageViewEvents::OpenInFullscreen(path));
+                                    })),
+                            )
+                            .child(
+                                Button::new(format!("delete-image-popover-{}", self.index))
+                                    .text_color(cx.theme().red)
+                                    .child(AppIcons::Trash)
+                                    .tooltip(t!("label.delete"))
+                                    .on_click(cx.listener(|this, _, window, cx| {
+                                        let path = Arc::new(this.path.clone());
+                                        let entity = cx.entity().downgrade();
+                                        tracing::debug!("Deleting    Image: {:?}", path);
+                                        window.open_alert_dialog(cx, move |alert, _, _| {
+                                            let path = path.clone();
+                                            let entity = entity.clone();
+                                            alert
+                                                .title(t!("dialog.delete_file"))
+                                                .description(t!("dialog.delete_file_confirmation"))
+                                                .show_cancel(true)
+                                                .on_ok(move |_, window, cx| {
+                                                    let remove =
+                                                        fs::remove_file(path.as_path()).is_ok();
+                                                    if remove {
+                                                        let _ = entity.update(cx, |_, cx| {
+                                                            cx.emit(ImageViewEvents::Delete(
+                                                                (*path).clone(),
+                                                            ));
+                                                        });
+                                                    } else {
+                                                        window.push_notification(
+                                                            "Failed to delete file",
+                                                            cx,
+                                                        );
+                                                    }
+
+                                                    true
+                                                })
+                                        })
                                     })),
                             ),
                     ),

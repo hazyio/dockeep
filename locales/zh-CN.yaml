@@ -31,7 +31,9 @@ label:
   clean: 干净
   dirty: 有未提交更改
   last_accessed: 上次访问 %{datetime}
+  screenshot_saved: 截图已保存
 dialog:
+  select_tab: 选择标签页
   delete_title: 删除项目？
   delete_description: 这将从您的项目中移除 "%{name}"，不会删除任何文件。
 error:
@@ -39,3 +41,5 @@ error:
   name_too_short: 名称长度必须至少为 2 个字符
   project_already_exists: "该路径下已存在项目: %{name}"
   unknown_error: 未知错误
+  failed_to_save_screenshot: 截图保存失败
+  failed_to_capture_screenshot: 截图失败

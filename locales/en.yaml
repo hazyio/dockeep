@@ -9,6 +9,7 @@ title:
   general: General
   add_new_project: Add New Project
   chrome: Chrome
+
 label:
   chrome_path: Chrome Executable Path
   path: Path
@@ -51,10 +52,15 @@ label:
   take_desktop_screenshot: Take Desktop Screenshot
   take_mobile_screenshot: Take Mobile Screenshot
   take_crop_screenshot: Take Crop Screenshot
+  screenshot_saved: Screenshot saved
+  replacing_path: You are replacing the path "%{path}", click to cancel.
 dialog:
+  select_tab: Select a Tab
   delete_title: Delete project?
   delete_description: This will remove "%{name}" from your projects, no file will be deleted.
   add_project_folder_missing: Something went wrong, close the dialog and try again.
+  delete_file: Delete File
+  delete_file_confirmation: Are you sure you want to delete this file? This action cannot be undone.
 error:
   name_cannot_be_empty: Name cannot be empty
   name_too_short: Name must be at least 2 characters long
@@ -69,4 +75,6 @@ error:
   chrome_path_not_found: Chrome executable path not found, open settings to set it
   no_active_tab: No active tab
   failed_to_bring_to_front: Failed to focus tab
+  failed_to_save_screenshot: Failed to save screenshot
+  failed_to_capture_screenshot: Failed to capture screenshot
   browser_already_closed: Browser already closed
