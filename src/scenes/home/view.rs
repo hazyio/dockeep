@@ -9,10 +9,11 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rust_i18n::t;
 
-use crate::components::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
-use crate::components::project_info::{ProjectInfo, ProjectInfoEvent};
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
+use crate::scenes::home::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
+use crate::scenes::home::project_info::ProjectInfo;
+use crate::scenes::home::project_info::ProjectInfoEvent;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
@@ -84,9 +85,8 @@ impl HomePage {
                             repo_info: get_git_repo_info(&path),
                             path,
                             last_accessed: to_human_datetime(project.last_accessed),
-                            open_delete_dialog: false,
                         }
-                    })
+                    }) 
                 })
                 .collect();
             entity

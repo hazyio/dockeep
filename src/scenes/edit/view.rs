@@ -17,6 +17,7 @@ use rust_i18n::t;
 
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
+use crate::scenes::capture::view::CapturePage;
 use crate::scenes::edit::image_full_view::ImageFullView;
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
 use crate::scenes::home::view::HomePage;
@@ -114,7 +115,7 @@ impl Render for EditPage {
         } else {
             3
         };
-
+        // generate doc for this
         let loading = self.loading;
         let error = self.error.as_ref().map(|error| error.to_string());
         let items = &self.items;
@@ -125,10 +126,10 @@ impl Render for EditPage {
 
         let row_gap = px(8.);
         let row_size = size(col_width, row_height + row_gap);
-        let app = self.app.clone();
         let item_sizes = Rc::new((0..rows).map(|_| row_size).collect());
         let show_image_full_view = self.show_image_full_view.clone();
 
+        let app = self.app.clone();
         div()
             .size_full()
             .relative()
@@ -168,42 +169,83 @@ impl Render for EditPage {
                             .child(Label::new(t!("label.loading_project")))
                     })
                     .when(!loading && error.clone().is_none(), |cx| {
-                        cx.when(items.is_empty(), |cx| {
-                            cx.v_flex()
-                                .justify_center()
-                                .items_center()
-                                .child(Label::new(t!("error.no_image_found")))
-                        })
-                        .when(!items.is_empty(), |cx| {
-                            cx.child(
-                                v_virtual_list(
-                                    element_cx.entity().clone(),
-                                    "my-list",
-                                    item_sizes,
-                                    move |view, visible_range, _, _| {
-                                        visible_range
-                                            .map(|row_ix| {
-                                                div().h_flex().gap_2().w_full().children(
-                                                    (0..cols).filter_map(|col| {
-                                                        let item_ix = row_ix * cols + col; // both usize
-                                                        view.items.get(item_ix).map(|item| {
-                                                            div()
-                                                                .w(col_width)
-                                                                .flex_none()
-                                                                .child(item.clone())
+                        cx.v_flex()
+                            .gap_3()
+                            .child(
+                                div()
+                                    .h_flex()
+                                    .gap_3()
+                                    .justify_end()
+                                    .child(
+                                        Button::new("take-screenshot")
+                                            .primary()
+                                            .label(t!("label.add_screenshot"))
+                                            .on_click(|_, _, _| {}),
+                                    )
+                                    .child(
+                                        Button::new("take-screenrecord")
+                                            .primary()
+                                            .label(t!("label.add_screenrecord"))
+                                            .on_click(|_, _, cx| {
+                                                cx.open_window(
+                                                    WindowOptions {
+                                                        titlebar: None,
+                                                        window_decorations: Some(
+                                                            WindowDecorations::Client,
+                                                        ),
+                                                        ..Default::default()
+                                                    },
+                                                    |window, cx| {
+                                                        let view = cx.new(|app| {
+                                                            let home =
+                                                                app.new(|_| CapturePage::new(None));
+                                                            CapturePage { path: None }
+                                                        });
+                                                        cx.new(|cx| {
+                                                            Root::new(view, window, cx)
+                                                                .bordered(false)
                                                         })
-                                                    }),
+                                                    },
                                                 )
-                                            })
-                                            .collect()
-                                    },
-                                )
-                                .track_scroll(&self.scroll_handle),
+                                                .ok();
+                                            }),
+                                    ),
                             )
-                        })
-                    }) .vertical_scrollbar(
-                        &self.scroll_handle
-                       ),
+                            .when(items.is_empty(), |cx| {
+                                cx.v_flex()
+                                    .justify_center()
+                                    .items_center()
+                                    .child(Label::new(t!("error.no_image_found")))
+                            })
+                            .when(!items.is_empty(), |cx| {
+                                cx.child(
+                                    v_virtual_list(
+                                        element_cx.entity().clone(),
+                                        "my-list",
+                                        item_sizes,
+                                        move |view, visible_range, _, _| {
+                                            visible_range
+                                                .map(|row_ix| {
+                                                    div().h_flex().gap_2().w_full().children(
+                                                        (0..cols).filter_map(|col| {
+                                                            let item_ix = row_ix * cols + col; // both usize
+                                                            view.items.get(item_ix).map(|item| {
+                                                                div()
+                                                                    .w(col_width)
+                                                                    .flex_none()
+                                                                    .child(item.clone())
+                                                            })
+                                                        }),
+                                                    )
+                                                })
+                                                .collect()
+                                        },
+                                    )
+                                    .track_scroll(&self.scroll_handle),
+                                )
+                            })
+                    })
+                    .vertical_scrollbar(&self.scroll_handle),
             )
             .when_some(show_image_full_view, |this, value| {
                 this.child(

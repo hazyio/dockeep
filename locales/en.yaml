@@ -38,6 +38,8 @@ label:
   edit_image: Edit Image
   close_popup: Close Popup
   open_in_fullscreen: Open in Fullscreen
+  add_screenshot: Add Screenshot
+  add_screenrecord: Add Screen Record
 dialog:
   delete_title: Delete project?
   delete_description: This will remove "%{name}" from your projects, no file will be deleted.

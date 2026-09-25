@@ -26,7 +26,6 @@ pub struct ProjectInfo {
     pub path: PathBuf,
     pub repo_info: Option<GitRepoInfo>,
     pub last_accessed: String,
-    pub open_delete_dialog: bool,
 }
 impl EventEmitter<ProjectInfoEvent> for ProjectInfo {}
 
@@ -213,17 +212,13 @@ impl ProjectInfo {
                         Button::new(format!("open-in-editor-{}", index))
                             .label(t!("label.open_in_editor"))
                             .primary()
-                            .child(AppIcons::ExternalLink)
                             .on_click(move |_, _, cx| {
                                 project_info.update_lastaccess();
                                 let name = name.clone();
                                 let path = path.clone();
                                 if let Some(app) = app.upgrade() {
-                                    let settings_view: AnyView = cx
-                                        .new(|cx| {
-                                            EditPage::new(path.clone(), name, app.downgrade(), cx)
-                                        })
-                                        .into();
+                                    let settings_view: AnyView =
+                                        cx.new(|cx| EditPage::new(path.clone(), name, app.downgrade(),cx)).into();
                                     app.update(cx, |app, cx| {
                                         app.navigate_to(settings_view, cx);
                                     });

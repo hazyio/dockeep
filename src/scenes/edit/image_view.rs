@@ -67,6 +67,7 @@ impl Render for ImageView {
                                         let path = this.path.clone();
                                         tracing::debug!("Edit Image: {:?}", path);
                                         cx.emit(ImageViewEvents::Edit(path));
+                                        
                                     }))
                                     .tooltip(t!("label.edit_image")),
                             )
