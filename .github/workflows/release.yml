@@ -19,12 +19,12 @@ jobs:
           - os: ubuntu-latest
             binary: dockeep
             asset_name: dockeep-linux-x86_64
-          - os: windows-latest
-            binary: dockeep.exe
-            asset_name: dockeep-windows-x86_64.exe
-          - os: macos-latest
-            binary: dockeep
-            asset_name: dockeep-macos-aarch64
+          # - os: windows-latest
+          #   binary: dockeep.exe
+          #   asset_name: dockeep-windows-x86_64.exe
+          # - os: macos-latest
+          #   binary: dockeep
+          #   asset_name: dockeep-macos-aarch64
 
     steps:
       - name: Checkout
@@ -44,6 +44,7 @@ jobs:
             libxcb-shape0-dev \
             libxcb-xfixes0-dev \
             libxkbcommon-dev \
+            libxkbcommon-x11-dev \
             libvulkan-dev \
             libasound2-dev \
             libfontconfig1-dev
