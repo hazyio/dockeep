@@ -5,7 +5,6 @@ use crate::utils::app_config::AppConfig;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_theme::AppTheme;
 use crate::utils::lanuages::Languages;
-use gpui_kit::component::TitleBar;
 use gpui_kit::component::button::*;
 use gpui_kit::component::setting::{
     SettingField, SettingGroup, SettingItem, SettingPage, Settings,

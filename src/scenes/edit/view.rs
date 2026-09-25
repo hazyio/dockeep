@@ -3,16 +3,14 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::Error;
-use gpui_kit::base::Scrollbar;
 use gpui_kit::component::button::*;
 use gpui_kit::component::label::Label;
-use gpui_kit::component::popover::Popover;
 use gpui_kit::component::scroll::ScrollableElement;
 use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
-use gpui_kit::{Pixels, Size, px, size};
+use gpui_kit::{px, size};
 use rust_i18n::t;
 
 use crate::components::window_decor::WindowDecor;
@@ -175,33 +173,6 @@ impl Render for EditPage {
                             .size_full()
                             .gap_3()
                             .child(browser_action)
-                            // .child(
-                            //     div()
-                            //         .h_flex()
-                            //         .gap_3()
-                            //         .justify_end()
-                            //         .py_6()
-                            //         .child(
-                            //             Button::new("take-screenshot")
-                            //                 .primary()
-                            //                 .label(t!("label.add_screenshot"))
-                            //                 .on_click(element_cx.listener(
-                            //                     |this, _, window, cx| {
-                            //                         this.capture(window, cx);
-                            //                     },
-                            //                 )),
-                            //         )
-                            //         .child(
-                            //             Button::new("take-screenrecord")
-                            //                 .primary()
-                            //                 .label(t!("label.add_screenrecord"))
-                            //                 .on_click(element_cx.listener(
-                            //                     |this, _, window, cx| {
-                            //                         this.capture(window, cx);
-                            //                     },
-                            //                 )),
-                            //         ),
-                            // )
                             .when(items.is_empty(), |cx| {
                                 cx.child(
                                     div()

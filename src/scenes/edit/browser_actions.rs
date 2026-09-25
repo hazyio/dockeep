@@ -7,7 +7,7 @@ use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
-use headless_chrome::{Browser, LaunchOptionsBuilder};
+use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_icons::AppIcons;
@@ -16,6 +16,11 @@ pub enum BrowserActionsState {
     Stopped,
     Starting,
     Running,
+}
+
+struct ScreenshotSize {
+    width: u32,
+    height: u32,
 }
 
 pub struct BrowserActions {
@@ -111,6 +116,37 @@ impl BrowserActions {
             }
         }
     }
+    fn get_browser(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Option<&Arc<Browser>> {
+        if self.state != BrowserActionsState::Running {
+            window.push_notification(t!("error.browser_is_not_running"), cx);
+            return None;
+        }
+        match &self.browser {
+            Some(browser) => Some(browser),
+            None => {
+                // return state to stopped
+                self.state = BrowserActionsState::Stopped;
+                cx.notify();
+                window.push_notification(t!("error.browser_is_not_running"), cx);
+                return None;
+            }
+        }
+    }
+    fn get_first_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Option<&Arc<Tab>> {
+        let browser = self.get_browser(window, cx)?;
+        let tabs = browser.get_tabs().lock().unwrap();
+        match tabs.first() {
+            Some(tab) => Some(tab),
+            None => {
+                window.push_notification(t!("error.no_active_tab"), cx);
+                return None;
+            }
+        }
+    }
     fn focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.state != BrowserActionsState::Running {
             window.push_notification(t!("error.browser_is_not_running"), cx);
@@ -145,6 +181,7 @@ impl BrowserActions {
             }
         }
     }
+    fn capture(&mut self, size: ScreenshotSize, window: &mut Window, cx: &mut Context<Self>) {}
 }
 
 impl Render for BrowserActions {
@@ -194,20 +231,20 @@ impl Render for BrowserActions {
                 .child(
                     Button::new("take-desktop-screenshot")
                         .child(AppIcons::Monitor)
-                        .tooltip(t!("label.take_desktop_browser"))
-                        .on_click(element_cx.listener(|this, _, window, cx| {})),
+                        .tooltip(t!("label.take_desktop_screenshot"))
+                        .on_click(element_cx.listener(|_this, _, _window, _cx| {})),
                 )
                 .child(
                     Button::new("take-mobile-screenshot")
                         .child(AppIcons::Smartphone)
                         .tooltip(t!("label.take_mobile_screenshot"))
-                        .on_click(element_cx.listener(|this, _, window, cx| {})),
+                        .on_click(element_cx.listener(|_this, _, _window, _cx| {})),
                 )
                 .child(
                     Button::new("take-crop-screenshot")
                         .child(AppIcons::Crop)
                         .tooltip(t!("label.take_crop_screenshot"))
-                        .on_click(element_cx.listener(|this, _, window, cx| {})),
+                        .on_click(element_cx.listener(|_this, _, _window, _cx| {})),
                 )
             })
     }
