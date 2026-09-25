@@ -14,7 +14,13 @@ pub enum AppIcons {
     Expand,
     Eye,
     SquareExclamationPoint,
-    Minus
+    Minus,
+    CircleDot,
+    Play,
+    PlayOff,
+    Monitor,
+    Smartphone,
+    Crop,
 }
 
 impl RenderOnce for AppIcons {
@@ -36,6 +42,12 @@ impl RenderOnce for AppIcons {
                 Icon::default().path("square-exclamation-point.svg")
             }
             AppIcons::Minus => Icon::default().path("minus.svg"),
+            AppIcons::CircleDot => Icon::default().path("circle-dot.svg"),
+            AppIcons::Play => Icon::default().path("play.svg"),
+            AppIcons::PlayOff => Icon::default().path("play-off.svg"),
+            AppIcons::Monitor => Icon::default().path("monitor.svg"),
+            AppIcons::Smartphone => Icon::default().path("smartphone.svg"),
+            AppIcons::Crop => Icon::default().path("crop.svg"),
         }
     }
 }

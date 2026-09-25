@@ -17,8 +17,7 @@ use rust_i18n::t;
 
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
-use crate::scenes::capture::view::CapturePage;
-use crate::scenes::edit::image_full_view::ImageFullView;
+use crate::scenes::edit::browser_actions::BrowserActions;
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_icons::AppIcons;
@@ -34,6 +33,7 @@ pub struct EditPage {
     items: Vec<Entity<ImageView>>,
     scroll_handle: VirtualListScrollHandle,
     _image_action_subscription: Vec<Subscription>,
+    browser_action: Entity<BrowserActions>,
 }
 
 impl EditPage {
@@ -56,6 +56,7 @@ impl EditPage {
             scroll_handle: VirtualListScrollHandle::new(),
             _image_action_subscription: Vec::new(),
             show_image_full_view: None,
+            browser_action: cx.new(|_| BrowserActions::new()),
         }
     }
     fn build_image_subscription(
@@ -130,6 +131,7 @@ impl Render for EditPage {
         let show_image_full_view = self.show_image_full_view.clone();
 
         let app = self.app.clone();
+        let browser_action = self.browser_action.clone();
         div()
             .size_full()
             .relative()
@@ -170,52 +172,45 @@ impl Render for EditPage {
                     })
                     .when(!loading && error.clone().is_none(), |cx| {
                         cx.v_flex()
+                            .size_full()
                             .gap_3()
-                            .child(
-                                div()
-                                    .h_flex()
-                                    .gap_3()
-                                    .justify_end()
-                                    .child(
-                                        Button::new("take-screenshot")
-                                            .primary()
-                                            .label(t!("label.add_screenshot"))
-                                            .on_click(|_, _, _| {}),
-                                    )
-                                    .child(
-                                        Button::new("take-screenrecord")
-                                            .primary()
-                                            .label(t!("label.add_screenrecord"))
-                                            .on_click(|_, _, cx| {
-                                                cx.open_window(
-                                                    WindowOptions {
-                                                        titlebar: None,
-                                                        window_decorations: Some(
-                                                            WindowDecorations::Client,
-                                                        ),
-                                                        ..Default::default()
-                                                    },
-                                                    |window, cx| {
-                                                        let view = cx.new(|app| {
-                                                            let home =
-                                                                app.new(|_| CapturePage::new(None));
-                                                            CapturePage { path: None }
-                                                        });
-                                                        cx.new(|cx| {
-                                                            Root::new(view, window, cx)
-                                                                .bordered(false)
-                                                        })
-                                                    },
-                                                )
-                                                .ok();
-                                            }),
-                                    ),
-                            )
+                            .child(browser_action)
+                            // .child(
+                            //     div()
+                            //         .h_flex()
+                            //         .gap_3()
+                            //         .justify_end()
+                            //         .py_6()
+                            //         .child(
+                            //             Button::new("take-screenshot")
+                            //                 .primary()
+                            //                 .label(t!("label.add_screenshot"))
+                            //                 .on_click(element_cx.listener(
+                            //                     |this, _, window, cx| {
+                            //                         this.capture(window, cx);
+                            //                     },
+                            //                 )),
+                            //         )
+                            //         .child(
+                            //             Button::new("take-screenrecord")
+                            //                 .primary()
+                            //                 .label(t!("label.add_screenrecord"))
+                            //                 .on_click(element_cx.listener(
+                            //                     |this, _, window, cx| {
+                            //                         this.capture(window, cx);
+                            //                     },
+                            //                 )),
+                            //         ),
+                            // )
                             .when(items.is_empty(), |cx| {
-                                cx.v_flex()
-                                    .justify_center()
-                                    .items_center()
-                                    .child(Label::new(t!("error.no_image_found")))
+                                cx.child(
+                                    div()
+                                        .size_full()
+                                        .v_flex()
+                                        .justify_center()
+                                        .items_center()
+                                        .child(Label::new(t!("error.no_image_found"))),
+                                )
                             })
                             .when(!items.is_empty(), |cx| {
                                 cx.child(

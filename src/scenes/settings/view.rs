@@ -27,6 +27,7 @@ impl Render for SettingsPage {
         let config = AppConfig::load();
         let current_theme_name: SharedString = config.theme.name().into();
         let current_language: SharedString = config.language.name_short().into();
+        let current_chrome_path = config.chrome_path.clone();
         let app = self.app.clone();
 
         div()
@@ -51,58 +52,77 @@ impl Render for SettingsPage {
                 ),
             )
             .child(
-                Settings::new("my-settings").page(
-                    SettingPage::new(t!("title.general")).group(
-                        SettingGroup::new()
-                            .title(t!("title.appearance"))
-                            .item(SettingItem::new(
-                                t!("label.language"),
-                                SettingField::dropdown(
-                                    Languages::all()
-                                        .iter()
-                                        .map(|lang| {
-                                            (lang.name_short().into(), lang.name_long().into())
-                                        })
-                                        .collect(),
-                                    move |_cx: &App| current_language.clone(),
-                                    move |val: SharedString, cx: &mut App| {
-                                        if let Some(lang) = Languages::all()
+                Settings::new("my-settings")
+                    .page(
+                        SettingPage::new(t!("title.general")).group(
+                            SettingGroup::new()
+                                .title(t!("title.appearance"))
+                                .item(SettingItem::new(
+                                    t!("label.language"),
+                                    SettingField::dropdown(
+                                        Languages::all()
                                             .iter()
-                                            .find(|t| t.name_short() == val.as_ref())
-                                        {
-                                            let mut config = AppConfig::load();
-                                            config.language = *lang;
-                                            config.save();
-                                            lang.set_for_app(cx);
-                                        }
-                                    },
-                                )
-                                .default_value(config.language.name_short()),
-                            ))
-                            .item(SettingItem::new(
-                                t!("label.theme"),
-                                SettingField::dropdown(
-                                    AppTheme::all()
-                                        .iter()
-                                        .map(|theme| (theme.name().into(), theme.name().into()))
-                                        .collect(),
-                                    move |_cx: &App| current_theme_name.clone(),
-                                    move |val: SharedString, cx: &mut App| {
-                                        if let Some(theme) = AppTheme::all()
+                                            .map(|lang| {
+                                                (lang.name_short().into(), lang.name_long().into())
+                                            })
+                                            .collect(),
+                                        move |_cx: &App| current_language.clone(),
+                                        move |val: SharedString, cx: &mut App| {
+                                            if let Some(lang) = Languages::all()
+                                                .iter()
+                                                .find(|t| t.name_short() == val.as_ref())
+                                            {
+                                                let mut config = AppConfig::load();
+                                                config.language = *lang;
+                                                config.save();
+                                                lang.set_for_app(cx);
+                                            }
+                                        },
+                                    )
+                                    .default_value(config.language.name_short()),
+                                ))
+                                .item(SettingItem::new(
+                                    t!("label.theme"),
+                                    SettingField::dropdown(
+                                        AppTheme::all()
                                             .iter()
-                                            .find(|t| t.name() == val.as_ref())
-                                        {
+                                            .map(|theme| (theme.name().into(), theme.name().into()))
+                                            .collect(),
+                                        move |_cx: &App| current_theme_name.clone(),
+                                        move |val: SharedString, cx: &mut App| {
+                                            if let Some(theme) = AppTheme::all()
+                                                .iter()
+                                                .find(|t| t.name() == val.as_ref())
+                                            {
+                                                let mut config = AppConfig::load();
+                                                config.theme = *theme;
+                                                config.save();
+                                                theme.switch_to(cx);
+                                            }
+                                        },
+                                    )
+                                    .default_value(config.theme.name()),
+                                )),
+                        ),
+                    )
+                    .page(
+                        SettingPage::new(t!("title.chrome")).group(
+                            SettingGroup::new().title(t!("label.chrome_path")).item(
+                                SettingItem::new(
+                                    t!("label.path"),
+                                    SettingField::input(
+                                        move |_| SharedString::from(current_chrome_path.clone()),
+                                        |val: SharedString, _: &mut App| {
                                             let mut config = AppConfig::load();
-                                            config.theme = *theme;
+                                            config.chrome_path = val.to_string();
                                             config.save();
-                                            theme.switch_to(cx);
-                                        }
-                                    },
-                                )
-                                .default_value(config.theme.name()),
-                            )),
+                                        },
+                                    )
+                                    .default_value(config.chrome_path.clone()),
+                                ),
+                            ),
+                        ),
                     ),
-                ),
             )
     }
 }

@@ -3,10 +3,11 @@ use std::{fs, path::PathBuf};
 
 use crate::utils::{app_theme::AppTheme, lanuages::Languages};
 
-#[derive(Debug, Clone,  Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     pub theme: AppTheme,
     pub language: Languages,
+    pub chrome_path: String,
 }
 
 impl AppConfig {

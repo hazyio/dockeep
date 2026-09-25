@@ -1,8 +1,6 @@
-use std::ops::Sub;
 use std::path::PathBuf;
 
-use gpui_kit::component::button::{Button, ButtonVariants};
-use gpui_kit::component::popover::Popover;
+use gpui_kit::component::button::Button;
 use gpui_kit::component::*;
 use gpui_kit::*;
 
@@ -27,10 +25,7 @@ impl ImageView {
 impl EventEmitter<ImageViewEvents> for ImageView {}
 
 impl Render for ImageView {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let window_width = window.viewport_size().width.sub(px(60.)); //add some padding
-        let window_height = window.viewport_size().height.sub(px(60.)); //add some padding
-
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let path = self.path.clone();
         let file_name = path
             .file_name()
@@ -38,7 +33,6 @@ impl Render for ImageView {
             .unwrap_or_else(|| String::from("Unknown"));
 
         let m_path = path.clone();
-        let m_index = self.index;
         div()
             .v_flex()
             .w(relative(1.))
@@ -51,7 +45,7 @@ impl Render for ImageView {
             .child(
                 div()
                     .v_flex()
-                    .p_3()  
+                    .p_3()
                     .bg(cx.theme().background)
                     .rounded_b_md()
                     .child(div().child(file_name).truncate())
@@ -67,7 +61,6 @@ impl Render for ImageView {
                                         let path = this.path.clone();
                                         tracing::debug!("Edit Image: {:?}", path);
                                         cx.emit(ImageViewEvents::Edit(path));
-                                        
                                     }))
                                     .tooltip(t!("label.edit_image")),
                             )
@@ -94,34 +87,7 @@ impl Render for ImageView {
                                         tracing::debug!("Edit Image: {:?}", path);
                                         cx.emit(ImageViewEvents::OpenInFullscreen(path));
                                     })),
-                            ), // .child(
-                               //     Popover::new(format!("popover-image-{}", self.index))
-                               //         .anchor(Anchor::TopCenter)
-                               //         // .appearance(false)
-                               //         // .p_3()
-                               //         .m_0()
-                               //         .w(window_width)
-                               //         .h(window_height)
-                               //         .shadow_2xl()
-                               //         .rounded_none()
-                               //         .trigger(
-                               //             Button::new(format!("open-image-popover-{}", self.index))
-                               //                 .child(AppIcons::Expand)
-                               //                 .tooltip(t!("label.open_in_fullscreen")),
-                               //         )
-                               //         .content(move |_, _, cx| {
-                               //             div().h_flex().justify_end().child(
-                               //                 Button::new(format!("close-popover-image-{}", m_index))
-                               //                     .primary()
-                               //                     .child(AppIcons::Close)
-                               //                     .on_click(cx.listener(|_, _, _, cx| {
-                               //                         cx.emit(DismissEvent);
-                               //                     }))
-                               //                     .tooltip(t!("label.close_popup")),
-                               //             )
-                               //         })
-                               //         .child(img(path.clone()).flex_grow_1().w(relative(1.0))),
-                               // ),
+                            ),
                     ),
             )
     }

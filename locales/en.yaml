@@ -8,7 +8,10 @@ title:
   appearance: Appearance
   general: General
   add_new_project: Add New Project
+  chrome: Chrome
 label:
+  chrome_path: Chrome Executable Path
+  path: Path
   close: Close
   done: Done
   delete: Delete
@@ -40,6 +43,14 @@ label:
   open_in_fullscreen: Open in Fullscreen
   add_screenshot: Add Screenshot
   add_screenrecord: Add Screen Record
+  take_screenshot: Take Screenshot
+  take_screenrecord: Take Screen Record
+  start_browser: Start Browser
+  stop_browser: Stop Browser
+  focus_browser: Focus Browser
+  take_desktop_screenshot: Take Desktop Screenshot
+  take_mobile_screenshot: Take Mobile Screenshot
+  take_crop_screenshot: Take Crop Screenshot
 dialog:
   delete_title: Delete project?
   delete_description: This will remove "%{name}" from your projects, no file will be deleted.
@@ -50,3 +61,12 @@ error:
   project_already_exists: "A project with that path already exists: %{name}"
   unknown_error: Unknown error
   no_image_found: No image found .
+  browser_not_running: Browser is not running
+  browser_is_starting: Browser is starting
+  browser_is_stopped: Browser is stopped
+  browser_already_running: Browser is already running
+  browser_is_not_running: Browser is not running
+  chrome_path_not_found: Chrome executable path not found, open settings to set it
+  no_active_tab: No active tab
+  failed_to_bring_to_front: Failed to focus tab
+  browser_already_closed: Browser already closed

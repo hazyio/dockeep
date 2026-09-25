@@ -36,8 +36,11 @@ fn main() {
             cx.spawn(async move |cx| {
                 cx.open_window(
                     WindowOptions {
-                        titlebar: None,                                      // no title bar
                         window_decorations: Some(WindowDecorations::Client), // no WM frame
+                        titlebar: Some(TitlebarOptions {
+                            title: Some(SharedString::new("DocKeep")),
+                            ..Default::default()
+                        }),
                         ..Default::default()
                     },
                     |window, cx| {
