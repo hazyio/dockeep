@@ -86,7 +86,7 @@ impl HomePage {
                             path,
                             last_accessed: to_human_datetime(project.last_accessed),
                         }
-                    }) 
+                    })
                 })
                 .collect();
             entity
@@ -162,13 +162,22 @@ impl Render for HomePage {
                         .ghost()
                         .child(AppIcons::Settings)
                         .on_click(move |_, _, cx| {
-                            if let Some(app) = app.upgrade() {
-                                let settings_view: AnyView =
-                                    cx.new(|_| SettingsPage::new(app.downgrade())).into();
-                                app.update(cx, |app, cx| {
-                                    app.navigate_to(settings_view, cx);
-                                });
-                            }
+                            cx.open_window(
+                                WindowOptions {
+                                    window_decorations: Some(WindowDecorations::Client), // no WM frame
+                                    titlebar: Some(TitlebarOptions {
+                                        title: Some(SharedString::new("DocKeep Settings")),
+
+                                        ..Default::default()
+                                    }),
+                                    ..Default::default()
+                                },
+                                |window, cx| {
+                                    let view = cx.new(|_| SettingsPage::new());
+                                    cx.new(|cx| Root::new(view, window, cx).bordered(false))
+                                },
+                            )
+                            .ok();
                         }),
                 ),
             )

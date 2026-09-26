@@ -3,11 +3,70 @@ use std::{fs, path::PathBuf};
 
 use crate::utils::{app_theme::AppTheme, lanuages::Languages};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureSetting {
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChromeConfig {
+    pub path: String,
+    pub use_attach: bool,
+    pub attach_port: u16,
+    pub mobile_capture_setting: CaptureSetting,
+    pub desktop_capture_setting: CaptureSetting,
+}
+
+fn find_chrome() -> String {
+    #[cfg(target_os = "windows")]
+    let candidates = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ];
+
+    #[cfg(target_os = "macos")]
+    let candidates = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
+
+    #[cfg(target_os = "linux")]
+    let candidates = [
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+        "/snap/bin/chromium",
+    ];
+
+    candidates
+        .iter()
+        .find(|p| std::path::Path::new(p).exists())
+        .map(|p| p.to_string())
+        .unwrap_or_default()
+}
+
+impl Default for ChromeConfig {
+    fn default() -> Self {
+        Self {
+            path: find_chrome(),
+            use_attach: false,
+            attach_port: 9222,
+            desktop_capture_setting: CaptureSetting {
+                width: 1920.0,
+                height: 1080.0,
+            },
+            mobile_capture_setting: CaptureSetting {
+                width: 375.0,
+                height: 667.0,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     pub theme: AppTheme,
     pub language: Languages,
-    pub chrome_path: String,
+    pub chrome_config: ChromeConfig,
 }
 
 impl AppConfig {
@@ -22,6 +81,7 @@ impl AppConfig {
         Self::config_dir().join(Self::CONFIG_FILE)
     }
     pub fn load() -> Self {
+        tracing::info!("Loading app config");
         let config_path = Self::config_path();
 
         match fs::read_to_string(&config_path) {

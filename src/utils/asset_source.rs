@@ -64,15 +64,31 @@ impl Assets {
                 "window-restore.svg",
                 include_bytes!("../../assets/svg/window-restore.svg"),
             ),
-            ("circle-dot.svg", include_bytes!("../../assets/svg/circle-dot.svg")),
+            (
+                "circle-dot.svg",
+                include_bytes!("../../assets/svg/circle-dot.svg"),
+            ),
             ("play.svg", include_bytes!("../../assets/svg/play.svg")),
-            ("play-off.svg", include_bytes!("../../assets/svg/play-off.svg")),
-            ("monitor.svg", include_bytes!("../../assets/svg/monitor.svg")),
-            ("smartphone.svg", include_bytes!("../../assets/svg/smartphone.svg")),
+            (
+                "play-off.svg",
+                include_bytes!("../../assets/svg/play-off.svg"),
+            ),
+            (
+                "monitor.svg",
+                include_bytes!("../../assets/svg/monitor.svg"),
+            ),
+            (
+                "smartphone.svg",
+                include_bytes!("../../assets/svg/smartphone.svg"),
+            ),
             ("crop.svg", include_bytes!("../../assets/svg/crop.svg")),
-            
+            ("plus.svg", include_bytes!("../../assets/svg/plus.svg")),
+            ("undo-2.svg", include_bytes!("../../assets/svg/undo-2.svg")),
+            (
+                "chevron-right.svg",
+                include_bytes!("../../assets/svg/chevron-right.svg"),
+            ),
         ]
-        
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {
         let name = path.rsplit('/').next().unwrap_or(path);

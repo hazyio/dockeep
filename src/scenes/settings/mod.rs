@@ -1,1 +1,3 @@
+mod chrome_page;
+mod general_page;
 pub mod view;

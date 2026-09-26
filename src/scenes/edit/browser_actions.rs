@@ -63,7 +63,7 @@ impl BrowserActions {
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
             BrowserActionsState::Stopped => {
-                let chrome_path = AppConfig::load().chrome_path;
+                let chrome_path = AppConfig::load().chrome_config.path;
                 if chrome_path.is_empty() {
                     window.push_notification(t!("error.chrome_path_not_found"), cx);
                     return;

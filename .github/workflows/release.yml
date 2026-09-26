@@ -62,6 +62,8 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Build release binary
+        env:
+          RUSTFLAGS: ${{ matrix.os == 'windows-latest' && '-C target-feature=+crt-static' || '' }}
         run: cargo build --release
 
       - name: Rename binary

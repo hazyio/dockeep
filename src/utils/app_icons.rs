@@ -21,6 +21,9 @@ pub enum AppIcons {
     Monitor,
     Smartphone,
     Crop,
+    Plus,
+    Undo2,
+    ChevronRight,
 }
 
 impl RenderOnce for AppIcons {
@@ -48,6 +51,9 @@ impl RenderOnce for AppIcons {
             AppIcons::Monitor => Icon::default().path("monitor.svg"),
             AppIcons::Smartphone => Icon::default().path("smartphone.svg"),
             AppIcons::Crop => Icon::default().path("crop.svg"),
+            AppIcons::Plus => Icon::default().path("plus.svg"),
+            AppIcons::Undo2 => Icon::default().path("undo-2.svg"),
+            AppIcons::ChevronRight => Icon::default().path("chevron-right.svg"),
         }
     }
 }

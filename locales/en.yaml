@@ -9,9 +9,13 @@ title:
   general: General
   add_new_project: Add New Project
   chrome: Chrome
-
+  use_settings: Attach Settings
+  desktop_capture_settings: Desktop Capture Settings
+  mobile_capture_settings: Mobile Capture Settings
 label:
   chrome_path: Chrome Executable Path
+  width: Width
+  height: Height
   path: Path
   close: Close
   done: Done
@@ -54,6 +58,13 @@ label:
   take_crop_screenshot: Take Crop Screenshot
   screenshot_saved: Screenshot saved
   replacing_path: You are replacing the path "%{path}", click to cancel.
+  use_attach: Use Attach
+  port: Port
+description:
+  use_attach: Attach to running browser instead of starting a new browser, you might want to use this mode if you want specific browser settings to be applied.
+  min_height: Height must be greater than %{min}.
+  min_width: Width must be greater than %{min}.
+  min_port: Port must be greater than %{min}.
 dialog:
   select_tab: Select a Tab
   delete_title: Delete project?
