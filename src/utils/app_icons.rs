@@ -24,6 +24,7 @@ pub enum AppIcons {
     Plus,
     Undo2,
     ChevronRight,
+    RefreshCw,
 }
 
 impl RenderOnce for AppIcons {
@@ -54,6 +55,7 @@ impl RenderOnce for AppIcons {
             AppIcons::Plus => Icon::default().path("plus.svg"),
             AppIcons::Undo2 => Icon::default().path("undo-2.svg"),
             AppIcons::ChevronRight => Icon::default().path("chevron-right.svg"),
+            AppIcons::RefreshCw => Icon::default().path("refresh-cw.svg"),
         }
     }
 }

@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 use futures::channel::oneshot;
 use gpui_kit::component::button::Button;
@@ -7,11 +9,13 @@ use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
-use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
+use headless_chrome::protocol::cdp::Emulation::{self};
+use headless_chrome::protocol::cdp::Page::{self, CaptureScreenshotFormatOption};
 use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_icons::AppIcons;
+use crate::utils::files::save_screenshot;
 use gpui_kit::component::WindowExt;
 #[derive(Debug, Clone, PartialEq)]
 pub enum BrowserActionsState {
@@ -23,15 +27,22 @@ pub enum BrowserActionsState {
 enum ScreenshotSize {
     Desktop,
     Mobile,
-    Crop,
+    Crop(f64, f64),
 }
 
 impl ScreenshotSize {
-    fn dimensions(&self) -> (u32, u32) {
+    fn dimensions(&self) -> (f64, f64) {
+        let config = AppConfig::load();
         match self {
-            ScreenshotSize::Desktop => (1920, 1080),
-            ScreenshotSize::Mobile => (390, 844),
-            ScreenshotSize::Crop => (1280, 720),
+            ScreenshotSize::Desktop => {
+                let desktop = config.chrome_config.desktop_capture_setting;
+                (desktop.width, desktop.height)
+            }
+            ScreenshotSize::Mobile => {
+                let mobile = config.chrome_config.mobile_capture_setting;
+                (mobile.width, mobile.height)
+            }
+            ScreenshotSize::Crop(w, h) => (*w, *h),
         }
     }
 }
@@ -45,6 +56,7 @@ pub struct BrowserActions {
     browser: Option<Arc<Browser>>,
     working_dir: PathBuf,
     replace_path: Option<PathBuf>,
+    taking_cropped: bool,
 }
 impl EventEmitter<BrowserActionsEvents> for BrowserActions {}
 
@@ -55,6 +67,7 @@ impl BrowserActions {
             browser: None,
             working_dir: working_dir,
             replace_path: None,
+            taking_cropped: false,
         }
     }
     fn is_browser_alive(browser: &Browser) -> bool {
@@ -137,6 +150,10 @@ impl BrowserActions {
                 cx.notify();
             }
         }
+    }
+    fn restart(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.stop(window, cx);
+        self.start(window, cx);
     }
     fn get_browser(
         &mut self,
@@ -244,62 +261,162 @@ impl BrowserActions {
     pub fn queue_replace_path(&mut self, path: PathBuf) {
         self.replace_path = Some(path);
     }
-
-    fn capture(&mut self, _size: ScreenshotSize, window: &mut Window, cx: &mut Context<Self>) {
-        let working_dir = self.working_dir.clone();
-        let replace_path = self.replace_path.clone();
+    fn end_capture_cropped(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+
+        let replace_path = self.replace_path.clone();
+        let working_dir = self.working_dir.clone();
+        self.get_active_tab(window, cx, move |tab, _, cx| {
+            let replace_path = replace_path.clone();
+            let working_dir = working_dir.clone();
+            let entity = entity.clone();
+
+            cx.spawn(async move |cx| {
+                let update = entity.update(cx, |this, cx| {
+                    let Ok(result) =
+                        tab.evaluate("JSON.stringify(window.__dockeep_selection)", false)
+                    else {
+                        // selection is not available, stop taking cropped
+                        this.taking_cropped = false;
+                        tracing::error!(
+                            "failed to evaluate window.__dockeep_selection: Failed to get"
+                        );
+                        return;
+                    };
+                    let Some(json_str) = result.value.and_then(|v| v.as_str().map(String::from))
+                    else {
+                        this.taking_cropped = false;
+                        tracing::error!("window.__dockeep_selection is undefined/null");
+                        return;
+                    };
+                    tracing::trace!("result: {:?}", json_str);
+
+                    let Ok(selection) = serde_json::from_str::<serde_json::Value>(&json_str) else {
+                        this.taking_cropped = false;
+                        tracing::error!("failed to parse selection json");
+                        return;
+                    };
+                    tracing::trace!("selection: {:?}", selection);
+                    let clip = Page::Viewport {
+                        x: selection["x"].as_f64().unwrap(),
+                        y: selection["y"].as_f64().unwrap(),
+                        width: selection["width"].as_f64().unwrap(),
+                        height: selection["height"].as_f64().unwrap(),
+                        scale: 1.0,
+                    };
+                    let capture_data = tab.capture_screenshot(
+                        CaptureScreenshotFormatOption::Png,
+                        Some(100),
+                        Some(clip),
+                        true,
+                    );
+                    let saved = save_screenshot(capture_data, replace_path, working_dir.clone());
+                    this.taking_cropped = false;
+
+                    if saved.saved {
+                        if saved.is_replaced {
+                            this.replace_path = None;
+
+                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
+                        } else {
+                            cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
+                        }
+                    }
+                    cx.notify();
+                });
+                if let Err(err) = update {
+                    tracing::error!("failed to update browser actions: {:?}", err);
+                };
+            })
+            .detach();
+        });
+    }
+    fn start_capture_cropped(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+        self.get_active_tab(window, cx, move |tab, window, cx| {
+            let entity = entity.clone();
+            // bring tab into focus
+            let _ = tab.bring_to_front();
+            // inject the selector overlay
+            let inject = tab.evaluate(include_str!("../../../assets/selector.js"), false);
+            if let Err(e) = inject {
+                tracing::error!("Failed to inject selection overlay: {}", e);
+                window.push_notification(t!("error.failed_to_inject_selector"), cx);
+                return;
+            }
+            cx.spawn(async move |cx| {
+                let _ = entity.update(cx, |this, cx| {
+                    this.taking_cropped = true;
+                    cx.notify();
+                });
+            })
+            .detach();
+        });
+    }
+
+    fn capture(&mut self, size: ScreenshotSize, window: &mut Window, cx: &mut Context<Self>) {
+        let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+        let replace_path = self.replace_path.clone();
+        let working_dir = self.working_dir.clone();
 
         self.get_active_tab(window, cx, move |tab, _window, cx| {
             let working_dir = working_dir.clone();
             let replace_path = replace_path.clone();
-            tracing::info!("Capturing screenshot, replace_path: {:?}", replace_path);
-            
+
+            let (width, height) = size.dimensions();
+            tracing::info!("Capturing screenshot, size: {}x{}", width, height);
+
+            // set device metrics override
+            if let Err(e) = tab.call_method(Emulation::SetDeviceMetricsOverride {
+                width: width as u32,
+                height: height as u32,
+                device_scale_factor: 1.0,
+                mobile: false,
+                scale: None,
+                screen_width: None,
+                screen_height: None,
+                position_x: None,
+                position_y: None,
+                dont_set_visible_size: None,
+                screen_orientation: None,
+                viewport: None,
+                display_feature: None,
+                device_posture: None,
+            }) {
+                tracing::error!("Failed to set device metrics override: {:?}", e);
+                // window.push_notification(t!("error.failed_to_set_device_metrics_override"), cx);
+                return;
+            }
+
             let entity = entity.clone(); // move a clone into the async block below
 
             cx.spawn(async move |cx| {
                 let result = cx
                     .background_spawn(async move {
-                        tab.capture_screenshot(
+                        let capture_data = tab.capture_screenshot(
                             CaptureScreenshotFormatOption::Png,
                             Some(100),
                             None,
                             false,
-                        )
+                        );
+                        // reset device metrics override
+                        let _ = tab.call_method(Emulation::ClearDeviceMetricsOverride(None));
+                        capture_data
                     })
                     .await;
-
-                match result {
-                    Ok(data) => {
-                        let (path, is_replace) = if let Some(rp) = replace_path {
-                            (rp, true)
+                let saved = save_screenshot(result, replace_path, working_dir.clone());
+                if saved.saved {
+                    if let Err(e) = entity.update(cx, |this, cx| {
+                        if saved.is_replaced {
+                            this.replace_path = None;
+                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
                         } else {
-                            let filename = chrono::Local::now()
-                                .format("Screenshot_%Y%m%d_%H%M%S.png")
-                                .to_string();
-                            (working_dir.join(&filename), false)
-                        };
-
-                        if let Err(e) = std::fs::write(&path, &data) {
-                            tracing::error!("Failed to save screenshot to {:?}: {}", path, e);
-                            return;
+                            cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
                         }
-
-                        // Fresh async continuation — no longer nested inside the
-                        // click-handler's borrow of this same entity, so this is safe.
-                        if let Err(e) = entity.update(cx, |this, cx| {
-                            if is_replace {
-                                this.replace_path = None;
-                                cx.emit(BrowserActionsEvents::Replace(path.clone()));
-                            } else {
-                                cx.emit(BrowserActionsEvents::Add(path.clone()));
-                            }
-                            cx.notify();
-                        }) {
-                            tracing::error!("failed to emit event: {:?}", e);
-                        }
+                        cx.notify();
+                    }) {
+                        tracing::error!("failed to emit event: {:?}", e);
                     }
-                    Err(e) => tracing::error!("Failed to capture screenshot: {}", e),
                 }
             })
             .detach();
@@ -356,6 +473,14 @@ impl Render for BrowserActions {
                         })),
                 )
                 .child(
+                    Button::new("restart-browser")
+                        .child(AppIcons::RefreshCw)
+                        .tooltip(t!("label.restart_browser"))
+                        .on_click(element_cx.listener(|this, _, window, cx| {
+                            this.restart(window, cx);
+                        })),
+                )
+                .child(
                     Button::new("focus-browser")
                         .child(AppIcons::Eye)
                         .tooltip(t!("label.focus_browser"))
@@ -367,21 +492,35 @@ impl Render for BrowserActions {
                     Button::new("take-desktop-screenshot")
                         .child(AppIcons::Monitor)
                         .tooltip(t!("label.take_desktop_screenshot"))
-                        .on_click(element_cx.listener(|this, _, _window, _cx| {
-                            this.capture(ScreenshotSize::Desktop, _window, _cx);
+                        .on_click(element_cx.listener(|this, _, window, cx| {
+                            this.capture(ScreenshotSize::Desktop, window, cx);
                         })),
                 )
                 .child(
                     Button::new("take-mobile-screenshot")
                         .child(AppIcons::Smartphone)
                         .tooltip(t!("label.take_mobile_screenshot"))
-                        .on_click(element_cx.listener(|_this, _, _window, _cx| {})),
+                        .on_click(element_cx.listener(|this, _, window, cx| {
+                            this.capture(ScreenshotSize::Mobile, window, cx);
+                        })),
                 )
                 .child(
-                    Button::new("take-crop-screenshot")
+                    Button::new("take-end-crop-screenshot")
                         .child(AppIcons::Crop)
-                        .tooltip(t!("label.take_crop_screenshot"))
-                        .on_click(element_cx.listener(|_this, _, _window, _cx| {})),
+                        .when(!self.taking_cropped, |cx| {
+                            cx.tooltip(t!("label.take_crop_screenshot")).on_click(
+                                element_cx.listener(|this, _, window, cx| {
+                                    this.start_capture_cropped(window, cx);
+                                }),
+                            )
+                        })
+                        .when(self.taking_cropped, |cx| {
+                            cx.tooltip(t!("label.capturing_crop"))
+                                .text_color(element_cx.theme().yellow)
+                                .on_click(element_cx.listener(|this, _, window, cx| {
+                                    this.end_capture_cropped(window, cx);
+                                }))
+                        }),
                 )
             })
     }

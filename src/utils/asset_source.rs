@@ -88,6 +88,10 @@ impl Assets {
                 "chevron-right.svg",
                 include_bytes!("../../assets/svg/chevron-right.svg"),
             ),
+            (
+                "refresh-cw.svg",
+                include_bytes!("../../assets/svg/refresh-cw.svg"),
+            ),
         ]
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {

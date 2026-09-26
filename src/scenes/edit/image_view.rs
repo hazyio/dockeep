@@ -59,8 +59,14 @@ impl Render for ImageView {
             .child(
                 img(path.clone())
                     .image_cache(&self.image_cache)
+                    .id(format!("fullscreen-view-image-{}", self.index))
                     .flex_grow_1()
-                    .w(relative(1.0)),
+                    .w(relative(1.0))
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        let path = this.path.clone();
+                        tracing::debug!("Edit Image: {:?}", path);
+                        cx.emit(ImageViewEvents::OpenInFullscreen(path));
+                    })),
             )
             .child(
                 div()
@@ -97,16 +103,6 @@ impl Render for ImageView {
                                         let _ = open_in_file_explorer(m_path.as_path());
                                     })
                                     .tooltip(t!("label.open_in_file_manager")),
-                            )
-                            .child(
-                                Button::new(format!("open-image-popover-{}", self.index))
-                                    .child(AppIcons::Expand)
-                                    .tooltip(t!("label.open_in_fullscreen"))
-                                    .on_click(cx.listener(|this, _, _, cx| {
-                                        let path = this.path.clone();
-                                        tracing::debug!("Edit Image: {:?}", path);
-                                        cx.emit(ImageViewEvents::OpenInFullscreen(path));
-                                    })),
                             )
                             .child(
                                 Button::new(format!("delete-image-popover-{}", self.index))

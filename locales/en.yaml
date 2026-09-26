@@ -52,12 +52,14 @@ label:
   take_screenrecord: Take Screen Record
   start_browser: Start Browser
   stop_browser: Stop Browser
+  restart_browser: Restart Browser
   focus_browser: Focus Browser
   take_desktop_screenshot: Take Desktop Screenshot
   take_mobile_screenshot: Take Mobile Screenshot
   take_crop_screenshot: Take Crop Screenshot
   screenshot_saved: Screenshot saved
   replacing_path: You are replacing the path "%{path}", click to cancel.
+  capturing_crop: You are in the process of taking a cropped screenshot, click to cancel
   use_attach: Use Attach
   port: Port
 description:
@@ -89,3 +91,7 @@ error:
   failed_to_save_screenshot: Failed to save screenshot
   failed_to_capture_screenshot: Failed to capture screenshot
   browser_already_closed: Browser already closed
+  failed_to_set_device_metrics_override: Failed to set device metrics override
+  crop_not_found: Crop not found
+  failed_to_inject_selector: Failed to inject selector
+  failed_to_update_browser_actions: Failed to update browser actions

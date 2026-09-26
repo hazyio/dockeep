@@ -1,11 +1,62 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Error, Result};
 use regex::Regex;
 use walkdir::WalkDir;
-
 const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp"];
+pub struct SaveScreenshotResult {
+    pub saved: bool,
+    pub is_replaced: bool,
+    pub save_path: PathBuf,
+}
+pub fn save_screenshot(
+    data: Result<Vec<u8>, Error>,
+    replace_path: Option<PathBuf>,
+    working_dir: PathBuf,
+) -> SaveScreenshotResult {
+    let (save_path, is_replace) = match replace_path {
+        Some(rp) => (rp, true),
+        None => {
+            let working_dir = working_dir.clone();
 
+            let filename = chrono::Local::now()
+                .format("Screenshot_%Y%m%d_%H%M%S.png")
+                .to_string();
+            (working_dir.join(&filename), false)
+        }
+    };
+    match data {
+        Ok(data) => {
+            if let Err(e) = std::fs::write(&save_path, &data) {
+                tracing::error!("Failed to save screenshot to {:?}: {}", save_path, e);
+                if is_replace {
+                    // remove the created file
+                    std::fs::remove_file(&save_path).ok();
+                }
+                return SaveScreenshotResult {
+                    saved: false,
+                    is_replaced: is_replace,
+                    save_path,
+                };
+            }
+
+            SaveScreenshotResult {
+                saved: true,
+                is_replaced: is_replace,
+                save_path,
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to capture screenshot: {}", e);
+            SaveScreenshotResult {
+                saved: false,
+                is_replaced: is_replace,
+                save_path,
+            }
+        }
+    }
+}
 pub fn read_images(path: &PathBuf) -> Vec<PathBuf> {
     read_dir(path)
         .into_iter()

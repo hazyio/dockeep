@@ -28,6 +28,7 @@ pub struct EditPage {
     pub path: PathBuf,
     title: String,
     show_image_full_view: Option<PathBuf>,
+    fullscreen_image_cache: Entity<RetainAllImageCache>,
     items: Vec<Entity<ImageView>>,
     scroll_handle: VirtualListScrollHandle,
     _image_action_subscription: Vec<Subscription>,
@@ -62,6 +63,7 @@ impl EditPage {
                 cx,
             ),
             browser_action: browser_action,
+            fullscreen_image_cache: RetainAllImageCache::new(cx),
         }
     }
     fn build_browser_action_subscription(
@@ -163,6 +165,7 @@ impl Render for EditPage {
     fn render(&mut self, window: &mut Window, element_cx: &mut Context<Self>) -> impl IntoElement {
         let dialog_layer = Root::render_dialog_layer(window, element_cx);
         let width = window.viewport_size().width.sub(px(12.)); //remove padding
+        let height = window.viewport_size().height;
 
         let cols: usize = if width < px(640.) {
             1
@@ -290,11 +293,18 @@ impl Render for EditPage {
                                     .v_flex()
                                     .items_center()
                                     .justify_center()
-                                    .child(img(value).max_h(relative(0.9))),
+                                    .child(
+                                        img(value)
+                                            .image_cache(&self.fullscreen_image_cache)
+                                            .max_h(height.sub(px(50.)))
+                                            .max_w(width.sub(px(50.))),
+                                    ),
                             ),
                         )
                         .on_click(element_cx.listener(|this, _, _, cx| {
                             this.show_image_full_view = None;
+                            // rebuild the cache to clear any existing images, very inefficient but works for now as it would be more complex to clear individual images.
+                            this.fullscreen_image_cache = RetainAllImageCache::new(cx);
                             cx.notify();
                         })),
                 )
