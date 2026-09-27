@@ -2,6 +2,7 @@ use anyhow::Error;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::Input;
 use gpui_kit::component::input::InputState;
+use gpui_kit::component::popover::Popover;
 use gpui_kit::component::scroll::ScrollableElement;
 use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
@@ -204,6 +205,15 @@ impl Render for HomePage {
                                     .on_click(element_cx.listener(|this, _, _, cx| {
                                         Self::load_projects(this.app.clone(), cx);
                                     })),
+                            )
+                            .child(
+                                Popover::new("sort-projects-popover")
+                                    .trigger(
+                                        Button::new("sort-projects")
+                                            .child(AppIcons::SlidersHorizontal),
+                                    )
+                                    .child("Hello, this is a popover!")
+                                    .child("It appears when you click the button."),
                             ),
                     )
                     .size_full()
