@@ -2,7 +2,6 @@ use anyhow::Error;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::Input;
 use gpui_kit::component::input::InputState;
-use gpui_kit::component::popover::Popover;
 use gpui_kit::component::scroll::ScrollableElement;
 use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::*;
@@ -84,13 +83,43 @@ impl HomePage {
         cx.subscribe_in(
             entity,
             window,
-            move |_this, _button, event: &SortButtonEvent, window, cx| match event {
-                SortButtonEvent::SortNameAscending => {}
-                SortButtonEvent::SortNameDescending => {}
-                SortButtonEvent::SortLastAccessedAscending => {}
-                SortButtonEvent::SortLastAccessedDescending => {}
+            move |this, _button, event: &SortButtonEvent, _window, cx| match event {
+                SortButtonEvent::SortNameAscending => {
+                    this.apply_sort(cx, |info| info.name.to_lowercase(), true);
+                }
+                SortButtonEvent::SortNameDescending => {
+                    this.apply_sort(cx, |info| info.name.to_lowercase(), false);
+                }
+                SortButtonEvent::SortLastAccessedAscending => {
+                    this.apply_sort(cx, |info| info.last_accessed_timestamp, true);
+                }
+                SortButtonEvent::SortLastAccessedDescending => {
+                    this.apply_sort(cx, |info| info.last_accessed_timestamp, false);
+                }
             },
         )
+    }
+
+    /// Sorts `projects` in place using `key`, then notifies the view.
+    fn apply_sort<K, F>(&mut self, cx: &mut Context<Self>, key: F, ascending: bool)
+    where
+        K: Ord,
+        F: Fn(&ProjectInfo) -> K,
+    {
+        let mut keyed: Vec<(K, Entity<ProjectInfo>)> = self
+            .projects
+            .iter()
+            .map(|project| (key(project.read(cx)), project.clone()))
+            .collect();
+        keyed.sort_by(|a, b| {
+            if ascending {
+                a.0.cmp(&b.0)
+            } else {
+                b.0.cmp(&a.0)
+            }
+        });
+        self.projects = keyed.into_iter().map(|(_, project)| project).collect();
+        cx.notify();
     }
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
@@ -115,6 +144,7 @@ impl HomePage {
                             last_accessed_datetime: to_human_datetime(
                                 project.last_accessed_datetime,
                             ),
+                            last_accessed_timestamp: project.last_accessed_datetime,
                         }
                     })
                 })

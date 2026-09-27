@@ -25,7 +25,7 @@ impl SortButton {
     }
 }
 impl Render for SortButton {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         Popover::new("sort-projects-popover")
             .w(px(200.0))
             .trigger(Button::new("sort-projects").child(AppIcons::SlidersHorizontal))

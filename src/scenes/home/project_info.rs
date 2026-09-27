@@ -26,6 +26,7 @@ pub struct ProjectInfo {
     pub path: PathBuf,
     pub repo_info: Option<GitRepoInfo>,
     pub last_accessed_datetime: String,
+    pub last_accessed_timestamp: u64,
 }
 impl EventEmitter<ProjectInfoEvent> for ProjectInfo {}
 
