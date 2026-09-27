@@ -47,6 +47,7 @@ pub struct CaptureSetting {
     pub image_format: ImageFormat,
     pub mobile_capture_sizing: CaptureSizing,
     pub desktop_capture_sizing: CaptureSizing,
+    pub crop_timeout: u64,
 }
 impl Default for CaptureSetting {
     fn default() -> Self {
@@ -62,6 +63,7 @@ impl Default for CaptureSetting {
                 width: 375.0,
                 height: 667.0,
             },
+            crop_timeout: 15,
         }
     }
 }

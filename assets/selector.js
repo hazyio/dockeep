@@ -1,5 +1,5 @@
 (function() {
-    window.__dockeep_selection = null;
+    window.__dockeep_selection_0replace_key0 = null;
 
     const overlay = document.createElement('div');
     Object.assign(overlay.style, {
@@ -93,7 +93,7 @@
         btnWrap.appendChild(btn);
         btn.addEventListener('click', () => {
             const rect = box.getBoundingClientRect();
-            window.__dockeep_selection = {
+            window.__dockeep_selection_0replace_key0 = {
                 x: rect.left, y: rect.top,
                 width: rect.width, height: rect.height
             };

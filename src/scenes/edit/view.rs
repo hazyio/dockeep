@@ -101,26 +101,62 @@ impl EditPage {
         entity: &Entity<ImageView>,
         cx: &mut Context<Self>,
     ) -> Subscription {
-        cx.subscribe(entity, |this, _, event: &ImageViewEvents, cx| match event {
-            ImageViewEvents::Edit(path) => {
-                tracing::debug!("Editing Image: {:?}", path);
-                this.browser_action.update(cx, |action, cx| {
-                    action.queue_replace_path(path.clone());
+        cx.subscribe(
+            entity,
+            |this, image_view, event: &ImageViewEvents, cx| match event {
+                ImageViewEvents::Replace(path) => {
+                    tracing::debug!("Editing Image: {:?}", path);
+                    if let Some(active_replace) =
+                        this.items.iter().find(|item| item.read(cx).is_replacing)
+                    {
+                        // remove the active replace path
+                        active_replace.update(cx, |item, cx| {
+                            item.is_replacing = false;
+                            cx.notify();
+                        });
+                    };
+                    this.browser_action.update(cx, |action, cx| {
+                        action.queue_replace_path(path.clone());
+                        cx.notify();
+                    });
+                    image_view.update(cx, |item, cx| {
+                        item.is_replacing = true;
+                        cx.notify();
+                    });
+
                     cx.notify();
-                });
-                cx.notify();
-            }
-            ImageViewEvents::OpenInFullscreen(path) => {
-                tracing::debug!("Opening Image in Fullscreen: {:?}", path);
-                this.show_image_full_view = Some(path.clone());
-                cx.notify();
-            }
-            ImageViewEvents::Delete(path) => {
-                tracing::debug!("Deleting Image: {:?}", path);
-                this.items.retain(|item| item.read(cx).path != *path);
-                cx.notify();
-            }
-        })
+                }
+                ImageViewEvents::OpenInFullscreen(path) => {
+                    tracing::debug!("Opening Image in Fullscreen: {:?}", path);
+                    this.show_image_full_view = Some(path.clone());
+                    cx.notify();
+                }
+                ImageViewEvents::Delete(path) => {
+                    tracing::debug!("Deleting Image: {:?}", path);
+                    this.items.retain(|item| item.read(cx).path != *path);
+                    this.browser_action.update(cx, |action, cx| {
+                        // cancel replace if the path matches
+                        if let Some(replace_path) = &action.replace_path {
+                            if replace_path.as_os_str() == path.as_os_str() {
+                                action.cancel_replace();
+                            }
+                        }
+                        cx.notify();
+                    });
+                    cx.notify();
+                }
+                ImageViewEvents::CancelReplace => {
+                    this.browser_action.update(cx, |action, cx| {
+                        action.cancel_replace();
+                        cx.notify();
+                    });
+                    image_view.update(cx, |item, cx| {
+                        item.is_replacing = false;
+                        cx.notify();
+                    });
+                }
+            },
+        )
     }
     fn build_image_entity(
         &mut self,

@@ -4,19 +4,23 @@ use std::sync::Arc;
 
 use gpui_kit::component::button::Button;
 use gpui_kit::component::*;
+use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
 use crate::utils::app_icons::AppIcons;
 use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
-    Edit(PathBuf),
+    Replace(PathBuf),
     OpenInFullscreen(PathBuf),
     Delete(PathBuf),
+    CancelReplace,
 }
 
 pub struct ImageView {
     pub path: PathBuf,
     pub index: usize,
+    pub is_replacing: bool,
+
     image_cache: Entity<RetainAllImageCache>,
 }
 
@@ -26,6 +30,7 @@ impl ImageView {
             path,
             index,
             image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
+            is_replacing: false,
         }
     }
 }
@@ -56,6 +61,7 @@ impl Render for ImageView {
             .bg(cx.theme().muted)
             .rounded_md()
             .border_1()
+            .when(self.is_replacing, |d| d.border_color(cx.theme().red))
             .child(
                 img(path.clone())
                     .image_cache(&self.image_cache)
@@ -81,14 +87,26 @@ impl Render for ImageView {
                             .gap_3()
                             .justify_end()
                             .child(
-                                Button::new(format!("edit-image-{}", self.index))
-                                    .child(AppIcons::Pencil)
-                                    .on_click(cx.listener(|this, _, _, cx| {
-                                        let path = this.path.clone();
-                                        tracing::debug!("Edit Image: {:?}", path);
-                                        cx.emit(ImageViewEvents::Edit(path));
-                                    }))
-                                    .tooltip(t!("label.edit_image")),
+                                Button::new(format!("replace-image-{}", self.index))
+                                    .when(!self.is_replacing, |button| {
+                                        button
+                                            .child(AppIcons::Replace)
+                                            .on_click(cx.listener(|this, _, _, cx| {
+                                                let path = this.path.clone();
+                                                tracing::debug!("Replace Image: {:?}", path);
+
+                                                cx.emit(ImageViewEvents::Replace(path));
+                                            }))
+                                            .tooltip(t!("label.replace_image"))
+                                    })
+                                    .when(self.is_replacing, |button| {
+                                        button
+                                            .child(AppIcons::Close)
+                                            .on_click(cx.listener(|_, _, _, cx| {
+                                                cx.emit(ImageViewEvents::CancelReplace);
+                                            }))
+                                            .tooltip(t!("label.cancel_replace"))
+                                    }),
                             )
                             .child(
                                 Button::new(format!("view-image-{}", self.index))

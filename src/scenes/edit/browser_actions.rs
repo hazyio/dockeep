@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use futures::channel::oneshot;
 use gpui_kit::component::button::Button;
@@ -14,6 +16,7 @@ use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 use crate::utils::app_config::AppConfig;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files::save_screenshot;
+use crate::utils::random::random_string;
 use gpui_kit::component::WindowExt;
 #[derive(Debug, Clone, PartialEq)]
 pub enum BrowserActionsState {
@@ -51,7 +54,7 @@ pub struct BrowserActions {
     state: BrowserActionsState,
     browser: Option<Arc<Browser>>,
     working_dir: PathBuf,
-    replace_path: Option<PathBuf>,
+    pub replace_path: Option<PathBuf>,
     taking_cropped: bool,
 }
 impl EventEmitter<BrowserActionsEvents> for BrowserActions {}
@@ -266,85 +269,29 @@ impl BrowserActions {
     pub fn queue_replace_path(&mut self, path: PathBuf) {
         self.replace_path = Some(path);
     }
-    fn end_capture_cropped(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+    pub fn cancel_replace(&mut self) {
+        self.replace_path = None;
+    }
 
+    fn start_capture_cropped(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let replace_path = self.replace_path.clone();
         let working_dir = self.working_dir.clone();
-        self.get_active_tab(window, cx, move |tab, _, cx| {
+        let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+        self.get_active_tab(window, cx, move |tab, window, cx| {
             let replace_path = replace_path.clone();
             let working_dir = working_dir.clone();
             let entity = entity.clone();
-
-            cx.spawn(async move |cx| {
-                let update = entity.update(cx, |this, cx| {
-                    let Ok(result) =
-                        tab.evaluate("JSON.stringify(window.__dockeep_selection)", false)
-                    else {
-                        // selection is not available, stop taking cropped
-                        this.taking_cropped = false;
-                        tracing::error!(
-                            "failed to evaluate window.__dockeep_selection: Failed to get"
-                        );
-                        return;
-                    };
-                    let Some(json_str) = result.value.and_then(|v| v.as_str().map(String::from))
-                    else {
-                        this.taking_cropped = false;
-                        tracing::error!("window.__dockeep_selection is undefined/null");
-                        return;
-                    };
-                    tracing::trace!("result: {:?}", json_str);
-
-                    let Ok(selection) = serde_json::from_str::<serde_json::Value>(&json_str) else {
-                        this.taking_cropped = false;
-                        tracing::error!("failed to parse selection json");
-                        return;
-                    };
-                    if selection["x"].as_f64().is_none() {
-                        // no need to capture if selection is invalid, this will also work as a cancel
-                        this.taking_cropped = false;
-                        return;
-                    }
-                    tracing::trace!("selection: {:?}", selection);
-                    let clip = Page::Viewport {
-                        x: selection["x"].as_f64().unwrap(),
-                        y: selection["y"].as_f64().unwrap(),
-                        width: selection["width"].as_f64().unwrap(),
-                        height: selection["height"].as_f64().unwrap(),
-                        scale: 1.0,
-                    };
-
-                    let capture_data = Self::capture_screenshot(&tab, Some(clip));
-                    let saved = save_screenshot(capture_data, replace_path, working_dir.clone());
-                    this.taking_cropped = false;
-
-                    if saved.saved {
-                        if saved.is_replaced {
-                            this.replace_path = None;
-
-                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
-                        } else {
-                            cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
-                        }
-                    }
-                    cx.notify();
-                });
-                if let Err(err) = update {
-                    tracing::error!("failed to update browser actions: {:?}", err);
-                };
-            })
-            .detach();
-        });
-    }
-    fn start_capture_cropped(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
-        self.get_active_tab(window, cx, move |tab, window, cx| {
-            let entity = entity.clone();
+            // generate a random key for this capture session
+            let key = random_string(32);
+            let full_evaluation = format!("window.__dockeep_selection_{}", key);
             // bring tab into focus
             let _ = tab.bring_to_front();
             // inject the selector overlay
-            let inject = tab.evaluate(include_str!("../../../assets/selector.js"), false);
+            let inject = tab.evaluate(
+                &include_str!("../../../assets/selector.js")
+                    .replace("0replace_key0", key.clone().as_str()),
+                false,
+            );
             if let Err(e) = inject {
                 tracing::error!("Failed to inject selection overlay: {}", e);
                 window.push_notification(t!("error.failed_to_inject_selector"), cx);
@@ -355,6 +302,98 @@ impl BrowserActions {
                     this.taking_cropped = true;
                     cx.notify();
                 });
+                let m_tab = tab.clone();
+                let m_full_evaluation = full_evaluation.clone();
+                // listen for selection update
+                let selection = cx
+                    .background_spawn(async move {
+                        let started_at = Instant::now();
+                        let crop_timeout = AppConfig::load().capture_setting.crop_timeout;
+                        tracing::info!("waiting for selector {}", m_full_evaluation.clone());
+
+                        let rr = loop {
+                            if Instant::now() - started_at > Duration::from_secs(crop_timeout) {
+                                tracing::error!("Timed out waiting for selector");
+                                break Err(anyhow::anyhow!("Timed out waiting for selector"));
+                            }
+                            match m_tab.evaluate(
+                                &format!("JSON.stringify({})", m_full_evaluation.clone()),
+                                false,
+                            ) {
+                                Ok(result) => {
+                                    // parse selection
+                                    let Some(json_str) =
+                                        result.value.and_then(|v| v.as_str().map(String::from))
+                                    else {
+                                        // continue if result is undefined/null
+                                        tracing::debug!("{} is undefined/null", m_full_evaluation);
+                                        thread::sleep(Duration::from_millis(100));
+                                        continue;
+                                    };
+
+                                    let Ok(selection) =
+                                        serde_json::from_str::<serde_json::Value>(&json_str)
+                                    else {
+                                        break Err(anyhow::anyhow!(
+                                            "failed to parse selection json"
+                                        ));
+                                    };
+                                    if selection["x"].as_f64().is_none() {
+                                        // continue if selection is not available
+                                        tracing::error!("{} is undefined/null", m_full_evaluation);
+                                        thread::sleep(Duration::from_millis(100));
+                                        continue;
+                                    }
+                                    tracing::info!("Found selector, closing loop, {:?}", selection);
+                                    break Ok(selection);
+                                }
+                                Err(err) => {
+                                    tracing::error!(
+                                        "failed to evaluate {}: Failed to get {:?}",
+                                        m_full_evaluation,
+                                        err
+                                    );
+                                    break Err(anyhow::anyhow!(
+                                        "failed to evaluate {}",
+                                        m_full_evaluation
+                                    ));
+                                }
+                            }
+                        };
+                        rr
+                    })
+                    .await;
+                let Ok(selection) = selection else {
+                    // selection is not available, stop taking cropped
+                    tracing::error!("failed to get value for {}", full_evaluation.clone());
+                    return;
+                };
+
+                let clip = Page::Viewport {
+                    x: selection["x"].as_f64().unwrap(),
+                    y: selection["y"].as_f64().unwrap(),
+                    width: selection["width"].as_f64().unwrap(),
+                    height: selection["height"].as_f64().unwrap(),
+                    scale: 1.0,
+                };
+
+                let capture_data = Self::capture_screenshot(&tab, Some(clip));
+                let saved = save_screenshot(capture_data, replace_path, working_dir.clone());
+
+                let update = entity.update(cx, |_, cx| {
+                    if saved.saved {
+                        if saved.is_replaced {
+                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
+                        } else {
+                            cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
+                        }
+                    }
+                    cx.notify();
+                });
+                if let Err(err) = update {
+                    // for logging only
+                    tracing::error!("failed to update browser actions: {:?}", err);
+                };
             })
             .detach();
         });
@@ -408,9 +447,8 @@ impl BrowserActions {
                     .await;
                 let saved = save_screenshot(result, replace_path, working_dir.clone());
                 if saved.saved {
-                    if let Err(e) = entity.update(cx, |this, cx| {
+                    if let Err(e) = entity.update(cx, |_, cx| {
                         if saved.is_replaced {
-                            this.replace_path = None;
                             cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
                         } else {
                             cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
@@ -434,6 +472,14 @@ impl Render for BrowserActions {
             .justify_end()
             .text_2xl()
             .gap_2()
+            .when_some(self.replace_path.clone(), |cx, value| {
+                cx.child(
+                    Button::new("replace-path")
+                        .text_color(element_cx.theme().yellow)
+                        .child(AppIcons::SquareExclamationPoint)
+                        .tooltip(t!("label.replacing_path", path = value.to_string_lossy())),
+                )
+            })
             .when(self.state == BrowserActionsState::Stopped, |cx| {
                 cx.child(
                     Button::new("start-browser")
@@ -442,18 +488,6 @@ impl Render for BrowserActions {
                         .tooltip(t!("label.start_browser"))
                         .on_click(element_cx.listener(|this, _, window, cx| {
                             this.start(window, cx);
-                        })),
-                )
-            })
-            .when_some(self.replace_path.clone(), |cx, value| {
-                cx.child(
-                    Button::new("replace-path")
-                        .text_color(element_cx.theme().yellow)
-                        .child(AppIcons::SquareExclamationPoint)
-                        .tooltip(t!("label.replacing_path", path = value.to_string_lossy()))
-                        .on_click(element_cx.listener(|this, _, _, cx| {
-                            this.replace_path = None;
-                            cx.notify();
                         })),
                 )
             })
@@ -509,20 +543,10 @@ impl Render for BrowserActions {
                 .child(
                     Button::new("take-end-crop-screenshot")
                         .child(AppIcons::Crop)
-                        .when(!self.taking_cropped, |cx| {
-                            cx.tooltip(t!("label.take_crop_screenshot")).on_click(
-                                element_cx.listener(|this, _, window, cx| {
-                                    this.start_capture_cropped(window, cx);
-                                }),
-                            )
-                        })
-                        .when(self.taking_cropped, |cx| {
-                            cx.tooltip(t!("label.capturing_crop"))
-                                .text_color(element_cx.theme().yellow)
-                                .on_click(element_cx.listener(|this, _, window, cx| {
-                                    this.end_capture_cropped(window, cx);
-                                }))
-                        }),
+                        .tooltip(t!("label.take_crop_screenshot"))
+                        .on_click(element_cx.listener(|this, _, window, cx| {
+                            this.start_capture_cropped(window, cx);
+                        })),
                 )
             })
     }

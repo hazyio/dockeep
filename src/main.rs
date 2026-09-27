@@ -39,8 +39,10 @@ fn main() {
                         window_decorations: Some(WindowDecorations::Client), // no WM frame
                         titlebar: Some(TitlebarOptions {
                             title: Some(SharedString::new("DocKeep")),
+
                             ..Default::default()
                         }),
+                        is_resizable: true,
                         ..Default::default()
                     },
                     |window, cx| {

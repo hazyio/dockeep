@@ -85,6 +85,38 @@ impl CapturePage {
                     ))
                     .item(
                         SettingItem::new(
+                            t!("label.crop_timeout"),
+                            SettingField::number_input(
+                                NumberFieldOptions {
+                                    min: 0.0,
+                                    max: 5400.0,
+                                    step: 1.0,
+                                },
+                                {
+                                    let debouncer = debouncer.clone();
+                                    move |_: &App| {
+                                        debouncer.config.borrow().capture_setting.crop_timeout
+                                            as f64
+                                    }
+                                },
+                                {
+                                    let debouncer = debouncer.clone();
+                                    move |val: f64, cx: &mut App| {
+                                        debouncer
+                                            .config
+                                            .borrow_mut()
+                                            .capture_setting
+                                            .crop_timeout = val as u64;
+                                        debouncer.schedule(cx);
+                                    }
+                                },
+                            )
+                            .default_value(capture_setting_defaults.crop_timeout as f64),
+                        )
+                        .description(t!("description.crop_timeout").to_string()),
+                    )
+                    .item(
+                        SettingItem::new(
                             t!("label.quality"),
                             SettingField::number_input(
                                 NumberFieldOptions {

@@ -25,6 +25,8 @@ pub enum AppIcons {
     Undo2,
     ChevronRight,
     RefreshCw,
+    Replace,
+    SlidersHorizontal,
 }
 
 impl RenderOnce for AppIcons {
@@ -56,6 +58,8 @@ impl RenderOnce for AppIcons {
             AppIcons::Undo2 => Icon::default().path("undo-2.svg"),
             AppIcons::ChevronRight => Icon::default().path("chevron-right.svg"),
             AppIcons::RefreshCw => Icon::default().path("refresh-cw.svg"),
+            AppIcons::Replace => Icon::default().path("replace.svg"),
+            AppIcons::SlidersHorizontal => Icon::default().path("sliders-horizontal.svg"),
         }
     }
 }

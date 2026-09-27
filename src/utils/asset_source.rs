@@ -92,6 +92,8 @@ impl Assets {
                 "refresh-cw.svg",
                 include_bytes!("../../assets/svg/refresh-cw.svg"),
             ),
+            ("replace.svg", include_bytes!("../../assets/svg/replace.svg")),
+            ("sliders-horizontal.svg", include_bytes!("../../assets/svg/sliders-horizontal.svg")),
         ]
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {
