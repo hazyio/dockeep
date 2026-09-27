@@ -1,10 +1,73 @@
+use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 
 use crate::utils::{app_theme::AppTheme, lanuages::Languages};
-
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum ImageFormat {
+    #[default]
+    Png,
+    Jpeg,
+    Webp,
+}
+impl ImageFormat {
+    pub fn to_cdp_format(&self) -> CaptureScreenshotFormatOption {
+        match self {
+            ImageFormat::Png => CaptureScreenshotFormatOption::Png,
+            ImageFormat::Jpeg => CaptureScreenshotFormatOption::Jpeg,
+            ImageFormat::Webp => CaptureScreenshotFormatOption::Webp,
+        }
+    }
+    pub fn all() -> &'static [ImageFormat] {
+        &[ImageFormat::Png, ImageFormat::Jpeg, ImageFormat::Webp]
+    }
+    pub fn to_value(&self) -> &str {
+        match self {
+            ImageFormat::Png => "png",
+            ImageFormat::Jpeg => "jpeg",
+            ImageFormat::Webp => "webp",
+        }
+    }
+    pub fn from_value(value: &str) -> ImageFormat {
+        match value {
+            "png" => ImageFormat::Png,
+            "jpeg" => ImageFormat::Jpeg,
+            "webp" => ImageFormat::Webp,
+            _ => ImageFormat::Png,
+        }
+    }
+    pub fn to_string(&self) -> String {
+        self.to_value().to_uppercase()
+    }
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureSetting {
+    pub quality: u8,
+    pub capture_from_surface: bool,
+    pub image_format: ImageFormat,
+    pub mobile_capture_sizing: CaptureSizing,
+    pub desktop_capture_sizing: CaptureSizing,
+}
+impl Default for CaptureSetting {
+    fn default() -> Self {
+        Self {
+            quality: 100,
+            capture_from_surface: true,
+            image_format: ImageFormat::Png,
+            desktop_capture_sizing: CaptureSizing {
+                width: 1920.0,
+                height: 1080.0,
+            },
+            mobile_capture_sizing: CaptureSizing {
+                width: 375.0,
+                height: 667.0,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureSizing {
     pub width: f64,
     pub height: f64,
 }
@@ -14,8 +77,6 @@ pub struct ChromeConfig {
     pub path: String,
     pub use_attach: bool,
     pub attach_port: u16,
-    pub mobile_capture_setting: CaptureSetting,
-    pub desktop_capture_setting: CaptureSetting,
 }
 
 fn find_chrome() -> String {
@@ -50,14 +111,6 @@ impl Default for ChromeConfig {
             path: find_chrome(),
             use_attach: false,
             attach_port: 9222,
-            desktop_capture_setting: CaptureSetting {
-                width: 1920.0,
-                height: 1080.0,
-            },
-            mobile_capture_setting: CaptureSetting {
-                width: 375.0,
-                height: 667.0,
-            },
         }
     }
 }
@@ -67,6 +120,7 @@ pub struct AppConfig {
     pub theme: AppTheme,
     pub language: Languages,
     pub chrome_config: ChromeConfig,
+    pub capture_setting: CaptureSetting,
 }
 
 impl AppConfig {

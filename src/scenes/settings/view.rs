@@ -1,4 +1,5 @@
 use crate::components::window_decor::WindowDecor;
+use crate::scenes::settings::capture_page::CapturePage;
 use crate::scenes::settings::chrome_page::ChromePage;
 use crate::scenes::settings::general_page::GeneralPage;
 use crate::utils::{app_config::AppConfig, save_debouncer::SaveDebouncer};
@@ -23,7 +24,6 @@ impl SettingsPage {
 impl Render for SettingsPage {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         let debouncer = self.debouncer.clone();
-        let default_config = self.default_config.clone();
 
         div()
             .v_flex()
@@ -33,8 +33,9 @@ impl Render for SettingsPage {
             .child(
                 Settings::new("my-settings")
                     .with_group_variant(GroupBoxVariant::Fill)
-                    .page(GeneralPage::page(debouncer.clone()))
-                    .page(ChromePage::page(debouncer, &default_config)),
+                    .page(GeneralPage::page(debouncer.clone(), &self.default_config))
+                    .page(ChromePage::page(debouncer.clone(), &self.default_config))
+                    .page(CapturePage::page(debouncer, &self.default_config)),
             )
     }
 }

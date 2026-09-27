@@ -7,7 +7,7 @@
     });
     document.body.appendChild(overlay);
 
-    let startX, startY, box, widthLabel, heightLabel, isDrawing = false;
+    let box, widthLabel, heightLabel;
 
     function cleanup() {
         if (box) { box.remove(); box = null; }
@@ -18,6 +18,42 @@
     function reset() {
         cleanup();
         overlay.remove();
+    }
+
+    function initBox() {
+        const w = Math.round(window.innerWidth  * 0.5);
+        const h = Math.round(window.innerHeight * 0.5);
+        const x = Math.round((window.innerWidth  - w) / 2);
+        const y = Math.round((window.innerHeight - h) / 2);
+
+        box = document.createElement('div');
+        Object.assign(box.style, {
+            position: 'fixed', border: '2px dashed red',
+            background: 'rgba(255,0,0,0.1)', zIndex: 2147483647,
+            overflow: 'visible', boxSizing: 'border-box',
+            left: x + 'px', top: y + 'px',
+            width: w + 'px', height: h + 'px'
+        });
+        document.body.appendChild(box);
+
+        const labelStyle = {
+            position: 'fixed', background: 'rgba(0,0,0,0.65)', color: '#fff',
+            font: 'bold 11px monospace', padding: '1px 4px', borderRadius: '3px',
+            pointerEvents: 'none', zIndex: 2147483647, whiteSpace: 'nowrap'
+        };
+        widthLabel = document.createElement('div');
+        Object.assign(widthLabel.style, labelStyle);
+        document.body.appendChild(widthLabel);
+
+        heightLabel = document.createElement('div');
+        Object.assign(heightLabel.style, labelStyle);
+        document.body.appendChild(heightLabel);
+
+        updateLabels();
+        addBoxControls();
+
+        overlay.style.pointerEvents = 'none';
+        overlay.style.cursor = 'default';
     }
 
     document.addEventListener('keydown', e => {
@@ -35,49 +71,7 @@
         heightLabel.style.top  = (y + h / 2 - heightLabel.offsetHeight / 2) + 'px';
     }
 
-    // ── Drawing phase ────────────────────────────────────────────────────────
-    overlay.addEventListener('mousedown', e => {
-        isDrawing = true;
-        startX = e.clientX; startY = e.clientY;
-
-        box = document.createElement('div');
-        Object.assign(box.style, {
-            position: 'fixed', border: '2px dashed red',
-            background: 'rgba(255,0,0,0.1)', zIndex: 2147483647,
-            overflow: 'visible', boxSizing: 'border-box'
-        });
-        document.body.appendChild(box);
-
-        const labelStyle = {
-            position: 'fixed', background: 'rgba(0,0,0,0.65)', color: '#fff',
-            font: 'bold 11px monospace', padding: '1px 4px', borderRadius: '3px',
-            pointerEvents: 'none', zIndex: 2147483647, whiteSpace: 'nowrap'
-        };
-        widthLabel = document.createElement('div');
-        Object.assign(widthLabel.style, labelStyle);
-        document.body.appendChild(widthLabel);
-
-        heightLabel = document.createElement('div');
-        Object.assign(heightLabel.style, labelStyle);
-        document.body.appendChild(heightLabel);
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (!box || !isDrawing) return;
-        const x = Math.min(e.clientX, startX), y = Math.min(e.clientY, startY);
-        const w = Math.abs(e.clientX - startX), h = Math.abs(e.clientY - startY);
-        box.style.left = x + 'px'; box.style.top = y + 'px';
-        box.style.width = w + 'px'; box.style.height = h + 'px';
-        updateLabels();
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (!isDrawing) return;
-        isDrawing = false;
-        overlay.style.pointerEvents = 'none';
-        overlay.style.cursor = 'default';
-        if (!box) return;
-
+    function addBoxControls() {
         // ── Buttons ──────────────────────────────────────────────────────────
         const btnWrap = document.createElement('div');
         Object.assign(btnWrap.style, {
@@ -200,5 +194,7 @@
                 document.body.style.userSelect = '';
             });
         });
-    });
+    }
+
+    initBox();
 })();

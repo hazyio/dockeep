@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
 
 use futures::channel::oneshot;
 use gpui_kit::component::button::Button;
@@ -10,7 +8,7 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use headless_chrome::protocol::cdp::Emulation::{self};
-use headless_chrome::protocol::cdp::Page::{self, CaptureScreenshotFormatOption};
+use headless_chrome::protocol::cdp::Page::{self};
 use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::utils::app_config::AppConfig;
@@ -27,7 +25,6 @@ pub enum BrowserActionsState {
 enum ScreenshotSize {
     Desktop,
     Mobile,
-    Crop(f64, f64),
 }
 
 impl ScreenshotSize {
@@ -35,14 +32,13 @@ impl ScreenshotSize {
         let config = AppConfig::load();
         match self {
             ScreenshotSize::Desktop => {
-                let desktop = config.chrome_config.desktop_capture_setting;
+                let desktop = config.capture_setting.desktop_capture_sizing;
                 (desktop.width, desktop.height)
             }
             ScreenshotSize::Mobile => {
-                let mobile = config.chrome_config.mobile_capture_setting;
+                let mobile = config.capture_setting.mobile_capture_sizing;
                 (mobile.width, mobile.height)
             }
-            ScreenshotSize::Crop(w, h) => (*w, *h),
         }
     }
 }
@@ -70,9 +66,9 @@ impl BrowserActions {
             taking_cropped: false,
         }
     }
-    fn is_browser_alive(browser: &Browser) -> bool {
-        browser.get_version().is_ok()
-    }
+    // fn is_browser_alive(browser: &Browser) -> bool {
+    //     browser.get_version().is_ok()
+    // }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
             BrowserActionsState::Stopped => {
@@ -258,6 +254,15 @@ impl BrowserActions {
             };
         }
     }
+    fn capture_screenshot(tab: &Tab, clip: Option<Page::Viewport>) -> Result<Vec<u8>> {
+        let app_config = AppConfig::load();
+        tab.capture_screenshot(
+            app_config.capture_setting.image_format.to_cdp_format(),
+            Some(app_config.capture_setting.quality as u32),
+            clip,
+            app_config.capture_setting.capture_from_surface,
+        )
+    }
     pub fn queue_replace_path(&mut self, path: PathBuf) {
         self.replace_path = Some(path);
     }
@@ -296,6 +301,11 @@ impl BrowserActions {
                         tracing::error!("failed to parse selection json");
                         return;
                     };
+                    if selection["x"].as_f64().is_none() {
+                        // no need to capture if selection is invalid, this will also work as a cancel
+                        this.taking_cropped = false;
+                        return;
+                    }
                     tracing::trace!("selection: {:?}", selection);
                     let clip = Page::Viewport {
                         x: selection["x"].as_f64().unwrap(),
@@ -304,12 +314,8 @@ impl BrowserActions {
                         height: selection["height"].as_f64().unwrap(),
                         scale: 1.0,
                     };
-                    let capture_data = tab.capture_screenshot(
-                        CaptureScreenshotFormatOption::Png,
-                        Some(100),
-                        Some(clip),
-                        true,
-                    );
+
+                    let capture_data = Self::capture_screenshot(&tab, Some(clip));
                     let saved = save_screenshot(capture_data, replace_path, working_dir.clone());
                     this.taking_cropped = false;
 
@@ -393,12 +399,8 @@ impl BrowserActions {
             cx.spawn(async move |cx| {
                 let result = cx
                     .background_spawn(async move {
-                        let capture_data = tab.capture_screenshot(
-                            CaptureScreenshotFormatOption::Png,
-                            Some(100),
-                            None,
-                            false,
-                        );
+                        let capture_data = Self::capture_screenshot(&tab, None);
+
                         // reset device metrics override
                         let _ = tab.call_method(Emulation::ClearDeviceMetricsOverride(None));
                         capture_data

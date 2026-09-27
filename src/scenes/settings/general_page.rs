@@ -9,8 +9,8 @@ use crate::utils::{
 pub struct GeneralPage {}
 
 impl GeneralPage {
-    pub fn page(debouncer: SaveDebouncer) -> SettingPage {
-        let app_config_default = AppConfig::default();
+    pub fn page(debouncer: SaveDebouncer, default_config: &AppConfig) -> SettingPage {
+        let app_config_default = default_config.clone();
 
         SettingPage::new(t!("title.general"))
             .resettable(true)

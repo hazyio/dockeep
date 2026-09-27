@@ -132,7 +132,6 @@ impl Render for HomePage {
         } else {
             3
         };
-        let app = self.app.clone();
 
         let dialog_layer = Root::render_dialog_layer(window, element_cx);
 

@@ -10,10 +10,16 @@ title:
   add_new_project: Add New Project
   chrome: Chrome
   use_settings: Attach Settings
-  desktop_capture_settings: Desktop Capture Settings
-  mobile_capture_settings: Mobile Capture Settings
+  desktop_capture_settings: Desktop Capture
+  mobile_capture_settings: Mobile Capture
+  capture: Capture
+  screenshot_settings: Screenshot
+  capture_from_surface: Capture From Surface
+
 label:
   chrome_path: Chrome Executable Path
+  format: Format
+  quality: Quality
   width: Width
   height: Height
   path: Path
@@ -67,6 +73,8 @@ description:
   min_height: Height must be greater than %{min}.
   min_width: Width must be greater than %{min}.
   min_port: Port must be greater than %{min}.
+  min_quality: Quality must be greater than %{min}.
+  capture_from_surface: Captures the page's rendered content directly (recommended) instead of the raw OS window surface.
 dialog:
   select_tab: Select a Tab
   delete_title: Delete project?
