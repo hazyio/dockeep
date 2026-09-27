@@ -30,7 +30,7 @@ label:
   not_repo: 非 Git 仓库
   clean: 干净
   dirty: 有未提交更改
-  last_accessed: 上次访问 %{datetime}
+  last_accessed_datetime: 上次访问 %{datetime}
   screenshot_saved: 截图已保存
 dialog:
   select_tab: 选择标签页

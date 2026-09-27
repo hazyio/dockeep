@@ -30,7 +30,7 @@ label:
   not_repo: リポジトリではありません
   clean: クリーン
   dirty: 変更あり
-  last_accessed: 最終アクセス日時 %{datetime}
+  last_accessed_datetime: 最終アクセス日時 %{datetime}
   screenshot_saved: スクリーンショットを保存しました
 dialog:
   select_tab: タブを選択

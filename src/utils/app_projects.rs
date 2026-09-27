@@ -21,11 +21,11 @@ pub struct AppProjectInfo {
     /// Unix timestamp (seconds since epoch) when the project was added.
     /// Defaults to 0 (the Unix epoch) when not present in stored data.
     #[serde(default)]
-    pub last_accessed: u64,
+    pub last_accessed_datetime: u64,
 }
 
 impl AppProjectInfo {
-    /// Updates `last_accessed` for this project in persistent storage.
+    /// Updates `last_accessed_datetime` for this project in persistent storage.
     /// Loads all projects, patches the matching entry by path, and saves.
     /// Errors are logged as warnings and never propagate to the caller.
     pub fn update_lastaccess(&self) {
@@ -36,7 +36,7 @@ impl AppProjectInfo {
             return;
         }
         if let Some(p) = projects.iter_mut().find(|p| p.path == self.path) {
-            p.last_accessed = now;
+            p.last_accessed_datetime = now;
         }
         if let Err(e) = (AppProjects { projects }).save() {
             tracing::warn!("update_lastaccess: failed to save projects: {e}");

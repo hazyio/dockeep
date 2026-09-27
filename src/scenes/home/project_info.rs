@@ -25,7 +25,7 @@ pub struct ProjectInfo {
     pub name: String,
     pub path: PathBuf,
     pub repo_info: Option<GitRepoInfo>,
-    pub last_accessed: String,
+    pub last_accessed_datetime: String,
 }
 impl EventEmitter<ProjectInfoEvent> for ProjectInfo {}
 
@@ -148,12 +148,12 @@ impl ProjectInfo {
         let name = self.name.clone();
         let path = self.path.clone();
         let index = self.index.clone();
-        let last_accessed = self.last_accessed.clone();
+        let last_accessed_datetime = self.last_accessed_datetime.clone();
         let app = self.app.clone();
         let project_info = AppProjectInfo {
             name: self.name.clone(),
             path: self.path.to_string_lossy().to_string(),
-            last_accessed: 0,
+            last_accessed_datetime: 0,
         };
         div()
             .p_2()
@@ -182,7 +182,7 @@ impl ProjectInfo {
                             .p_2()
                             .child(AppIcons::RotateCcwClock)
                             .child(
-                                Label::new(t!("label.last_accessed", datetime = last_accessed))
+                                Label::new(t!("label.last_accessed_datetime", datetime = last_accessed_datetime))
                                     .text_sm(),
                             )
                             .bg(cx.theme().background)

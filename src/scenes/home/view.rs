@@ -10,6 +10,8 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rust_i18n::t;
 
+use crate::components::sort_button::SortButton;
+use crate::components::sort_button::SortButtonEvent;
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
 use crate::scenes::home::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
@@ -20,6 +22,7 @@ use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
 use crate::utils::git::get_git_repo_info;
 use crate::utils::prelude::to_human_datetime;
+
 pub struct HomePage {
     app: WeakEntity<MyApp>,
     search: Entity<InputState>,
@@ -27,8 +30,10 @@ pub struct HomePage {
     projects: Vec<Entity<ProjectInfo>>,
     error: Option<Error>,
     add_project_dialog: Entity<AddProjectDialog>,
+    sort_button: Entity<SortButton>,
     _project_saved_subscription: Subscription,
     _project_delete_subscriptions: Vec<Subscription>,
+    _sort_button_subscription: Subscription,
 }
 
 impl HomePage {
@@ -53,6 +58,10 @@ impl HomePage {
                 }
             },
         );
+        // Sort button
+        let sort_button = cx.new(|_| SortButton::new());
+        let _sort_button_subscription =
+            Self::build_sort_button_subscription(&sort_button, window, cx);
 
         Self {
             app,
@@ -63,7 +72,25 @@ impl HomePage {
             add_project_dialog: add_project_dialog,
             _project_saved_subscription,
             _project_delete_subscriptions: Vec::new(),
+            _sort_button_subscription,
+            sort_button,
         }
+    }
+    fn build_sort_button_subscription(
+        entity: &Entity<SortButton>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe_in(
+            entity,
+            window,
+            move |_this, _button, event: &SortButtonEvent, window, cx| match event {
+                SortButtonEvent::SortNameAscending => {}
+                SortButtonEvent::SortNameDescending => {}
+                SortButtonEvent::SortLastAccessedAscending => {}
+                SortButtonEvent::SortLastAccessedDescending => {}
+            },
+        )
     }
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
@@ -85,7 +112,9 @@ impl HomePage {
                             name: project.name.clone(),
                             repo_info: get_git_repo_info(&path),
                             path,
-                            last_accessed: to_human_datetime(project.last_accessed),
+                            last_accessed_datetime: to_human_datetime(
+                                project.last_accessed_datetime,
+                            ),
                         }
                     })
                 })
@@ -139,6 +168,8 @@ impl Render for HomePage {
         let loading = self.loading;
         let search = self.search.clone();
         let add_project_dialog = self.add_project_dialog.clone();
+        let sort_button = self.sort_button.clone();
+
         let error = self.error.as_ref().map(|error| error.to_string());
         let query = self.search.read(element_cx).value().to_lowercase();
         let project_to_show: Vec<_> = self
@@ -206,15 +237,7 @@ impl Render for HomePage {
                                         Self::load_projects(this.app.clone(), cx);
                                     })),
                             )
-                            .child(
-                                Popover::new("sort-projects-popover")
-                                    .trigger(
-                                        Button::new("sort-projects")
-                                            .child(AppIcons::SlidersHorizontal),
-                                    )
-                                    .child("Hello, this is a popover!")
-                                    .child("It appears when you click the button."),
-                            ),
+                            .child(sort_button),
                     )
                     .size_full()
                     .child(

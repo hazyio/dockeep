@@ -27,6 +27,9 @@ pub enum AppIcons {
     RefreshCw,
     Replace,
     SlidersHorizontal,
+    ArrowUpWideNarrow,
+    ListSortAscending,
+    ListSortDescending,
 }
 
 impl RenderOnce for AppIcons {
@@ -60,6 +63,9 @@ impl RenderOnce for AppIcons {
             AppIcons::RefreshCw => Icon::default().path("refresh-cw.svg"),
             AppIcons::Replace => Icon::default().path("replace.svg"),
             AppIcons::SlidersHorizontal => Icon::default().path("sliders-horizontal.svg"),
+            AppIcons::ArrowUpWideNarrow => Icon::default().path("arrow-up-wide-narrow.svg"),
+            AppIcons::ListSortAscending => Icon::default().path("list-sort-ascending.svg"),
+            AppIcons::ListSortDescending => Icon::default().path("list-sort-descending.svg"),
         }
     }
 }
