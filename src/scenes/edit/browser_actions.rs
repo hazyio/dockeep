@@ -13,7 +13,7 @@ use headless_chrome::protocol::cdp::Emulation::{self};
 use headless_chrome::protocol::cdp::Page::{self};
 use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
-use crate::utils::app_config::AppConfig;
+use crate::config::AppConfig;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files::save_screenshot;
 use crate::utils::random::random_string;

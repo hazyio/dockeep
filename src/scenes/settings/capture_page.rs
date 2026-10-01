@@ -5,9 +5,9 @@ use gpui_kit::{
     },
 };
 
-use crate::utils::{
-    app_config::{AppConfig, ImageFormat},
-    save_debouncer::SaveDebouncer,
+use crate::{
+    config::{AppConfig, ImageFormat},
+    utils::save_debouncer::SaveDebouncer,
 };
 pub struct CapturePage {}
 

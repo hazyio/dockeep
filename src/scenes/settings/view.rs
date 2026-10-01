@@ -1,8 +1,10 @@
 use crate::components::window_decor::WindowDecor;
+use crate::config::AppConfig;
 use crate::scenes::settings::capture_page::CapturePage;
 use crate::scenes::settings::chrome_page::ChromePage;
 use crate::scenes::settings::general_page::GeneralPage;
-use crate::utils::{app_config::AppConfig, save_debouncer::SaveDebouncer};
+use crate::scenes::settings::git_page::GitPage;
+use crate::utils::save_debouncer::SaveDebouncer;
 use gpui_kit::component::group_box::GroupBoxVariant;
 use gpui_kit::component::setting::Settings;
 use gpui_kit::component::*;
@@ -35,7 +37,8 @@ impl Render for SettingsPage {
                     .with_group_variant(GroupBoxVariant::Fill)
                     .page(GeneralPage::page(debouncer.clone(), &self.default_config))
                     .page(ChromePage::page(debouncer.clone(), &self.default_config))
-                    .page(CapturePage::page(debouncer, &self.default_config)),
+                    .page(CapturePage::page(debouncer.clone(), &self.default_config))
+                    .page(GitPage::page(debouncer, &self.default_config)),
             )
     }
 }

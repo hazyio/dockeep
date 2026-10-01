@@ -3,8 +3,9 @@ use gpui_kit::{
     component::setting::{SettingField, SettingGroup, SettingItem, SettingPage},
 };
 
-use crate::utils::{
-    app_config::AppConfig, app_theme::AppTheme, lanuages::Languages, save_debouncer::SaveDebouncer,
+use crate::{
+    config::AppConfig,
+    utils::{app_theme::AppTheme, lanuages::Languages, save_debouncer::SaveDebouncer},
 };
 pub struct GeneralPage {}
 

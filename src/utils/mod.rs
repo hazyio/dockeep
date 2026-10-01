@@ -1,4 +1,3 @@
-pub mod app_config;
 pub mod app_icons;
 pub mod app_projects;
 pub mod app_theme;

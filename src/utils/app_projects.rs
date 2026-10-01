@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Error, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::app_config::AppConfig;
+use crate::config::AppConfig;
 use crate::utils::prelude::now_timestamp;
 
 #[derive(Debug)]

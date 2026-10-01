@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use gpui_kit::{App, Task};
 
-use crate::utils::app_config::AppConfig;
+use crate::config::AppConfig;
 
 const DEBOUNCE_MS: u64 = 500;
 

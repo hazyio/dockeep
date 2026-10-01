@@ -1,4 +1,5 @@
 pub mod components;
+pub mod config;
 pub mod scenes;
 pub mod utils;
 use gpui_kit::component::*;
@@ -6,8 +7,9 @@ use gpui_kit::*;
 use tracing_subscriber::EnvFilter;
 
 use crate::{
+    config::AppConfig,
     scenes::{app::MyApp, home::view::HomePage},
-    utils::{app_config::AppConfig, app_theme::AppTheme},
+    utils::app_theme::AppTheme,
 };
 #[macro_use]
 extern crate rust_i18n;
