@@ -1,3 +1,5 @@
+use std::ops::Div;
+
 use anyhow::Error;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::Input;
@@ -222,15 +224,18 @@ impl Render for HomePage {
                     Button::new("back")
                         .ghost()
                         .child(AppIcons::Settings)
-                        .on_click(move |_, _, cx| {
+                        .on_click(move |_, window, cx| {
+                            let win_size = window.bounds().size.div(1.5);                            
                             cx.open_window(
                                 WindowOptions {
+                                    window_bounds: Some(WindowBounds::centered(win_size,&cx)),
                                     window_decorations: Some(WindowDecorations::Client), // no WM frame
                                     titlebar: Some(TitlebarOptions {
                                         title: Some(SharedString::new("DocKeep Settings")),
 
                                         ..Default::default()
                                     }),
+                                    is_resizable: true,
                                     ..Default::default()
                                 },
                                 |window, cx| {

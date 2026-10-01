@@ -1,24 +1,26 @@
 use gpui_kit::component::*;
-use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
+
 #[derive(IntoElement)]
 pub struct WindowDecor {
     title: String,
-    before_decor: Option<AnyElement>,
+    before_decor: Vec<AnyElement>,
 }
+
 impl WindowDecor {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             title: title.into(),
-            before_decor: None,
+            before_decor: Vec::new(),
         }
     }
 
     pub fn before_decor(mut self, el: impl IntoElement) -> Self {
-        self.before_decor = Some(el.into_any_element());
+        self.before_decor.push(el.into_any_element());
         self
     }
 }
+
 impl RenderOnce for WindowDecor {
     fn render(
         self,
@@ -27,6 +29,6 @@ impl RenderOnce for WindowDecor {
     ) -> impl gpui_kit::prelude::IntoElement {
         TitleBar::new()
             .child(div().flex().items_center().child(self.title))
-            .when_some(self.before_decor, |parent, value| parent.child(value))
+            .children(self.before_decor)
     }
 }

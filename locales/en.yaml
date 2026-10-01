@@ -4,7 +4,7 @@ theme:
   ayu_dark: Ayu Dark
 title:
   home: Dockeep Home
-  settings: Settings
+  settings: Dockeep Settings
   appearance: Appearance
   general: General
   add_new_project: Add New Project
@@ -15,8 +15,10 @@ title:
   capture: Capture
   screenshot_settings: Screenshot
   capture_from_surface: Capture From Surface
-
+  git: Git
+  commit: Commit
 label:
+  auto_commit: Auto Commit
   crop_timeout: Crop Timeout
   chrome_path: Chrome Executable Path
   format: Format
