@@ -40,3 +40,4 @@ pub fn get_git_branch(path: &PathBuf) -> Option<String> {
 
     Some(branch)
 }
+ 

@@ -22,6 +22,7 @@ use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
 
 pub struct EditPage {
+    is_git_repo: bool,
     app: WeakEntity<MyApp>,
     loading: bool,
     error: Option<Error>,
@@ -42,6 +43,7 @@ impl EditPage {
         title: String,
         app: WeakEntity<MyApp>,
         cx: &mut Context<Self>,
+        is_git_repo: bool,
     ) -> Self {
         // kick off the background load
         Self::load_project(cx, &path);
@@ -49,6 +51,7 @@ impl EditPage {
         let browser_action = cx.new(move |_| BrowserActions::new(m_path.clone()));
 
         Self {
+            is_git_repo,
             app,
             loading: true,
             error: None,

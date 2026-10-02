@@ -7,7 +7,8 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
-use crate::scenes::app::MyApp;
+use crate::config::AppConfig;
+use crate::scenes::app::{self, MyApp};
 use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjectInfo;
@@ -46,6 +47,30 @@ impl Render for ProjectInfo {
     }
 }
 impl ProjectInfo {
+    fn open_editor(
+        name: String,
+        path: PathBuf,
+        repo_info: Option<GitRepoInfo>,
+        cx: &mut App,
+        app: WeakEntity<MyApp>,
+    ) {
+        let project_info = AppProjectInfo {
+            name: name.clone(),
+            path: path.to_string_lossy().to_string(),
+            last_accessed_datetime: 0,
+        };
+        project_info.update_lastaccess();
+        let is_git_repo = repo_info.is_some();
+        if let Some(app) = app.upgrade() {
+            let settings_view: AnyView = cx
+                .new(|cx| EditPage::new(path.clone(), name, app.downgrade(), cx, is_git_repo))
+                .into();
+            app.update(cx, |app, cx| {
+                app.navigate_to(settings_view, cx);
+            });
+        }
+    }
+
     fn open_delete_dialog(&self, window: &mut Window, cx: &mut Context<Self>) {
         let name = self.name.clone();
         let entity = cx.entity().downgrade();
@@ -156,6 +181,8 @@ impl ProjectInfo {
             path: self.path.to_string_lossy().to_string(),
             last_accessed_datetime: 0,
         };
+        let repo_info = self.repo_info.clone();
+        let is_git_repo = self.repo_info.is_some();
         div()
             .p_2()
             .v_flex()
@@ -183,8 +210,11 @@ impl ProjectInfo {
                             .p_2()
                             .child(AppIcons::RotateCcwClock)
                             .child(
-                                Label::new(t!("label.last_accessed_datetime", datetime = last_accessed_datetime))
-                                    .text_sm(),
+                                Label::new(t!(
+                                    "label.last_accessed_datetime",
+                                    datetime = last_accessed_datetime
+                                ))
+                                .text_sm(),
                             )
                             .bg(cx.theme().background)
                             .rounded_md(),
@@ -213,17 +243,36 @@ impl ProjectInfo {
                         Button::new(format!("open-in-editor-{}", index))
                             .label(t!("label.open_in_editor"))
                             .primary()
-                            .on_click(move |_, _, cx| {
-                                project_info.update_lastaccess();
+                            .on_click(move |_, window, cx| {
+                                let repo_info = repo_info.clone();
+                                let app = app.clone();
                                 let name = name.clone();
                                 let path = path.clone();
-                                if let Some(app) = app.upgrade() {
-                                    let settings_view: AnyView =
-                                        cx.new(|cx| EditPage::new(path.clone(), name, app.downgrade(),cx)).into();
-                                    app.update(cx, |app, cx| {
-                                        app.navigate_to(settings_view, cx);
-                                    });
+
+                                if let Some(repo_info_un) = repo_info {
+                                    let app_config = AppConfig::load();
+                                    let repo_info = repo_info.clone();
+                                    let app = app.clone();
+                                    let name = name.clone();
+                                    let path = path.clone();
+                                    if repo_info_un.dirty && app_config.git_setting.auto_commit {
+                                        window.open_alert_dialog(cx, |alert, _, _| {
+                                            alert
+                                                .title("Delete File")
+                                                .description("Are you sure you want to delete this file? This action cannot be undone.")
+                                                .show_cancel(true)
+                                                .on_ok(|_, window, cx| {
+                                                     Self::open_editor(name.clone(), path.clone(), repo_info, cx, app);
+                                                    true // Return true to close dialog
+                                                })
+                                        });
+                                        return;
+                                    }
+                                } else {
+                                    Self::open_editor(name.clone(), path.clone(), repo_info, cx, app);
+                                    return;
                                 }
+
                             }),
                     ),
             )
