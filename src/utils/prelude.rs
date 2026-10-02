@@ -1,8 +1,39 @@
+use std::ops::Div;
 use std::process::Command;
 use std::{
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use gpui_kit::component::Root;
+use gpui_kit::{
+    App, AppContext, SharedString, TitlebarOptions, Window, WindowBounds, WindowDecorations,
+    WindowOptions,
+};
+
+use crate::scenes::settings::view::{SettingDefaultOpen, SettingsPage};
+
+pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: &mut App) -> bool {
+    let win_size = window.bounds().size.div(1.5);
+    cx.open_window(
+        WindowOptions {
+            window_bounds: Some(WindowBounds::centered(win_size, &cx)),
+            window_decorations: Some(WindowDecorations::Client), // no WM frame
+            titlebar: Some(TitlebarOptions {
+                title: Some(SharedString::new("DocKeep Settings")),
+
+                ..Default::default()
+            }),
+            is_resizable: true,
+            ..Default::default()
+        },
+        |window, cx| {
+            let view = cx.new(|_| SettingsPage::new(default_open));
+            cx.new(|cx| Root::new(view, window, cx).bordered(false))
+        },
+    )
+    .is_ok()
+}
 
 pub fn path_exists_or_none(path: &str) -> Option<PathBuf> {
     let path = Path::new(path);

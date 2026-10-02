@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 
-use crate::utils::{app_theme::AppTheme, lanuages::Languages};
+use crate::{config::GitSetting, utils::{app_theme::AppTheme, lanuages::Languages}};
 
 use super::{capture_setting::CaptureSetting, chrome_config::ChromeConfig};
 
@@ -11,6 +11,7 @@ pub struct AppConfig {
     pub language: Languages,
     pub chrome_config: ChromeConfig,
     pub capture_setting: CaptureSetting,
+    pub git_setting: GitSetting,
 }
 
 impl AppConfig {

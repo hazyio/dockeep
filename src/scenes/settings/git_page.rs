@@ -5,7 +5,7 @@ use gpui_kit::{
 
 use crate::{
     config::AppConfig,
-    utils::{app_theme::AppTheme, lanuages::Languages, save_debouncer::SaveDebouncer},
+    utils::{lanuages::Languages, save_debouncer::SaveDebouncer},
 };
 pub struct GitPage {}
 
@@ -18,61 +18,55 @@ impl GitPage {
                 .title(t!("title.commit"))
                 .item(SettingItem::new(
                     t!("label.auto_commit"),
-                    SettingField::dropdown(
-                        AppTheme::all()
-                            .iter()
-                            .map(|theme| (theme.name().into(), theme.name().into()))
-                            .collect(),
+                    SettingField::switch(
                         {
                             let debouncer = debouncer.clone();
-                            move |_: &App| {
-                                SharedString::from(debouncer.config.borrow().theme.name())
-                            }
+                            move |_: &App| debouncer.config.borrow().git_setting.auto_commit
                         },
                         {
                             let debouncer = debouncer.clone();
-                            move |val: SharedString, cx: &mut App| {
-                                if let Some(theme) =
-                                    AppTheme::all().iter().find(|t| t.name() == val.as_ref())
-                                {
-                                    debouncer.config.borrow_mut().theme = *theme;
-                                    debouncer.schedule(cx);
-                                    theme.switch_to(cx);
-                                }
+                            move |val: bool, cx: &mut App| {
+                                debouncer.config.borrow_mut().git_setting.auto_commit = val;
+                                debouncer.schedule(cx);
                             }
                         },
                     )
-                    .default_value(app_config_default.theme.name()),
+                    .default_value(app_config_default.git_setting.auto_commit),
                 ))
-                .item(SettingItem::new(
-                    t!("label.language"),
-                    SettingField::dropdown(
-                        Languages::all()
-                            .iter()
-                            .map(|lang| (lang.name_short().into(), lang.name_long().into()))
-                            .collect(),
-                        {
-                            let debouncer = debouncer.clone();
-                            move |_: &App| {
-                                SharedString::from(debouncer.config.borrow().language.name_short())
-                            }
-                        },
-                        {
-                            let debouncer = debouncer.clone();
-                            move |val: SharedString, cx: &mut App| {
-                                if let Some(lang) = Languages::all()
-                                    .iter()
-                                    .find(|t| t.name_short() == val.as_ref())
-                                {
-                                    debouncer.config.borrow_mut().language = *lang;
-                                    debouncer.schedule(cx);
-                                    lang.set_for_app(cx);
+                .item(
+                    SettingItem::new(
+                        t!("label.commit_lanuage"),
+                        SettingField::dropdown(
+                            Languages::all()
+                                .iter()
+                                .map(|lang| (lang.name_short().into(), lang.name_long().into()))
+                                .collect(),
+                            {
+                                let debouncer = debouncer.clone();
+                                move |_: &App| {
+                                    SharedString::from(
+                                        debouncer.config.borrow().git_setting.language.name_short(),
+                                    )
                                 }
-                            }
-                        },
+                            },
+                            {
+                                let debouncer = debouncer.clone();
+                                move |val: SharedString, cx: &mut App| {
+                                    if let Some(lang) = Languages::all()
+                                        .iter()
+                                        .find(|t| t.name_short() == val.as_ref())
+                                    {
+                                        debouncer.config.borrow_mut().git_setting.language = *lang;
+                                        debouncer.schedule(cx);
+                                        lang.set_for_app(cx);
+                                    }
+                                }
+                            },
+                        )
+                        .default_value(app_config_default.git_setting.language.name_short()),
                     )
-                    .default_value(app_config_default.language.name_short()),
-                )),
+                    .disabled(!debouncer.config.borrow().git_setting.auto_commit),
+                ),
         )
     }
 }

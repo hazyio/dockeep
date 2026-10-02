@@ -10,22 +10,32 @@ use gpui_kit::component::setting::Settings;
 use gpui_kit::component::*;
 use gpui_kit::*;
 use rust_i18n::t;
-
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SettingDefaultOpen {
+    None,
+    General,
+    Chrome,
+    Capture,
+    Git,
+}
 pub struct SettingsPage {
     debouncer: SaveDebouncer,
     default_config: AppConfig,
+    default_open: SettingDefaultOpen,
 }
 impl SettingsPage {
-    pub fn new() -> Self {
+    pub fn new(default_open: SettingDefaultOpen) -> Self {
         Self {
             debouncer: SaveDebouncer::new(AppConfig::load()),
             default_config: AppConfig::default(),
+            default_open,
         }
     }
 }
 impl Render for SettingsPage {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         let debouncer = self.debouncer.clone();
+        let default_open = self.default_open.clone();
 
         div()
             .v_flex()
@@ -35,10 +45,22 @@ impl Render for SettingsPage {
             .child(
                 Settings::new("my-settings")
                     .with_group_variant(GroupBoxVariant::Fill)
-                    .page(GeneralPage::page(debouncer.clone(), &self.default_config))
-                    .page(ChromePage::page(debouncer.clone(), &self.default_config))
-                    .page(CapturePage::page(debouncer.clone(), &self.default_config))
-                    .page(GitPage::page(debouncer, &self.default_config)),
+                    .page(
+                        GeneralPage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::General),
+                    )
+                    .page(
+                        ChromePage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Chrome),
+                    )
+                    .page(
+                        CapturePage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Capture),
+                    )
+                    .page(
+                        GitPage::page(debouncer, &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Git),
+                    ),
             )
     }
 }

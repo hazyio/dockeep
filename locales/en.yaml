@@ -18,6 +18,7 @@ title:
   git: Git
   commit: Commit
 label:
+  commit_lanuage: Commit Language
   auto_commit: Auto Commit
   crop_timeout: Crop Timeout
   chrome_path: Chrome Executable Path

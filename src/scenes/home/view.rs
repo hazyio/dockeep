@@ -18,10 +18,12 @@ use crate::scenes::app::MyApp;
 use crate::scenes::home::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
 use crate::scenes::home::project_info::ProjectInfo;
 use crate::scenes::home::project_info::ProjectInfoEvent;
+use crate::scenes::settings::view::SettingDefaultOpen;
 use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
 use crate::utils::git::get_git_repo_info;
+use crate::utils::prelude::open_settings;
 use crate::utils::prelude::to_human_datetime;
 
 pub struct HomePage {
@@ -225,25 +227,7 @@ impl Render for HomePage {
                         .ghost()
                         .child(AppIcons::Settings)
                         .on_click(move |_, window, cx| {
-                            let win_size = window.bounds().size.div(1.5);                            
-                            cx.open_window(
-                                WindowOptions {
-                                    window_bounds: Some(WindowBounds::centered(win_size,&cx)),
-                                    window_decorations: Some(WindowDecorations::Client), // no WM frame
-                                    titlebar: Some(TitlebarOptions {
-                                        title: Some(SharedString::new("DocKeep Settings")),
-
-                                        ..Default::default()
-                                    }),
-                                    is_resizable: true,
-                                    ..Default::default()
-                                },
-                                |window, cx| {
-                                    let view = cx.new(|_| SettingsPage::new());
-                                    cx.new(|cx| Root::new(view, window, cx).bordered(false))
-                                },
-                            )
-                            .ok();
+                            open_settings(SettingDefaultOpen::General, window, cx);
                         }),
                 ),
             )
