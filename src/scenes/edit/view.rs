@@ -13,6 +13,7 @@ use gpui_kit::*;
 use gpui_kit::{px, size};
 use rust_i18n::t;
 
+
 use crate::components::window_decor::WindowDecor;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};

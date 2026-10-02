@@ -1,5 +1,3 @@
-use std::ops::Div;
-
 use anyhow::Error;
 use gpui_kit::component::button::*;
 use gpui_kit::component::input::Input;
@@ -19,7 +17,6 @@ use crate::scenes::home::add_project_dialog::{AddProjectDialog, AddProjectDialog
 use crate::scenes::home::project_info::ProjectInfo;
 use crate::scenes::home::project_info::ProjectInfoEvent;
 use crate::scenes::settings::view::SettingDefaultOpen;
-use crate::scenes::settings::view::SettingsPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjects;
 use crate::utils::git::get_git_repo_info;
@@ -127,6 +124,11 @@ impl HomePage {
     }
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
+            // start loading
+            entity.update(cx, |entity, cx| {
+                entity.loading = true;
+                cx.notify();
+            }).ok();
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
                 .await;

@@ -1,43 +1,47 @@
-use git2::{Repository, StatusOptions};
-use std::path::PathBuf;
-#[derive(Clone)]
+use git2::{ErrorCode, Repository, StatusOptions};
+use std::path::Path;
 
+#[derive(Clone)]
 pub struct GitRepoInfo {
     pub branch: String,
     pub dirty: bool,
 }
-pub fn is_git_repo(path: &PathBuf) -> bool {
+
+pub fn is_git_repo(path: &Path) -> bool {
     Repository::discover(path).is_ok()
 }
-pub fn get_git_repo_info(path: &PathBuf) -> Option<GitRepoInfo> {
-    let repo = Repository::discover(path).ok()?;
 
-    let head = repo.head().ok()?;
-    let Ok(branch) = head.shorthand() else {
-        return None;
-    };
+fn branch_name(repo: &Repository) -> Option<String> {
+    match repo.head() {
+        Ok(head) => head.shorthand().ok().map(str::to_owned),
+        // No commits yet: HEAD is symbolic and points to a branch that doesn't exist
+        Err(e) if e.code() == ErrorCode::UnbornBranch => {
+            let head = repo.find_reference("HEAD").ok()?;
+            let target = head.symbolic_target().ok()??;
+            Some(
+                target
+                    .strip_prefix("refs/heads/")
+                    .unwrap_or(target)
+                    .to_owned(),
+            )
+        }
+        Err(_) => None,
+    }
+}
+pub fn get_git_repo_info(path: &Path) -> Option<GitRepoInfo> {
+    let repo = Repository::discover(path).ok()?;
+    let branch = branch_name(&repo)?;
 
     let mut opts = StatusOptions::new();
     opts.include_untracked(true);
-
     let statuses = repo.statuses(Some(&mut opts)).ok()?;
-    let dirty = statuses.is_empty();
 
     Some(GitRepoInfo {
-        branch: branch.to_string(),
-        dirty,
+        branch,
+        dirty: !statuses.is_empty(),
     })
 }
-pub fn get_git_branch(path: &PathBuf) -> Option<String> {
-    let repo = Repository::discover(path).ok()?;
-    let Ok(branch) = repo.head() else {
-        return None;
-    };
-    let Ok(branch) = branch.name() else {
-        return None;
-    };
-    let branch = branch.to_string();
 
-    Some(branch)
+pub fn get_git_branch(path: &Path) -> Option<String> {
+    branch_name(&Repository::discover(path).ok()?)
 }
- 

@@ -8,7 +8,7 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
 use crate::config::AppConfig;
-use crate::scenes::app::{self, MyApp};
+use crate::scenes::app::MyApp;
 use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjectInfo;
@@ -176,13 +176,7 @@ impl ProjectInfo {
         let index = self.index.clone();
         let last_accessed_datetime = self.last_accessed_datetime.clone();
         let app = self.app.clone();
-        let project_info = AppProjectInfo {
-            name: self.name.clone(),
-            path: self.path.to_string_lossy().to_string(),
-            last_accessed_datetime: 0,
-        };
         let repo_info = self.repo_info.clone();
-        let is_git_repo = self.repo_info.is_some();
         div()
             .p_2()
             .v_flex()
@@ -244,35 +238,42 @@ impl ProjectInfo {
                             .label(t!("label.open_in_editor"))
                             .primary()
                             .on_click(move |_, window, cx| {
-                                let repo_info = repo_info.clone();
-                                let app = app.clone();
-                                let name = name.clone();
-                                let path = path.clone();
-
-                                if let Some(repo_info_un) = repo_info {
-                                    let app_config = AppConfig::load();
-                                    let repo_info = repo_info.clone();
-                                    let app = app.clone();
+                                let is_dirty = repo_info.as_ref().map_or(false, |r| r.dirty);
+                                let app_config = AppConfig::load();
+                                if is_dirty && app_config.git_setting.auto_commit {
                                     let name = name.clone();
                                     let path = path.clone();
-                                    if repo_info_un.dirty && app_config.git_setting.auto_commit {
-                                        window.open_alert_dialog(cx, |alert, _, _| {
-                                            alert
-                                                .title("Delete File")
-                                                .description("Are you sure you want to delete this file? This action cannot be undone.")
-                                                .show_cancel(true)
-                                                .on_ok(|_, window, cx| {
-                                                     Self::open_editor(name.clone(), path.clone(), repo_info, cx, app);
-                                                    true // Return true to close dialog
-                                                })
-                                        });
-                                        return;
-                                    }
+                                    let repo_info = repo_info.clone();
+                                    let app = app.clone();
+                                    window.open_alert_dialog(cx, move |alert, _, _| {
+                                        let name = name.clone();
+                                        let path = path.clone();
+                                        let repo_info = repo_info.clone();
+                                        let app = app.clone();
+                                        alert
+                                            .title(t!("dialog.dirty_repo_title"))
+                                            .description(t!("dialog.dirty_repo_description"))
+                                            .show_cancel(true)
+                                            .on_ok(move |_, _window, cx| {
+                                                Self::open_editor(
+                                                    name.clone(),
+                                                    path.clone(),
+                                                    repo_info.clone(),
+                                                    cx,
+                                                    app.clone(),
+                                                );
+                                                true // Return true to close dialog
+                                            })
+                                    });
                                 } else {
-                                    Self::open_editor(name.clone(), path.clone(), repo_info, cx, app);
-                                    return;
+                                    Self::open_editor(
+                                        name.clone(),
+                                        path.clone(),
+                                        repo_info.clone(),
+                                        cx,
+                                        app.clone(),
+                                    );
                                 }
-
                             }),
                     ),
             )
