@@ -92,13 +92,27 @@ impl Assets {
                 "refresh-cw.svg",
                 include_bytes!("../../assets/svg/refresh-cw.svg"),
             ),
-            ("replace.svg", include_bytes!("../../assets/svg/replace.svg")),
-            ("sliders-horizontal.svg", include_bytes!("../../assets/svg/sliders-horizontal.svg")),
-            ("arrow-up-wide-narrow.svg", include_bytes!("../../assets/svg/arrow-up-wide-narrow.svg")),
-            ("list-sort-ascending.svg", include_bytes!("../../assets/svg/list-sort-ascending.svg")),
-            ("list-sort-descending.svg", include_bytes!("../../assets/svg/list-sort-descending.svg")),
+            (
+                "replace.svg",
+                include_bytes!("../../assets/svg/replace.svg"),
+            ),
+            (
+                "sliders-horizontal.svg",
+                include_bytes!("../../assets/svg/sliders-horizontal.svg"),
+            ),
+            (
+                "arrow-up-wide-narrow.svg",
+                include_bytes!("../../assets/svg/arrow-up-wide-narrow.svg"),
+            ),
+            (
+                "list-sort-ascending.svg",
+                include_bytes!("../../assets/svg/list-sort-ascending.svg"),
+            ),
+            (
+                "list-sort-descending.svg",
+                include_bytes!("../../assets/svg/list-sort-descending.svg"),
+            ),
             ("info.svg", include_bytes!("../../assets/svg/info.svg")),
-            
         ]
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {

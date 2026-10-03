@@ -36,6 +36,8 @@ label:
   done: Done
   delete: Delete
   theme: Theme
+  time_format: Time Format
+  date_format: Date Format
   back: Back
   save: Save
   search_projects: Search Projects

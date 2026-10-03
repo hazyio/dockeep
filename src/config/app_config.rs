@@ -1,13 +1,21 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 
-use crate::{config::GitSetting, utils::{app_theme::AppTheme, lanuages::Languages}};
+use crate::{
+    config::GitSetting,
+    utils::{
+        app_theme::AppTheme, date_format::DateFormat, lanuages::Languages, time_format::TimeFormat,
+    },
+};
 
 use super::{capture_setting::CaptureSetting, chrome_config::ChromeConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct AppConfig {
     pub theme: AppTheme,
+    pub time_format: TimeFormat,
+    pub date_format: DateFormat,
     pub language: Languages,
     pub chrome_config: ChromeConfig,
     pub capture_setting: CaptureSetting,

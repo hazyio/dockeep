@@ -5,14 +5,16 @@ use gpui_kit::{
 
 use crate::{
     config::AppConfig,
-    utils::{app_theme::AppTheme, lanuages::Languages, save_debouncer::SaveDebouncer},
+    utils::{
+        app_theme::AppTheme, date_format::DateFormat, lanuages::Languages,
+        save_debouncer::SaveDebouncer, time_format::TimeFormat,
+    },
 };
 pub struct GeneralPage {}
 
 impl GeneralPage {
     pub fn page(debouncer: SaveDebouncer, default_config: &AppConfig) -> SettingPage {
         let app_config_default = default_config.clone();
-
         SettingPage::new(t!("title.general"))
             .resettable(true)
             .group(
@@ -76,6 +78,62 @@ impl GeneralPage {
                             },
                         )
                         .default_value(app_config_default.theme.name()),
+                    ))
+                    .item(SettingItem::new(
+                        t!("label.time_format"),
+                        SettingField::dropdown(
+                            TimeFormat::all()
+                                .iter()
+                                .map(|format| (format.id().into(), format.label().into()))
+                                .collect(),
+                            {
+                                let debouncer = debouncer.clone();
+                                move |_: &App| {
+                                    SharedString::from(debouncer.config.borrow().time_format.id())
+                                }
+                            },
+                            {
+                                let debouncer = debouncer.clone();
+                                move |val: SharedString, cx: &mut App| {
+                                    if let Some(format) = TimeFormat::all()
+                                        .iter()
+                                        .find(|format| format.id() == val.as_ref())
+                                    {
+                                        debouncer.config.borrow_mut().time_format = *format;
+                                        debouncer.schedule(cx);
+                                    }
+                                }
+                            },
+                        )
+                        .default_value(app_config_default.time_format.id()),
+                    ))
+                    .item(SettingItem::new(
+                        t!("label.date_format"),
+                        SettingField::dropdown(
+                            DateFormat::all()
+                                .iter()
+                                .map(|format| (format.id().into(), format.label().into()))
+                                .collect(),
+                            {
+                                let debouncer = debouncer.clone();
+                                move |_: &App| {
+                                    SharedString::from(debouncer.config.borrow().date_format.id())
+                                }
+                            },
+                            {
+                                let debouncer = debouncer.clone();
+                                move |val: SharedString, cx: &mut App| {
+                                    if let Some(format) = DateFormat::all()
+                                        .iter()
+                                        .find(|format| format.id() == val.as_ref())
+                                    {
+                                        debouncer.config.borrow_mut().date_format = *format;
+                                        debouncer.schedule(cx);
+                                    }
+                                }
+                            },
+                        )
+                        .default_value(app_config_default.date_format.id()),
                     )),
             )
     }

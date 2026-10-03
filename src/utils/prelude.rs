@@ -12,6 +12,8 @@ use gpui_kit::{
 };
 
 use crate::scenes::settings::view::{SettingDefaultOpen, SettingsPage};
+use crate::utils::date_format::DateFormat;
+use crate::utils::time_format::TimeFormat;
 
 pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: &mut App) -> bool {
     let win_size = window.bounds().size.div(1.5);
@@ -51,8 +53,9 @@ pub fn now_timestamp() -> u64 {
 }
 /// Returns a human-readable "last accessed" string.
 /// - Within 30 days: relative "ago" form (e.g. "3 hours ago", "5 days ago").
-/// - Older than 30 days: absolute date/time as `dd/mm/yyyy hh:mm`.
-pub fn to_human_datetime(ts: u64) -> String {
+/// - Older than 30 days: absolute date/time, where the date is formatted
+///   according to `date_format` and the time according to `time_format`.
+pub fn to_human_datetime(ts: u64, time_format: TimeFormat, date_format: DateFormat) -> String {
     let now = now_timestamp();
     let elapsed = now.saturating_sub(ts);
 
@@ -76,9 +79,13 @@ pub fn to_human_datetime(ts: u64) -> String {
         }
     }
 
-    // Older than 30 days — format as dd/mm/yyyy hh:mm
+    // Older than 30 days — format as <date> <time>
     let (year, month, day, hour, minute) = timestamp_to_parts(ts);
-    format!("{:02}/{:02}/{} {:02}:{:02}", day, month, year, hour, minute)
+    format!(
+        "{} {}",
+        date_format.format_date(year, month, day),
+        time_format.format_time(hour, minute)
+    )
 }
 
 /// Converts a Unix timestamp (seconds since epoch) to (year, month, day, hour, minute)

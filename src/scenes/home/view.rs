@@ -12,6 +12,7 @@ use rust_i18n::t;
 use crate::components::sort_button::SortButton;
 use crate::components::sort_button::SortButtonEvent;
 use crate::components::window_decor::WindowDecor;
+use crate::config::AppConfig;
 use crate::scenes::app::MyApp;
 use crate::scenes::home::add_project_dialog::{AddProjectDialog, AddProjectDialogEvent};
 use crate::scenes::home::project_info::ProjectInfo;
@@ -135,6 +136,7 @@ impl HomePage {
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
                 .await;
+            let config = AppConfig::load();
             let projects: Vec<Entity<ProjectInfo>> = result
                 .0
                 .iter()
@@ -152,6 +154,8 @@ impl HomePage {
                             path,
                             last_accessed_datetime: to_human_datetime(
                                 project.last_accessed_datetime,
+                                config.time_format,
+                                config.date_format,
                             ),
                             last_accessed_timestamp: project.last_accessed_datetime,
                         }

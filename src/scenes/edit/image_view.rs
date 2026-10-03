@@ -41,7 +41,7 @@ impl ImageView {
             image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
             is_replacing: false,
             last_modified_timestamp,
-            image_settings: cx.new(|_| ImageViewInfo::new(path)),
+            image_settings: cx.new(|_| ImageViewInfo::new(index, path)),
         }
     }
 }

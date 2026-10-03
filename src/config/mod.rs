@@ -11,5 +11,3 @@ pub use capture_sizing::CaptureSizing;
 pub use chrome_config::ChromeConfig;
 pub use git_setting::GitSetting;
 pub use image_format::ImageFormat;
-
-
