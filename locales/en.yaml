@@ -40,6 +40,7 @@ label:
   date_format: Date Format
   back: Back
   save: Save
+  open_url_in_browser: Open URL in Browser
   search_projects: Search Projects
   add_project: Add Project
   no_projects: No projects found

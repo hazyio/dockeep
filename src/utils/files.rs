@@ -8,7 +8,8 @@ use img_parts::{
     Bytes,
     jpeg::{Jpeg, JpegSegment, markers},
     png::{Png, PngChunk},
-    webp::{WebP, WebPChunk},
+    riff::{RiffChunk, RiffContent},
+    webp::{CHUNK_XMP, WebP},
 };
 use regex::Regex;
 use walkdir::WalkDir;
@@ -21,30 +22,67 @@ pub struct SaveScreenshotResult {
 pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
 }
+const KEY: &str = "dockeep_capture_url";
 
+pub fn read_capture_url(data: &[u8]) -> Option<String> {
+    let bytes = Bytes::copy_from_slice(data);
+
+    if data.starts_with(&[0x89, b'P', b'N', b'G']) {
+        let png = Png::from_bytes(bytes).ok()?;
+        // There can be several tEXt chunks, so scan them all
+        png.chunks()
+            .iter()
+            .filter(|c| c.kind() == *b"tEXt")
+            .find_map(|c| {
+                let contents = c.contents();
+                let nul = contents.iter().position(|&b| b == 0)?;
+                let (k, v) = (&contents[..nul], &contents[nul + 1..]);
+                (k == KEY.as_bytes()).then(|| String::from_utf8_lossy(v).into_owned())
+            })
+    } else if data.starts_with(&[0xFF, 0xD8]) {
+        let jpeg = Jpeg::from_bytes(bytes).ok()?;
+        let prefix = format!("{KEY}=");
+        jpeg.segments()
+            .iter()
+            .filter(|s| s.marker() == markers::COM)
+            .find_map(|s| {
+                let text = String::from_utf8_lossy(s.contents());
+                text.strip_prefix(&prefix).map(str::to_owned)
+            })
+    } else if data.len() > 12 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
+        let webp = WebP::from_bytes(bytes).ok()?;
+        let chunk = webp.chunk_by_id(*b"XMP ")?;
+        let xmp = String::from_utf8_lossy(chunk.content().data()?);
+        let open = format!("<{KEY}>");
+        let close = format!("</{KEY}>");
+        let start = xmp.find(&open)? + open.len();
+        let end = xmp[start..].find(&close)? + start;
+        Some(xmp[start..end].to_owned())
+    } else {
+        None
+    }
+}
 pub fn embed_capture_url(
     encoded: Vec<u8>,
     format: ImageFormat,
     value: &str,
 ) -> Result<Vec<u8>, img_parts::Error> {
-    let mut out = Vec::new();
-    let key = "dockeep_capture_url";
-    match format {
+    let out = match format {
         ImageFormat::Png => {
             let mut png = Png::from_bytes(Bytes::from(encoded))?;
             // tEXt = keyword, NUL, text
-            let mut payload = key.as_bytes().to_vec();
+            let mut payload = KEY.as_bytes().to_vec();
             payload.push(0);
             payload.extend_from_slice(value.as_bytes());
 
             let chunk = PngChunk::new(*b"tEXt", Bytes::from(payload));
             let idx = png.chunks().len().saturating_sub(1); // before IEND
             png.chunks_mut().insert(idx, chunk);
-            png.encoder().write_to(&mut out)?;
+            png.encoder().bytes().to_vec()
         }
         ImageFormat::Jpeg => {
             let mut jpeg = Jpeg::from_bytes(Bytes::from(encoded))?;
-            let comment = format!("{key}={value}");
+            let comment = format!("{KEY}={value}");
             let seg = JpegSegment::new_with_contents(markers::COM, Bytes::from(comment));
             let idx = jpeg
                 .segments()
@@ -52,24 +90,27 @@ pub fn embed_capture_url(
                 .position(|s| s.marker() == markers::SOS)
                 .unwrap_or(0);
             jpeg.segments_mut().insert(idx, seg);
-            jpeg.encoder().write_to(&mut out)?;
+            jpeg.encoder().bytes().to_vec()
         }
         ImageFormat::Webp => {
             let mut webp = WebP::from_bytes(Bytes::from(encoded))?;
             let xmp = format!(
-                r#"<x:xmpmeta xmlns:x="adobe:ns:meta/"><{key}>{value}</{key}></x:xmpmeta>"#
+                r#"<x:xmpmeta xmlns:x="adobe:ns:meta/"><{KEY}>{value}</{KEY}></x:xmpmeta>"#
             );
-            webp.chunks_mut()
-                .push(WebPChunk::new(*b"XMP ", Bytes::from(xmp)));
-            webp.encoder().write_to(&mut out)?;
+            webp.chunks_mut().push(RiffChunk::new(
+                CHUNK_XMP,
+                RiffContent::Data(Bytes::from(xmp)),
+            ));
+            webp.encoder().bytes().to_vec()
         }
-    }
+    };
     Ok(out)
 }
 pub fn save_screenshot(
     data: Result<Vec<u8>, Error>,
     replace_path: Option<PathBuf>,
     working_dir: PathBuf,
+    capture_url: &str,
 ) -> SaveScreenshotResult {
     let save_format = AppConfig::load().capture_setting.image_format;
 
@@ -85,7 +126,14 @@ pub fn save_screenshot(
     };
     match data {
         Ok(data) => {
-            if let Err(e) = std::fs::write(&save_path, &data) {
+            let try_embed = match embed_capture_url(data.clone(), save_format, capture_url) {
+                Ok(embedded) => embedded,
+                Err(e) => {
+                    tracing::warn!("Failed to embed capture URL: {}", e);
+                    data
+                }
+            };
+            if let Err(e) = std::fs::write(&save_path, &try_embed) {
                 tracing::error!("Failed to save screenshot to {:?}: {}", save_path, e);
                 if is_replace {
                     // remove the created file

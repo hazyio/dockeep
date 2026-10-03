@@ -8,7 +8,7 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
-use crate::scenes::edit::image_view_info::ImageViewInfo;
+use crate::scenes::edit::image_view_info::{ImageViewInfo, ImageViewInfoEvents};
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
 use crate::utils::prelude::open_in_file_explorer;
@@ -17,6 +17,7 @@ pub enum ImageViewEvents {
     OpenInFullscreen(PathBuf),
     Delete(PathBuf),
     CancelReplace,
+    OpenUrlInBrowser(String),
 }
 
 pub struct ImageView {
@@ -26,6 +27,7 @@ pub struct ImageView {
     pub last_modified_timestamp: u64,
     image_cache: Entity<RetainAllImageCache>,
     image_settings: Entity<ImageViewInfo>,
+    _popup_subscription: Option<Subscription>,
 }
 
 impl ImageView {
@@ -42,6 +44,7 @@ impl ImageView {
             is_replacing: false,
             last_modified_timestamp,
             image_settings: cx.new(|_| ImageViewInfo::new(index, path)),
+            _popup_subscription: None,
         }
     }
 }
@@ -65,10 +68,37 @@ impl ImageView {
             .as_secs();
         self.update_last_modified(last_modified_timestamp);
     }
+    fn build_popup_subscription(
+        entity: &Entity<ImageViewInfo>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe_in(
+            entity,
+            window,
+            move |_, _, event: &ImageViewInfoEvents, _window, cx| {
+                match event {
+                    ImageViewInfoEvents::OpenUrl(url) => {
+                        cx.emit(ImageViewEvents::OpenUrlInBrowser(url.clone()));
+                        cx.notify();
+                    }
+                }
+                cx.notify();
+            },
+        )
+    }
 }
 
 impl Render for ImageView {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self._popup_subscription.is_none() {
+            // Subscribe to popup events when the view is first rendered
+            self._popup_subscription = Some(Self::build_popup_subscription(
+                &self.image_settings,
+                window,
+                cx,
+            ));
+        }
         let path = self.path.clone();
         let file_name = path
             .file_name()

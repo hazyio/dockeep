@@ -14,18 +14,38 @@ use gpui_kit::*;
 
 use crate::config::AppConfig;
 use crate::utils::app_icons::AppIcons;
+use crate::utils::files::read_capture_url;
 use crate::utils::{date_format::DateFormat, time_format::TimeFormat};
-
+pub enum ImageViewInfoEvents {
+    OpenUrl(String),
+}
 pub struct ImageViewInfo {
     index: usize,
     path: PathBuf,
     edit_name: Option<Entity<InputState>>,
     last_modified: String,
     created: String,
+    capture_url: Option<String>,
 }
+impl EventEmitter<ImageViewInfoEvents> for ImageViewInfo {}
+
 impl ImageViewInfo {
     pub fn new(index: usize, path: PathBuf) -> Self {
         let app_config = AppConfig::load();
+        let capture_url = match std::fs::read(&path) {
+            Ok(data) => {
+                if let Some(url) = read_capture_url(&data) {
+                    println!("captured from {url}");
+                    Some(url)
+                } else {
+                    None
+                }
+            }
+            Err(e) => {
+                tracing::error!("Failed to read file {:?}: {}", path, e);
+                None
+            }
+        };
         let (created, modified) = match fs::metadata(path.clone()) {
             Ok(meta) => {
                 let modified = meta.modified().map_or_else(
@@ -50,6 +70,7 @@ impl ImageViewInfo {
             edit_name: None,
             last_modified: modified,
             created,
+            capture_url,
         }
     }
 }
@@ -114,7 +135,25 @@ impl Render for ImageViewInfo {
                             Label::new(t!("label.captured_from"))
                                 .text_color(parent_cx.theme().foreground.opacity(0.4)),
                         )
-                        .child("https://google.com")
+                        .when_none(&self.capture_url, |cx| cx.child("Unknown"))
+                        .when_some(self.capture_url.clone(), |cx, url| {
+                            cx.child(
+                                div().h_flex().gap_2().child(url).child(
+                                    Button::new(format!("open-url-for-image-{}", self.index))
+                                        .child(AppIcons::SquareArrowOutUpRight)
+                                        .tooltip(t!("label.open_url_in_browser"))
+                                        .on_click(parent_cx.listener(|this, _, _, cx| {
+                                            if let Some(url) = &this.capture_url {
+                                                // if for some freak reason the url is empty, don't open it
+                                                if !url.is_empty() {
+                                                    cx.emit(ImageViewInfoEvents::OpenUrl(url.clone()));
+                                                    cx.notify();
+                                                }
+                                            }
+                                        })),
+                                ),
+                            )
+                        })
                         .child(
                             Label::new(t!("label.created_at"))
                                 .text_color(parent_cx.theme().foreground.opacity(0.4)),

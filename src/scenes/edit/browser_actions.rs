@@ -72,6 +72,11 @@ impl BrowserActions {
     // fn is_browser_alive(browser: &Browser) -> bool {
     //     browser.get_version().is_ok()
     // }
+    pub fn open_url(&mut self, url: &str, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(tab) = &self.get_first_tab(window, cx) {
+            tab.navigate_to(url);
+        }
+    }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
             BrowserActionsState::Stopped => {
@@ -378,7 +383,13 @@ impl BrowserActions {
                 };
 
                 let capture_data = Self::capture_screenshot(&tab, Some(clip));
-                let saved = save_screenshot(capture_data, replace_path, working_dir.clone());
+                let capture_url = tab.get_url();
+                let saved = save_screenshot(
+                    capture_data,
+                    replace_path,
+                    working_dir.clone(),
+                    &capture_url,
+                );
 
                 let update = entity.update(cx, |_, cx| {
                     if saved.saved {
@@ -436,6 +447,8 @@ impl BrowserActions {
             let entity = entity.clone(); // move a clone into the async block below
 
             cx.spawn(async move |cx| {
+                let capture_url = tab.get_url();
+
                 let result = cx
                     .background_spawn(async move {
                         let capture_data = Self::capture_screenshot(&tab, None);
@@ -445,7 +458,9 @@ impl BrowserActions {
                         capture_data
                     })
                     .await;
-                let saved = save_screenshot(result, replace_path, working_dir.clone());
+
+                let saved =
+                    save_screenshot(result, replace_path, working_dir.clone(), &capture_url);
                 if saved.saved {
                     if let Err(e) = entity.update(cx, |_, cx| {
                         if saved.is_replaced {

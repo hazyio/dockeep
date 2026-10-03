@@ -113,6 +113,10 @@ impl Assets {
                 include_bytes!("../../assets/svg/list-sort-descending.svg"),
             ),
             ("info.svg", include_bytes!("../../assets/svg/info.svg")),
+            (
+                "square-arrow-out-up-right.svg",
+                include_bytes!("../../assets/svg/square-arrow-out-up-right.svg"),
+            ),
         ]
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {

@@ -31,6 +31,7 @@ pub enum AppIcons {
     ListSortAscending,
     ListSortDescending,
     Info,
+    SquareArrowOutUpRight,
 }
 
 impl RenderOnce for AppIcons {
@@ -68,6 +69,7 @@ impl RenderOnce for AppIcons {
             AppIcons::ListSortAscending => Icon::default().path("list-sort-ascending.svg"),
             AppIcons::ListSortDescending => Icon::default().path("list-sort-descending.svg"),
             AppIcons::Info => Icon::default().path("info.svg"),
+            AppIcons::SquareArrowOutUpRight => Icon::default().path("square-arrow-out-up-right.svg"),
         }
     }
 }

@@ -2,7 +2,7 @@ use git2::{ErrorCode, IndexAddOption, Oid, Repository, Signature, StatusOptions}
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::config::{AppConfig, app_config};
+use crate::config::AppConfig;
 
 #[derive(Clone)]
 pub struct GitRepoInfo {

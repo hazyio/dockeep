@@ -264,6 +264,9 @@ impl EditPage {
                         cx.notify();
                     });
                 }
+                ImageViewEvents::OpenUrlInBrowser(url) =>{
+                    this.browser_action.open_url(&url, window, cx);
+                },
             }
         })
     }
@@ -437,7 +440,7 @@ impl Render for EditPage {
                                         .child(
                                             Button::new("open-project-settings")
                                                 .child(AppIcons::Settings)
-                                                .on_click(element_cx.listener(|this, _, _, cx| {
+                                                .on_click(element_cx.listener(|_this, _, _, _cx| {
 
                                                     // Self::load_projects(this.app.clone(), cx);
                                                 })),
