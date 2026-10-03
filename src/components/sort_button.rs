@@ -1,6 +1,6 @@
 use gpui_kit::base::StyledExt;
-use gpui_kit::component::{ActiveTheme, button::*};
 use gpui_kit::component::popover::Popover;
+use gpui_kit::component::{ActiveTheme, button::*};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use rust_i18n::t;
@@ -15,13 +15,19 @@ pub enum SortButtonEvent {
 }
 pub struct SortButton {
     current_sort: SortButtonEvent,
+    use_last_modified: bool,
 }
 impl EventEmitter<SortButtonEvent> for SortButton {}
 impl SortButton {
-    pub fn new() -> Self {
+    /// Creates a new [`Self`] with the default sort order set to [`SortButtonEvent::SortNameAscending`].
+    pub fn new(use_last_modified: bool) -> Self {
         Self {
             current_sort: SortButtonEvent::SortNameAscending,
+            use_last_modified,
         }
+    }
+    pub fn current_sort(&self) -> SortButtonEvent {
+        self.current_sort.clone()
     }
 }
 impl Render for SortButton {
@@ -81,7 +87,16 @@ impl Render for SortButton {
                     .id("sort-by-last-accessed")
                     .h_flex()
                     .gap_1()
-                    .child(div().flex_grow_1().child(t!("label.last_accessed")))
+                    .child(
+                        div()
+                            .flex_grow_1()
+                            .when(self.use_last_modified, |cx| {
+                                cx.child(t!("label.last_modified"))
+                            })
+                            .when(!self.use_last_modified, |cx| {
+                                cx.child(t!("label.last_accessed"))
+                            }),
+                    )
                     .hover(|e| e.bg(cx.theme().muted))
                     .p_1()
                     .px_2()

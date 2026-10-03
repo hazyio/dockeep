@@ -18,7 +18,7 @@ title:
   git: Git
   commit: Commit
 label:
-  use_selected: Use selected %{locale}
+  use_selected: Use selected ( %{lang} )
   commit_lanuage: Commit Language
   auto_commit: Auto Commit
   crop_timeout: Crop Timeout
@@ -77,6 +77,8 @@ label:
   cancel_replace: Cancel Replace
   name: Name
   last_accessed: Last Accessed
+  last_modified: Last Modified
+  search_images: Search Images
 
 description:
   use_attach: Attach to running browser instead of starting a new browser, you might want to use this mode if you want specific browser settings to be applied.
@@ -86,6 +88,10 @@ description:
   min_quality: Quality must be greater than %{min}.
   capture_from_surface: Captures the page's rendered content directly (recommended) instead of the raw OS window surface.
   crop_timeout: Timeout for crop operation in seconds.
+  add_screenshot: Add Screenshot %{path}
+  renamed_screenshot: Rename Screenshot %{path}
+  delete_screenshot: Delete Screenshot %{path}
+  replace_screenshot: Replace Screenshot %{path}
 dialog:
   select_tab: Select a Tab
   delete_title: Delete project?

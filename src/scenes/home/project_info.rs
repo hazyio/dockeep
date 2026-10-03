@@ -51,6 +51,7 @@ impl ProjectInfo {
         name: String,
         path: PathBuf,
         repo_info: Option<GitRepoInfo>,
+        window: &mut Window,
         cx: &mut App,
         app: WeakEntity<MyApp>,
     ) {
@@ -63,7 +64,9 @@ impl ProjectInfo {
         let is_git_repo = repo_info.is_some();
         if let Some(app) = app.upgrade() {
             let settings_view: AnyView = cx
-                .new(|cx| EditPage::new(path.clone(), name, app.downgrade(), cx, is_git_repo))
+                .new(|cx| {
+                    EditPage::new(path.clone(), name, window, app.downgrade(), cx, is_git_repo)
+                })
                 .into();
             app.update(cx, |app, cx| {
                 app.navigate_to(settings_view, cx);
@@ -254,11 +257,12 @@ impl ProjectInfo {
                                             .title(t!("dialog.dirty_repo_title"))
                                             .description(t!("dialog.dirty_repo_description"))
                                             .show_cancel(true)
-                                            .on_ok(move |_, _window, cx| {
+                                            .on_ok(move |_, window, cx| {
                                                 Self::open_editor(
                                                     name.clone(),
                                                     path.clone(),
                                                     repo_info.clone(),
+                                                    window,
                                                     cx,
                                                     app.clone(),
                                                 );
@@ -270,6 +274,7 @@ impl ProjectInfo {
                                         name.clone(),
                                         path.clone(),
                                         repo_info.clone(),
+                                        window,
                                         cx,
                                         app.clone(),
                                     );

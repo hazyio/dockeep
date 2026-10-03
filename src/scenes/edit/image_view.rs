@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 use gpui_kit::component::button::Button;
 use gpui_kit::component::*;
@@ -8,6 +9,7 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
 use crate::utils::app_icons::AppIcons;
+use crate::utils::files;
 use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
     Replace(PathBuf),
@@ -20,17 +22,23 @@ pub struct ImageView {
     pub path: PathBuf,
     pub index: usize,
     pub is_replacing: bool,
-
+    pub last_modified_timestamp: u64,
     image_cache: Entity<RetainAllImageCache>,
 }
 
 impl ImageView {
-    pub fn new(path: PathBuf, index: usize, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        path: PathBuf,
+        last_modified_timestamp: u64,
+        index: usize,
+        cx: &mut Context<Self>,
+    ) -> Self {
         Self {
             path,
             index,
             image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
             is_replacing: false,
+            last_modified_timestamp,
         }
     }
 }
@@ -41,6 +49,18 @@ impl ImageView {
     /// Replaces the image cache so the next render reloads the file from disk.
     pub fn bust_cache(&mut self, cx: &mut Context<Self>) {
         self.image_cache = RetainAllImageCache::new(cx);
+    }
+    pub fn update_last_modified(&mut self, last_modified_timestamp: u64) {
+        self.last_modified_timestamp = last_modified_timestamp;
+    }
+    pub fn update_last_modified_with_now(&mut self) {
+        let last_modified_timestamp =
+            files::last_modified(&self.path).unwrap_or(SystemTime::UNIX_EPOCH);
+        let last_modified_timestamp = last_modified_timestamp
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        self.update_last_modified(last_modified_timestamp);
     }
 }
 

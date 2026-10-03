@@ -17,7 +17,7 @@ impl GitPage {
             SharedString::from(custom_language_key),
             SharedString::from(t!(
                 "label.use_selected",
-                locale = default_config.language.name_short()
+                lang = default_config.language.name_long()
             )),
         )];
         commit_language_option.extend(Languages::all().iter().map(|lang| {

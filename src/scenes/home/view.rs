@@ -59,7 +59,7 @@ impl HomePage {
             },
         );
         // Sort button
-        let sort_button = cx.new(|_| SortButton::new());
+        let sort_button = cx.new(|_| SortButton::new(false));
         let _sort_button_subscription =
             Self::build_sort_button_subscription(&sort_button, window, cx);
 
@@ -125,10 +125,12 @@ impl HomePage {
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
             // start loading
-            entity.update(cx, |entity, cx| {
-                entity.loading = true;
-                cx.notify();
-            }).ok();
+            entity
+                .update(cx, |entity, cx| {
+                    entity.loading = true;
+                    cx.notify();
+                })
+                .ok();
             let result = cx
                 .background_spawn(async move { AppProjects::load() })
                 .await;
@@ -179,7 +181,8 @@ impl HomePage {
                     this.projects = projects;
                     this.loading = false;
                     this.error = result.1;
-                    cx.notify();
+                    // apply default sort, cx.notify() is called automatically
+                    this.apply_sort(cx, |info| info.name.to_lowercase(), true);
                 })
                 .ok();
         })

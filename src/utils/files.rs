@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::{fs, time::SystemTime};
 
 use anyhow::{Error, Result};
 use regex::Regex;
@@ -9,6 +10,9 @@ pub struct SaveScreenshotResult {
     pub saved: bool,
     pub is_replaced: bool,
     pub save_path: PathBuf,
+}
+pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
+    fs::metadata(path)?.modified()
 }
 pub fn save_screenshot(
     data: Result<Vec<u8>, Error>,
