@@ -1,4 +1,6 @@
 > use gitignore and dockeepignore to skip paths, dockeepignore take precedence over gitignore
 > can attach to 9922
+> fix sort in home view
 # Roadmap
+- Add Tests
 - Demo chromiumoxide with screen casting.

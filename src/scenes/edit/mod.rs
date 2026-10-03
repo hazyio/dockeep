@@ -1,4 +1,4 @@
 mod browser_actions;
 mod image_view;
-mod settings;
+mod image_view_info;
 pub mod view;

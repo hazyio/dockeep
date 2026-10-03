@@ -20,9 +20,9 @@ pub struct SortButton {
 impl EventEmitter<SortButtonEvent> for SortButton {}
 impl SortButton {
     /// Creates a new [`Self`] with the default sort order set to [`SortButtonEvent::SortNameAscending`].
-    pub fn new(use_last_modified: bool) -> Self {
+    pub fn new(sort: SortButtonEvent, use_last_modified: bool) -> Self {
         Self {
-            current_sort: SortButtonEvent::SortNameAscending,
+            current_sort: sort,
             use_last_modified,
         }
     }

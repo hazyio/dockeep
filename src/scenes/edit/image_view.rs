@@ -8,6 +8,7 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
+use crate::scenes::edit::image_view_info::ImageViewInfo;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
 use crate::utils::prelude::open_in_file_explorer;
@@ -24,6 +25,7 @@ pub struct ImageView {
     pub is_replacing: bool,
     pub last_modified_timestamp: u64,
     image_cache: Entity<RetainAllImageCache>,
+    image_settings: Entity<ImageViewInfo>,
 }
 
 impl ImageView {
@@ -34,11 +36,12 @@ impl ImageView {
         cx: &mut Context<Self>,
     ) -> Self {
         Self {
-            path,
+            path: path.clone(),
             index,
             image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
             is_replacing: false,
             last_modified_timestamp,
+            image_settings: cx.new(|_| ImageViewInfo::new(path)),
         }
     }
 }
@@ -73,6 +76,8 @@ impl Render for ImageView {
             .unwrap_or_else(|| String::from("Unknown"));
 
         let m_path = path.clone();
+        let image_settings = self.image_settings.clone();
+
         div()
             .v_flex()
             .w(relative(1.))
@@ -128,9 +133,10 @@ impl Render for ImageView {
                                             .tooltip(t!("label.cancel_replace"))
                                     }),
                             )
+                            .child(image_settings)
                             .child(
                                 Button::new(format!("view-image-{}", self.index))
-                                    .child(AppIcons::Eye)
+                                    .child(AppIcons::Folder)
                                     .on_click(move |_, window, cx| {
                                         tracing::debug!("Opening Image: {:?}", m_path);
                                         window.push_notification(

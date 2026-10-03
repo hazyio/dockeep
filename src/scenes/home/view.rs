@@ -59,7 +59,8 @@ impl HomePage {
             },
         );
         // Sort button
-        let sort_button = cx.new(|_| SortButton::new(false));
+        let sort_button =
+            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedDescending, true));
         let _sort_button_subscription =
             Self::build_sort_button_subscription(&sort_button, window, cx);
 

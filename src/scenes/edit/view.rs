@@ -62,7 +62,8 @@ impl EditPage {
         let search =
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_images")));
         // Sort button
-        let sort_button = cx.new(|_| SortButton::new(true));
+        let sort_button =
+            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedAscending, true));
         let _sort_button_subscription =
             Self::build_sort_button_subscription(&sort_button, window, cx);
 
@@ -340,7 +341,6 @@ impl Render for EditPage {
             .cloned()
             .collect();
         let error = self.error.as_ref().map(|error| error.to_string());
-        let items = &self.items;
         let sizing = images_to_show.len();
         let rows = (sizing + cols - 1) / cols; // ceil division
         let row_height = px(250.);
@@ -420,7 +420,7 @@ impl Render for EditPage {
                                             Button::new("open-project-settings")
                                                 .child(AppIcons::Settings)
                                                 .on_click(element_cx.listener(|this, _, _, cx| {
-                                                    
+
                                                     // Self::load_projects(this.app.clone(), cx);
                                                 })),
                                         )

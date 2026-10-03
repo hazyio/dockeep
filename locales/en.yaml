@@ -18,6 +18,10 @@ title:
   git: Git
   commit: Commit
 label:
+  file_name: File Name
+  captured_from: Captured from
+  created_at: Created at
+  updated_at: Updated at
   use_selected: Use selected ( %{lang} )
   commit_lanuage: Commit Language
   auto_commit: Auto Commit
@@ -54,6 +58,7 @@ label:
   loading_project: Loading project ...
   editing_project: Editing %{name}
   opening_in_file_manager: Opening in File Manager
+  open_image_info: Open Image Info
   edit_image: Edit Image
   close_popup: Close Popup
   open_in_fullscreen: Open in Fullscreen
