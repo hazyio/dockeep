@@ -285,9 +285,18 @@ impl EditPage {
     /// Loads the project at `path` and populates `self.items` with the images.
     fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
         let path = path.clone();
+
         cx.spawn(async move |entity, cx| {
             // Runs on a background thread, why? UI stays responsive.
-
+            entity
+                .update(cx, |entity, cx| {
+                    // set loading state and clear items
+                    entity.loading = true;
+                    entity.error = None;
+                    entity.items.clear();
+                    cx.notify();
+                })
+                .ok();
             let paths = cx
                 .background_spawn(async move { files::read_images(&path) })
                 .await;
@@ -407,7 +416,16 @@ impl Render for EditPage {
                                         .v_flex()
                                         .justify_center()
                                         .items_center()
-                                        .child(Label::new(t!("error.no_image_found"))),
+                                        .child(Label::new(t!("error.no_image_found")))
+                                        .child(
+                                            Button::new("refresh-project-emptyt")
+                                                .child(AppIcons::Refresh)
+                                                .mt_3()
+                                                .text_3xl()
+                                                .on_click(element_cx.listener(|this, _, _, cx| {
+                                                    Self::load_project(cx, &this.path);
+                                                })),
+                                        ),
                                 )
                             })
                             .when(!images_to_show.is_empty(), |cx| {
@@ -424,7 +442,15 @@ impl Render for EditPage {
                                                     // Self::load_projects(this.app.clone(), cx);
                                                 })),
                                         )
-                                        .child(sort_button),
+                                        .child(sort_button)
+                                        .child(
+                                            Button::new("refresh-project-refresh")
+                                                .child(AppIcons::Refresh)
+                                               
+                                                .on_click(element_cx.listener(|this, _, _, cx| {
+                                                    Self::load_project(cx, &this.path);
+                                                })),
+                                        ),
                                 )
                                 .child(
                                     v_virtual_list(

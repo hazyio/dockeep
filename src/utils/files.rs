@@ -2,10 +2,17 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{fs, time::SystemTime};
 
+use crate::config::{AppConfig, ImageFormat};
 use anyhow::{Error, Result};
+use img_parts::{
+    Bytes,
+    jpeg::{Jpeg, JpegSegment, markers},
+    png::{Png, PngChunk},
+    webp::{WebP, WebPChunk},
+};
 use regex::Regex;
 use walkdir::WalkDir;
-const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp"];
+const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp"];
 pub struct SaveScreenshotResult {
     pub saved: bool,
     pub is_replaced: bool,
@@ -14,19 +21,65 @@ pub struct SaveScreenshotResult {
 pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
 }
+
+pub fn embed_capture_url(
+    encoded: Vec<u8>,
+    format: ImageFormat,
+    value: &str,
+) -> Result<Vec<u8>, img_parts::Error> {
+    let mut out = Vec::new();
+    let key = "dockeep_capture_url";
+    match format {
+        ImageFormat::Png => {
+            let mut png = Png::from_bytes(Bytes::from(encoded))?;
+            // tEXt = keyword, NUL, text
+            let mut payload = key.as_bytes().to_vec();
+            payload.push(0);
+            payload.extend_from_slice(value.as_bytes());
+
+            let chunk = PngChunk::new(*b"tEXt", Bytes::from(payload));
+            let idx = png.chunks().len().saturating_sub(1); // before IEND
+            png.chunks_mut().insert(idx, chunk);
+            png.encoder().write_to(&mut out)?;
+        }
+        ImageFormat::Jpeg => {
+            let mut jpeg = Jpeg::from_bytes(Bytes::from(encoded))?;
+            let comment = format!("{key}={value}");
+            let seg = JpegSegment::new_with_contents(markers::COM, Bytes::from(comment));
+            let idx = jpeg
+                .segments()
+                .iter()
+                .position(|s| s.marker() == markers::SOS)
+                .unwrap_or(0);
+            jpeg.segments_mut().insert(idx, seg);
+            jpeg.encoder().write_to(&mut out)?;
+        }
+        ImageFormat::Webp => {
+            let mut webp = WebP::from_bytes(Bytes::from(encoded))?;
+            let xmp = format!(
+                r#"<x:xmpmeta xmlns:x="adobe:ns:meta/"><{key}>{value}</{key}></x:xmpmeta>"#
+            );
+            webp.chunks_mut()
+                .push(WebPChunk::new(*b"XMP ", Bytes::from(xmp)));
+            webp.encoder().write_to(&mut out)?;
+        }
+    }
+    Ok(out)
+}
 pub fn save_screenshot(
     data: Result<Vec<u8>, Error>,
     replace_path: Option<PathBuf>,
     working_dir: PathBuf,
 ) -> SaveScreenshotResult {
+    let save_format = AppConfig::load().capture_setting.image_format;
+
     let (save_path, is_replace) = match replace_path {
         Some(rp) => (rp, true),
         None => {
             let working_dir = working_dir.clone();
 
-            let filename = chrono::Local::now()
-                .format("Screenshot_%Y%m%d_%H%M%S.png")
-                .to_string();
+            let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+            let filename = format!("Screenshot_{}.{}", timestamp, save_format.to_value());
             (working_dir.join(&filename), false)
         }
     };

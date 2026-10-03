@@ -106,6 +106,7 @@ impl Render for ImageView {
                     .bg(cx.theme().background)
                     .rounded_b_md()
                     .child(div().child(file_name).truncate())
+                    .gap_2()
                     .child(
                         div()
                             .h_flex()

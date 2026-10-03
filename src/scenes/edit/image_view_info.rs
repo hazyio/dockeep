@@ -2,8 +2,8 @@ use std::fs;
 use std::path::PathBuf;
 
 use chrono::{DateTime, Datelike, Local, Timelike};
-use gpui_kit::base::{Disableable, StyledExt};
 use gpui_kit::base::input::InputState;
+use gpui_kit::base::{Disableable, StyledExt};
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::component::button::Button;
 use gpui_kit::component::input::Input;
@@ -93,9 +93,8 @@ impl Render for ImageViewInfo {
                 let file_name_changed = edit_name.read_with(parent_cx, |edit_name, _| {
                     default_name != edit_name.value().as_str()
                 });
-                let has_value = edit_name.read_with(parent_cx, |edit_name, _| {
-                    !edit_name.value().is_empty()
-                });
+                let has_value =
+                    edit_name.read_with(parent_cx, |edit_name, _| !edit_name.value().is_empty());
                 cx.child(
                     div()
                         .v_flex()
@@ -108,7 +107,7 @@ impl Render for ImageViewInfo {
                             div().h_flex().gap_2().child(Input::new(&edit_name)).child(
                                 Button::new(format!("save-image-info-{}", self.index))
                                     .child(AppIcons::Check)
-                                    .disabled(!file_name_changed && !has_value),
+                                    .disabled(!file_name_changed && has_value),
                             ),
                         )
                         .child(
