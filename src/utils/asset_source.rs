@@ -97,6 +97,7 @@ impl Assets {
             ("arrow-up-wide-narrow.svg", include_bytes!("../../assets/svg/arrow-up-wide-narrow.svg")),
             ("list-sort-ascending.svg", include_bytes!("../../assets/svg/list-sort-ascending.svg")),
             ("list-sort-descending.svg", include_bytes!("../../assets/svg/list-sort-descending.svg")),
+            ("info.svg", include_bytes!("../../assets/svg/info.svg")),
             
         ]
     }
