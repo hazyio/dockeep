@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use anyhow::Context as _;
 use futures::channel::oneshot;
 use gpui_kit::component::button::Button;
 use gpui_kit::component::spinner::Spinner;
@@ -77,6 +78,30 @@ impl BrowserActions {
             tab.navigate_to(url).ok();
         }
     }
+    fn launch_browser(chrome_path: PathBuf) -> anyhow::Result<Browser> {
+        let opts = LaunchOptionsBuilder::default()
+            .headless(false)
+            .path(Some(chrome_path))
+            .build()
+            .map_err(anyhow::Error::from)?;
+        Ok(Browser::new(opts)?)
+    }
+
+    fn attach_browser(port: u16) -> anyhow::Result<Browser> {
+        let url = format!("http://127.0.0.1:{port}/json/version");
+        let body: serde_json::Value = ureq::get(&url)
+            .call()
+            .with_context(|| format!("no Chrome listening on port {port}"))?
+            .body_mut()
+            .read_json()?;
+
+        let ws_url = body["webSocketDebuggerUrl"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("webSocketDebuggerUrl missing in /json/version"))?
+            .to_string();
+
+        Ok(Browser::connect(ws_url)?)
+    }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
             BrowserActionsState::Stopped => {
@@ -93,23 +118,26 @@ impl BrowserActions {
 
                 self.state = BrowserActionsState::Starting;
                 cx.notify();
-                // Launching Chrome blocks until the DevTools port is ready,
+                // Launching / Attaching Chrome blocks until the DevTools port is ready,
                 // so it has to run off the main thread.
                 let (tx, rx) = oneshot::channel::<anyhow::Result<Browser>>();
                 std::thread::spawn(move || {
-                    let result = LaunchOptionsBuilder::default()
-                        .headless(false)
-                        .path(Some(chrome_path))
-                        .build()
-                        .map_err(anyhow::Error::from)
-                        .and_then(|opts| Browser::new(opts).map_err(anyhow::Error::from));
+                    let app_config = AppConfig::load();
+                    let attach = app_config.chrome_config.use_attach;
+                    let port = app_config.chrome_config.attach_port;
+
+                    let result = if attach {
+                        Self::attach_browser(port)
+                    } else {
+                        Self::launch_browser(chrome_path)
+                    };
 
                     let _ = tx.send(result);
                 });
-                cx.spawn(async move |this: WeakEntity<BrowserActions>, cx| {
+                cx.spawn_in(window, async move |this: WeakEntity<BrowserActions>, cx| {
                     let result = rx.await;
 
-                    this.update(cx, |this, cx| {
+                    this.update_in(cx, |this, window, cx| {
                         match result {
                             Ok(Ok(browser)) => {
                                 this.browser = Some(Arc::new(browser));
@@ -118,10 +146,12 @@ impl BrowserActions {
                             Ok(Err(e)) => {
                                 tracing::error!("failed to launch browser: {}", e);
                                 this.state = BrowserActionsState::Stopped;
+                                window.push_notification(t!("error.failed_to_start_browser"), cx);
                             }
                             Err(e) => {
                                 tracing::error!("launch thread dropped sender: {}", e);
                                 this.state = BrowserActionsState::Stopped;
+                                window.push_notification(t!("error.failed_to_start_browser"), cx);
                             }
                         }
                         cx.notify();

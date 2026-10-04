@@ -22,6 +22,7 @@ use crate::config::AppConfig;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
+use crate::scenes::edit::project_settings::ProjectSettings;
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
@@ -45,6 +46,7 @@ pub struct EditPage {
     sort_button: Entity<SortButton>,
     _sort_button_subscription: Subscription,
     _esc_subscription: Subscription,
+    project_settings: Entity<ProjectSettings>,
 }
 
 impl EditPage {
@@ -73,6 +75,8 @@ impl EditPage {
                 this.handle_esc(cx);
             }
         });
+        let project_settings = cx.new(|cx| ProjectSettings::new(window, cx));
+
         Self {
             search,
             is_git_repo,
@@ -95,6 +99,7 @@ impl EditPage {
             sort_button,
             _sort_button_subscription,
             _esc_subscription,
+            project_settings,
         }
     }
     fn handle_esc(&mut self, cx: &mut Context<Self>) {
@@ -429,6 +434,7 @@ impl Render for EditPage {
 
         let app = self.app.clone();
         let browser_action = self.browser_action.clone();
+        let project_settings = self.project_settings.clone();
 
         div()
             .size_full()
@@ -478,11 +484,7 @@ impl Render for EditPage {
                                     .h_flex()
                                     .gap_2()
                                     .child(Input::new(&search))
-                                    .child(
-                                        Button::new("open-project-settings")
-                                            .child(AppIcons::Settings)
-                                            .on_click(element_cx.listener(|this, _, _, cx| {})),
-                                    )
+                                    .child(project_settings)
                                     .child(sort_button)
                                     .child(
                                         Button::new("refresh-project-refresh")
