@@ -8,7 +8,7 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
-use crate::scenes::edit::image_view_info::{ImageViewInfo, ImageViewInfoEvents};
+use crate::scenes::edit::image_view_info_popup::{ImageViewInfoPopup, ImageViewInfoPopupEvents};
 use crate::utils::app_icons::AppIcons;
 use crate::utils::files;
 use crate::utils::prelude::open_in_file_explorer;
@@ -26,7 +26,7 @@ pub struct ImageView {
     pub is_replacing: bool,
     pub last_modified_timestamp: u64,
     image_cache: Entity<RetainAllImageCache>,
-    image_settings: Entity<ImageViewInfo>,
+    image_view_popup: Entity<ImageViewInfoPopup>,
     _popup_subscription: Option<Subscription>,
 }
 
@@ -43,7 +43,7 @@ impl ImageView {
             image_cache: RetainAllImageCache::new(cx), // Context<T> derefs to App, satisfies `&mut App`
             is_replacing: false,
             last_modified_timestamp,
-            image_settings: cx.new(|_| ImageViewInfo::new(index, path)),
+            image_view_popup: cx.new(|_| ImageViewInfoPopup::new(index, path)),
             _popup_subscription: None,
         }
     }
@@ -55,6 +55,10 @@ impl ImageView {
     /// Replaces the image cache so the next render reloads the file from disk.
     pub fn bust_cache(&mut self, cx: &mut Context<Self>) {
         self.image_cache = RetainAllImageCache::new(cx);
+        // reload popup metadata, e.g. last modified timestamp
+        self.image_view_popup.update(cx, |info, _| info.refresh());
+        // update the last modified timestamp
+        self.update_last_modified_with_now();
     }
     pub fn update_last_modified(&mut self, last_modified_timestamp: u64) {
         self.last_modified_timestamp = last_modified_timestamp;
@@ -69,18 +73,31 @@ impl ImageView {
         self.update_last_modified(last_modified_timestamp);
     }
     fn build_popup_subscription(
-        entity: &Entity<ImageViewInfo>,
+        entity: &Entity<ImageViewInfoPopup>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Subscription {
         cx.subscribe_in(
             entity,
             window,
-            move |_, _, event: &ImageViewInfoEvents, _window, cx| {
+            move |this, _, event: &ImageViewInfoPopupEvents, window, cx| {
                 match event {
-                    ImageViewInfoEvents::OpenUrl(url) => {
+                    ImageViewInfoPopupEvents::OpenUrl(url) => {
                         cx.emit(ImageViewEvents::OpenUrlInBrowser(url.clone()));
                         cx.notify();
+                    }
+                    ImageViewInfoPopupEvents::UpdateName(new_name) => {
+                        let result = files::rename_file(&this.path, new_name);
+                        match result {
+                            Ok(new_path) => {
+                                this.path = new_path;
+                                cx.notify();
+                            }
+                            Err(e) => {
+                                tracing::error!("failed to rename file: {}", e);
+                                window.push_notification(t!("error.failed_to_rename_file"), cx);
+                            }
+                        }
                     }
                 }
                 cx.notify();
@@ -94,19 +111,16 @@ impl Render for ImageView {
         if self._popup_subscription.is_none() {
             // Subscribe to popup events when the view is first rendered
             self._popup_subscription = Some(Self::build_popup_subscription(
-                &self.image_settings,
+                &self.image_view_popup,
                 window,
                 cx,
             ));
         }
         let path = self.path.clone();
-        let file_name = path
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_else(|| String::from("Unknown"));
+        let file_name = files::file_name_without_extension(&path);
 
         let m_path = path.clone();
-        let image_settings = self.image_settings.clone();
+        let image_info_popup = self.image_view_popup.clone();
 
         div()
             .v_flex()
@@ -164,7 +178,7 @@ impl Render for ImageView {
                                             .tooltip(t!("label.cancel_replace"))
                                     }),
                             )
-                            .child(image_settings)
+                            .child(image_info_popup)
                             .child(
                                 Button::new(format!("view-image-{}", self.index))
                                     .child(AppIcons::Folder)

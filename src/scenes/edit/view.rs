@@ -44,6 +44,7 @@ pub struct EditPage {
     search: Entity<InputState>,
     sort_button: Entity<SortButton>,
     _sort_button_subscription: Subscription,
+    _esc_subscription: Subscription,
 }
 
 impl EditPage {
@@ -63,10 +64,15 @@ impl EditPage {
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_images")));
         // Sort button
         let sort_button =
-            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedAscending, true));
+            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedDescending, true));
         let _sort_button_subscription =
             Self::build_sort_button_subscription(&sort_button, window, cx);
-
+        // bind escape key to handle_esc
+        let _esc_subscription = cx.observe_keystrokes(|this, ev, _, cx| {
+            if ev.keystroke.key == "escape" {
+                this.handle_esc(cx);
+            }
+        });
         Self {
             search,
             is_git_repo,
@@ -81,13 +87,48 @@ impl EditPage {
             show_image_full_view: None,
             _browser_action_subscription: Self::build_browser_action_subscription(
                 &browser_action,
+                window,
                 cx,
             ),
             browser_action: browser_action,
             fullscreen_image_cache: RetainAllImageCache::new(cx),
             sort_button,
             _sort_button_subscription,
+            _esc_subscription,
         }
+    }
+    fn handle_esc(&mut self, cx: &mut Context<Self>) {
+        // if an image is being shown in full view, close it.
+        if self.show_image_full_view.is_some() {
+            self.close_full_view(cx);
+            return;
+        }
+        let was_replacing = self.browser_action.update(cx, |action, cx| {
+            let had = action.replace_path.is_some();
+            if had {
+                action.cancel_replace();
+            }
+            cx.notify();
+            had
+        });
+
+        if was_replacing {
+            for item in &self.items {
+                item.update(cx, |item, cx| {
+                    if item.is_replacing {
+                        item.is_replacing = false;
+                        cx.notify();
+                    }
+                });
+            }
+            return;
+        }
+    }
+    fn close_full_view(&mut self, cx: &mut Context<Self>) {
+        self.show_image_full_view = None;
+        // rebuild the cache to clear any existing images, very inefficient but works for now as it would be more complex to clear individual images.
+        self.fullscreen_image_cache = RetainAllImageCache::new(cx);
+        cx.notify();
     }
     /// Sorts `projects` in place using `key`, then notifies the view.
     fn apply_sort(&mut self, cx: &mut Context<Self>) {
@@ -131,6 +172,7 @@ impl EditPage {
         self.items = keyed.into_iter().map(|(_, project)| project).collect();
         cx.notify();
     }
+
     fn build_sort_button_subscription(
         entity: &Entity<SortButton>,
         window: &mut Window,
@@ -146,129 +188,142 @@ impl EditPage {
     }
     fn build_browser_action_subscription(
         entity: &Entity<BrowserActions>,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Subscription {
-        cx.subscribe(entity, move |this, _, event: &BrowserActionsEvents, cx| {
-            let app_config = AppConfig::load();
-            let repo_path = this.path.clone();
-            let is_git_repo = this.is_git_repo;
-            match event {
-                BrowserActionsEvents::Add(p) => {
-                    tracing::debug!("Adding Image: {:?}", p);
-                    let entity = this.build_image_entity(p, this.items.len(), cx);
-                    let subscription = this.build_image_subscription(&entity, cx);
-                    this._image_action_subscription.push(subscription);
-                    this.items.push(entity);
-                    if app_config.git_setting.auto_commit && is_git_repo {
-                        // if auto-commit is enabled, make a new commit for the added image
-                        if let Err(e) =
-                            add_path_and_commit(&repo_path, p, "description.add_screenshot")
-                        {
-                            tracing::error!("Failed to commit image: {:?}", e);
-                        }
-                    };
-                    // apply sort after adding the image
-                    this.apply_sort(cx);
-                }
-                BrowserActionsEvents::Replace(p) => {
-                    tracing::debug!("Replacing Image: {:?}", p);
-                    if app_config.git_setting.auto_commit && is_git_repo {
-                        // if auto-commit is enabled, make a new commit for the replacement image
-                        if let Err(e) =
-                            add_path_and_commit(&repo_path, p, "description.replace_screenshot")
-                        {
-                            tracing::error!("Failed to commit image: {:?}", e);
-                        }
-                    };
-                    if let Some(entity) = this.items.iter().find(|item| item.read(cx).path == *p) {
-                        entity.update(cx, |image_view, cx| {
-                            // Replace the cache so the next render picks up the new file contents.
-                            image_view.bust_cache(cx);
-                            // update the last modified timestamp
-                            image_view.update_last_modified_with_now();
-                            cx.notify();
-                        });
+        cx.subscribe_in(
+            entity,
+            window,
+            move |this, _, event: &BrowserActionsEvents, window, cx| {
+                let app_config = AppConfig::load();
+                let repo_path = this.path.clone();
+                let is_git_repo = this.is_git_repo;
+                match event {
+                    BrowserActionsEvents::Add(p) => {
+                        tracing::debug!("Adding Image: {:?}", p);
+                        let entity = this.build_image_entity(p, this.items.len(), cx);
+                        let subscription = this.build_image_subscription(window, &entity, cx);
+                        this._image_action_subscription.push(subscription);
+                        this.items.push(entity);
+                        if app_config.git_setting.auto_commit && is_git_repo {
+                            // if auto-commit is enabled, make a new commit for the added image
+                            if let Err(e) =
+                                add_path_and_commit(&repo_path, p, "description.add_screenshot")
+                            {
+                                tracing::error!("Failed to commit image: {:?}", e);
+                            }
+                        };
+                        // apply sort after adding the image
+                        this.apply_sort(cx);
                     }
-                    // no need to sort after replacing an image, only data changed
+                    BrowserActionsEvents::Replace(p) => {
+                        tracing::debug!("Replacing Image: {:?}", p);
+                        if app_config.git_setting.auto_commit && is_git_repo {
+                            // if auto-commit is enabled, make a new commit for the replacement image
+                            if let Err(e) =
+                                add_path_and_commit(&repo_path, p, "description.replace_screenshot")
+                            {
+                                tracing::error!("Failed to commit image: {:?}", e);
+                            }
+                        };
+                        if let Some(entity) =
+                            this.items.iter().find(|item| item.read(cx).path == *p)
+                        {
+                            entity.update(cx, |image_view, cx| {
+                                // Replace the cache so the next render picks up the new file contents.
+                                image_view.bust_cache(cx);
+                                cx.notify();
+                            });
+                        }
+                        // no need to sort after replacing an image, only data changed
+                    }
                 }
-            }
-        })
+            },
+        )
     }
     fn build_image_subscription(
         &mut self,
+        window: &mut Window,
         entity: &Entity<ImageView>,
         cx: &mut Context<Self>,
     ) -> Subscription {
-        cx.subscribe(entity, |this, image_view, event: &ImageViewEvents, cx| {
-            let app_config = AppConfig::load();
-            let repo_path = this.path.clone();
-            let is_git_repo = this.is_git_repo;
-            match event {
-                ImageViewEvents::Replace(path) => {
-                    tracing::debug!("Editing Image: {:?}", path);
-                    if let Some(active_replace) =
-                        this.items.iter().find(|item| item.read(cx).is_replacing)
-                    {
-                        // remove the active replace path
-                        active_replace.update(cx, |item, cx| {
+        cx.subscribe_in(
+            entity,
+            window,
+            |this, image_view, event: &ImageViewEvents, window, cx| {
+                let app_config = AppConfig::load();
+                let repo_path = this.path.clone();
+                let is_git_repo = this.is_git_repo;
+                match event {
+                    ImageViewEvents::Replace(path) => {
+                        tracing::debug!("Editing Image: {:?}", path);
+                        if let Some(active_replace) =
+                            this.items.iter().find(|item| item.read(cx).is_replacing)
+                        {
+                            // remove the active replace path
+                            active_replace.update(cx, |item, cx| {
+                                item.is_replacing = false;
+                                cx.notify();
+                            });
+                        };
+                        this.browser_action.update(cx, |action, cx| {
+                            action.queue_replace_path(path.clone());
+                            cx.notify();
+                        });
+                        image_view.update(cx, |item, cx| {
+                            item.is_replacing = true;
+                            cx.notify();
+                        });
+
+                        cx.notify();
+                    }
+                    ImageViewEvents::OpenInFullscreen(path) => {
+                        tracing::debug!("Opening Image in Fullscreen: {:?}", path);
+                        this.show_image_full_view = Some(path.clone());
+                        cx.notify();
+                    }
+                    ImageViewEvents::Delete(path) => {
+                        tracing::debug!("Deleting Image: {:?}", path);
+                        this.items.retain(|item| item.read(cx).path != *path);
+                        if app_config.git_setting.auto_commit && is_git_repo {
+                            if let Err(e) = remove_path_and_commit(
+                                &repo_path,
+                                path.clone().as_path(),
+                                "description.delete_screenshot",
+                            ) {
+                                tracing::error!("Failed to commit image: {:?}", e);
+                            }
+                        };
+                        this.browser_action.update(cx, |action, cx| {
+                            // cancel replace if the path matches
+                            if let Some(replace_path) = &action.replace_path {
+                                if replace_path.as_os_str() == path.as_os_str() {
+                                    action.cancel_replace();
+                                }
+                            }
+                            cx.notify();
+                        });
+                        cx.notify();
+                    }
+                    ImageViewEvents::CancelReplace => {
+                        this.browser_action.update(cx, |action, cx| {
+                            action.cancel_replace();
+                            cx.notify();
+                        });
+                        image_view.update(cx, |item, cx| {
                             item.is_replacing = false;
                             cx.notify();
                         });
-                    };
-                    this.browser_action.update(cx, |action, cx| {
-                        action.queue_replace_path(path.clone());
-                        cx.notify();
-                    });
-                    image_view.update(cx, |item, cx| {
-                        item.is_replacing = true;
-                        cx.notify();
-                    });
-
-                    cx.notify();
+                    }
+                    ImageViewEvents::OpenUrlInBrowser(url) => {
+                        this.browser_action.update(cx, |action, cx| {
+                            action.open_url(&url, window, cx);
+                            cx.notify();
+                        });
+                    }
                 }
-                ImageViewEvents::OpenInFullscreen(path) => {
-                    tracing::debug!("Opening Image in Fullscreen: {:?}", path);
-                    this.show_image_full_view = Some(path.clone());
-                    cx.notify();
-                }
-                ImageViewEvents::Delete(path) => {
-                    tracing::debug!("Deleting Image: {:?}", path);
-                    this.items.retain(|item| item.read(cx).path != *path);
-                    if app_config.git_setting.auto_commit && is_git_repo {
-                        if let Err(e) = remove_path_and_commit(
-                            &repo_path,
-                            path.clone().as_path(),
-                            "description.delete_screenshot",
-                        ) {
-                            tracing::error!("Failed to commit image: {:?}", e);
-                        }
-                    };
-                    this.browser_action.update(cx, |action, cx| {
-                        // cancel replace if the path matches
-                        if let Some(replace_path) = &action.replace_path {
-                            if replace_path.as_os_str() == path.as_os_str() {
-                                action.cancel_replace();
-                            }
-                        }
-                        cx.notify();
-                    });
-                    cx.notify();
-                }
-                ImageViewEvents::CancelReplace => {
-                    this.browser_action.update(cx, |action, cx| {
-                        action.cancel_replace();
-                        cx.notify();
-                    });
-                    image_view.update(cx, |item, cx| {
-                        item.is_replacing = false;
-                        cx.notify();
-                    });
-                }
-                ImageViewEvents::OpenUrlInBrowser(url) =>{
-                    this.browser_action.open_url(&url, window, cx);
-                },
-            }
-        })
+            },
+        )
     }
     /// Builds an image entity for the given `path` and `index`.
     fn build_image_entity(
@@ -284,6 +339,9 @@ impl EditPage {
             .unwrap_or_default()
             .as_secs();
         cx.new(move |cx| ImageView::new(path, last_modified_timestamp, index, cx))
+    }
+    fn refresh_project(&mut self, cx: &mut Context<Self>) {
+        Self::load_project(cx, &self.path);
     }
     /// Loads the project at `path` and populates `self.items` with the images.
     fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
@@ -305,14 +363,17 @@ impl EditPage {
                 .await;
             // Back on the foreground executor.
             entity
-                .update(cx, |entity, cx| {
+                .update_in(cx, |entity, window, cx| {
                     let mut entities = Vec::new();
                     let mut entities_subscriptions = Vec::new();
                     for (index, path) in paths.iter().enumerate() {
                         // build the entity and subscribe to it
                         let built_entity = entity.build_image_entity(path, index, cx);
-                        entities_subscriptions
-                            .push(entity.build_image_subscription(&built_entity, cx));
+                        entities_subscriptions.push(entity.build_image_subscription(
+                            window,
+                            &built_entity,
+                            cx,
+                        ));
                         entities.push(built_entity);
                     }
                     entity.items = entities;
@@ -412,6 +473,25 @@ impl Render for EditPage {
                             .size_full()
                             .gap_3()
                             .child(browser_action)
+                            .child(
+                                div()
+                                    .h_flex()
+                                    .gap_2()
+                                    .child(Input::new(&search))
+                                    .child(
+                                        Button::new("open-project-settings")
+                                            .child(AppIcons::Settings)
+                                            .on_click(element_cx.listener(|this, _, _, cx| {})),
+                                    )
+                                    .child(sort_button)
+                                    .child(
+                                        Button::new("refresh-project-refresh")
+                                            .child(AppIcons::Refresh)
+                                            .on_click(element_cx.listener(|this, _, _, cx| {
+                                                this.refresh_project(cx);
+                                            })),
+                                    ),
+                            )
                             .when(images_to_show.is_empty(), |cx| {
                                 cx.child(
                                     div()
@@ -433,29 +513,6 @@ impl Render for EditPage {
                             })
                             .when(!images_to_show.is_empty(), |cx| {
                                 cx.child(
-                                    div()
-                                        .h_flex()
-                                        .gap_2()
-                                        .child(Input::new(&search))
-                                        .child(
-                                            Button::new("open-project-settings")
-                                                .child(AppIcons::Settings)
-                                                .on_click(element_cx.listener(|_this, _, _, _cx| {
-
-                                                    // Self::load_projects(this.app.clone(), cx);
-                                                })),
-                                        )
-                                        .child(sort_button)
-                                        .child(
-                                            Button::new("refresh-project-refresh")
-                                                .child(AppIcons::Refresh)
-                                               
-                                                .on_click(element_cx.listener(|this, _, _, cx| {
-                                                    Self::load_project(cx, &this.path);
-                                                })),
-                                        ),
-                                )
-                                .child(
                                     v_virtual_list(
                                         element_cx.entity().clone(),
                                         "my-list",
@@ -487,6 +544,7 @@ impl Render for EditPage {
                     }),
             )
             .when_some(show_image_full_view, |this, value| {
+                // image full view is shown, so show a backdrop and the image
                 this.child(
                     div()
                         .id("image-full-view-backdrop")
@@ -515,10 +573,7 @@ impl Render for EditPage {
                             ),
                         )
                         .on_click(element_cx.listener(|this, _, _, cx| {
-                            this.show_image_full_view = None;
-                            // rebuild the cache to clear any existing images, very inefficient but works for now as it would be more complex to clear individual images.
-                            this.fullscreen_image_cache = RetainAllImageCache::new(cx);
-                            cx.notify();
+                            this.close_full_view(cx);
                         })),
                 )
             })

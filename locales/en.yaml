@@ -41,6 +41,8 @@ label:
   back: Back
   save: Save
   open_url_in_browser: Open URL in Browser
+  size: Size
+  dimensions: Dimensions
   search_projects: Search Projects
   add_project: Add Project
   no_projects: No projects found
@@ -87,7 +89,7 @@ label:
   last_accessed: Last Accessed
   last_modified: Last Modified
   search_images: Search Images
-
+  file_type: File Type
 description:
   use_attach: Attach to running browser instead of starting a new browser, you might want to use this mode if you want specific browser settings to be applied.
   min_height: Height must be greater than %{min}.
@@ -130,3 +132,4 @@ error:
   crop_not_found: Crop not found
   failed_to_inject_selector: Failed to inject selector
   failed_to_update_browser_actions: Failed to update browser actions
+  failed_to_rename_file: Failed to rename file

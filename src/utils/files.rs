@@ -23,7 +23,41 @@ pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
 }
 const KEY: &str = "dockeep_capture_url";
+pub fn rename_file(path: &PathBuf, new_name: &str) -> Result<PathBuf> {
+    let parent = path.parent().unwrap_or(Path::new(""));
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let new_path = parent.join(format!("{new_name}.{ext}"));
+    fs::rename(path, &new_path)?;
+    Ok(new_path)
+}
+pub fn file_name_with_extension(path: &PathBuf) -> String {
+    path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_string()
+}
+pub fn file_name_without_extension(path: &PathBuf) -> String {
+    path.file_stem()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_string()
+}
+pub fn human_bytes(bytes: u64) -> String {
+    const UNITS: [&str; 6] = ["B", "KB", "MB", "GB", "TB", "PB"];
 
+    if bytes < 1024 {
+        return format!("{bytes} B");
+    }
+
+    let mut size = bytes as f64;
+    let mut unit = 0;
+    while size >= 1024.0 && unit < UNITS.len() - 1 {
+        size /= 1024.0;
+        unit += 1;
+    }
+
+    format!("{size:.1} {}", UNITS[unit])
+}
 pub fn read_capture_url(data: &[u8]) -> Option<String> {
     let bytes = Bytes::copy_from_slice(data);
 

@@ -74,7 +74,7 @@ impl BrowserActions {
     // }
     pub fn open_url(&mut self, url: &str, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(tab) = &self.get_first_tab(window, cx) {
-            tab.navigate_to(url);
+            tab.navigate_to(url).ok();
         }
     }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
