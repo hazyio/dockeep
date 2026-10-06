@@ -27,6 +27,9 @@ pub fn rename_file(path: &PathBuf, new_name: &str) -> Result<PathBuf> {
     let parent = path.parent().unwrap_or(Path::new(""));
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     let new_path = parent.join(format!("{new_name}.{ext}"));
+    if new_path.exists() {
+        return Err(anyhow::anyhow!("File already exists: {:?}", new_path));
+    }
     fs::rename(path, &new_path)?;
     Ok(new_path)
 }

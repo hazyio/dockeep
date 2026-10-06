@@ -19,6 +19,7 @@ title:
   commit: Commit
   project_settings: Project Settings
 label:
+  save_image_to: Save Image to
   image_save_format: Image Save Format
   save_with_tab_title: Save with Tab Title
   file_name: File Name

@@ -90,7 +90,12 @@ impl ImageView {
                         let result = files::rename_file(&this.path, new_name);
                         match result {
                             Ok(new_path) => {
-                                this.path = new_path;
+                                this.path = new_path.clone();
+                                // update the popup with the new path
+                                this.image_view_popup.update(cx, |popup, cx| {
+                                    popup.path = new_path;
+                                    cx.notify();
+                                });
                                 cx.notify();
                             }
                             Err(e) => {

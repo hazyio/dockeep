@@ -22,7 +22,7 @@ pub enum ImageViewInfoPopupEvents {
 }
 pub struct ImageViewInfoPopup {
     index: usize,
-    path: PathBuf,
+  pub  path: PathBuf,
     edit_name: Option<Entity<InputState>>,
     last_modified: String,
     created: String,
