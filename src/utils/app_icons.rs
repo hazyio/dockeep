@@ -21,6 +21,17 @@ pub enum AppIcons {
     Monitor,
     Smartphone,
     Crop,
+    Plus,
+    Undo2,
+    ChevronRight,
+    RefreshCw,
+    Replace,
+    SlidersHorizontal,
+    ArrowUpWideNarrow,
+    ListSortAscending,
+    ListSortDescending,
+    Info,
+    SquareArrowOutUpRight,
 }
 
 impl RenderOnce for AppIcons {
@@ -48,6 +59,17 @@ impl RenderOnce for AppIcons {
             AppIcons::Monitor => Icon::default().path("monitor.svg"),
             AppIcons::Smartphone => Icon::default().path("smartphone.svg"),
             AppIcons::Crop => Icon::default().path("crop.svg"),
+            AppIcons::Plus => Icon::default().path("plus.svg"),
+            AppIcons::Undo2 => Icon::default().path("undo-2.svg"),
+            AppIcons::ChevronRight => Icon::default().path("chevron-right.svg"),
+            AppIcons::RefreshCw => Icon::default().path("refresh-cw.svg"),
+            AppIcons::Replace => Icon::default().path("replace.svg"),
+            AppIcons::SlidersHorizontal => Icon::default().path("sliders-horizontal.svg"),
+            AppIcons::ArrowUpWideNarrow => Icon::default().path("arrow-up-wide-narrow.svg"),
+            AppIcons::ListSortAscending => Icon::default().path("list-sort-ascending.svg"),
+            AppIcons::ListSortDescending => Icon::default().path("list-sort-descending.svg"),
+            AppIcons::Info => Icon::default().path("info.svg"),
+            AppIcons::SquareArrowOutUpRight => Icon::default().path("square-arrow-out-up-right.svg"),
         }
     }
 }

@@ -17,14 +17,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            binary: dockeep
-            asset_name: dockeep-linux-x86_64
+            formats: deb,appimage
+            arch: linux-x86_64
           - os: windows-latest
-            binary: dockeep.exe
-            asset_name: dockeep-windows-x86_64.exe
+            formats: nsis
+            arch: windows-x86_64
           - os: macos-latest
-            binary: dockeep
-            asset_name: dockeep-macos-aarch64
+            formats: dmg
+            arch: macos-aarch64
 
     steps:
       - name: Checkout
@@ -47,7 +47,9 @@ jobs:
             libxkbcommon-x11-dev \
             libvulkan-dev \
             libasound2-dev \
-            libfontconfig1-dev
+            libfontconfig1-dev \
+            libfuse2 \
+            rpm
 
       - name: Cache Cargo registry and build
         uses: actions/cache@v4
@@ -62,17 +64,46 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Build release binary
+        env:
+          RUSTFLAGS: ${{ matrix.os == 'windows-latest' && '-C target-feature=+crt-static' || '' }}
         run: cargo build --release
 
-      - name: Rename binary
+      - name: Install cargo-packager
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-packager
+
+      - name: Install cargo-generate-rpm
+        if: matrix.os == 'ubuntu-latest'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-generate-rpm
+
+      - name: Package
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: cargo packager --release --formats ${{ matrix.formats }}
+
+      - name: Build RPM
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo generate-rpm --output dist/
+
+      - name: Collect artifacts
         shell: bash
-        run: mv target/release/${{ matrix.binary }} ${{ matrix.asset_name }}
+        run: |
+          mkdir -p upload
+          # installers/packages only; skip intermediate build dirs
+          find dist -maxdepth 1 -type f \
+            \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \
+               -o -name '*.dmg' -o -name '*setup.exe' -o -name '*.exe' \) \
+            -exec cp {} upload/ \;
+          ls -la upload
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.asset_name }}
+          name: dockeep-${{ matrix.arch }}
+          path: upload/*
 
   release:
     name: Create GitHub Release

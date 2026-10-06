@@ -19,6 +19,13 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 headless_chrome = "1.0.22"
 futures = "0.3.34"
 chrono = "0.4.45"
+img-parts = "0.4.0"
+tempfile = "3.27.0"
+imagesize = "0.15.0"
+base64 = "0.23.1"
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "webp"] }
+
+ureq = { version = "3.4.2", features = ["json"] }
 
 # Fast iteration: skip most optimization, keep debug info light,
 # and (most impactful) build dependencies with some optimization
@@ -40,3 +47,17 @@ lto = true            # link-time optimization, strips dead code across crates
 codegen-units = 1     # required for LTO to be maximally effective
 panic = "abort"       # drops unwinding tables — real size win, but no catch_unwind
 strip = true          # strips symbols from the final binary
+
+[package.metadata.packager]
+product-name = "Dockeep"
+identifier = "dockeep.hazyio.com"
+out-dir = "dist"
+binaries-dir = "target/release"
+binaries = [{ path = "dockeep", main = true }]
+# ico for Windows, icns for macOS, png for Linux.
+icons = ["assets/icon.ico", "assets/icon.icns", "assets/icon.png"]
+
+[package.metadata.generate-rpm]
+assets = [
+  { source = "target/release/dockeep", dest = "/usr/bin/dockeep", mode = "755" },
+]

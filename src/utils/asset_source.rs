@@ -64,15 +64,60 @@ impl Assets {
                 "window-restore.svg",
                 include_bytes!("../../assets/svg/window-restore.svg"),
             ),
-            ("circle-dot.svg", include_bytes!("../../assets/svg/circle-dot.svg")),
+            (
+                "circle-dot.svg",
+                include_bytes!("../../assets/svg/circle-dot.svg"),
+            ),
             ("play.svg", include_bytes!("../../assets/svg/play.svg")),
-            ("play-off.svg", include_bytes!("../../assets/svg/play-off.svg")),
-            ("monitor.svg", include_bytes!("../../assets/svg/monitor.svg")),
-            ("smartphone.svg", include_bytes!("../../assets/svg/smartphone.svg")),
+            (
+                "play-off.svg",
+                include_bytes!("../../assets/svg/play-off.svg"),
+            ),
+            (
+                "monitor.svg",
+                include_bytes!("../../assets/svg/monitor.svg"),
+            ),
+            (
+                "smartphone.svg",
+                include_bytes!("../../assets/svg/smartphone.svg"),
+            ),
             ("crop.svg", include_bytes!("../../assets/svg/crop.svg")),
-            
+            ("plus.svg", include_bytes!("../../assets/svg/plus.svg")),
+            ("undo-2.svg", include_bytes!("../../assets/svg/undo-2.svg")),
+            (
+                "chevron-right.svg",
+                include_bytes!("../../assets/svg/chevron-right.svg"),
+            ),
+            (
+                "refresh-cw.svg",
+                include_bytes!("../../assets/svg/refresh-cw.svg"),
+            ),
+            (
+                "replace.svg",
+                include_bytes!("../../assets/svg/replace.svg"),
+            ),
+            (
+                "sliders-horizontal.svg",
+                include_bytes!("../../assets/svg/sliders-horizontal.svg"),
+            ),
+            (
+                "arrow-up-wide-narrow.svg",
+                include_bytes!("../../assets/svg/arrow-up-wide-narrow.svg"),
+            ),
+            (
+                "list-sort-ascending.svg",
+                include_bytes!("../../assets/svg/list-sort-ascending.svg"),
+            ),
+            (
+                "list-sort-descending.svg",
+                include_bytes!("../../assets/svg/list-sort-descending.svg"),
+            ),
+            ("info.svg", include_bytes!("../../assets/svg/info.svg")),
+            (
+                "square-arrow-out-up-right.svg",
+                include_bytes!("../../assets/svg/square-arrow-out-up-right.svg"),
+            ),
         ]
-        
     }
     fn find(&self, path: &str) -> Option<&'static [u8]> {
         let name = path.rsplit('/').next().unwrap_or(path);

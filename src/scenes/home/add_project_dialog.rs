@@ -113,7 +113,7 @@ impl AddProjectDialog {
             match AppProjects::add_project(AppProjectInfo {
                 name: value.to_string(),
                 path: new_project_info.path.read(cx).value().clone().to_string(),
-                last_accessed: now_timestamp(),
+                last_accessed_datetime: now_timestamp(),
             }) {
                 Ok(_) => {
                     tracing::info!("Project added successfully");

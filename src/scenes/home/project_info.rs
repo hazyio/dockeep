@@ -7,6 +7,7 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
+use crate::config::AppConfig;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
@@ -25,7 +26,8 @@ pub struct ProjectInfo {
     pub name: String,
     pub path: PathBuf,
     pub repo_info: Option<GitRepoInfo>,
-    pub last_accessed: String,
+    pub last_accessed_datetime: String,
+    pub last_accessed_timestamp: u64,
 }
 impl EventEmitter<ProjectInfoEvent> for ProjectInfo {}
 
@@ -45,6 +47,50 @@ impl Render for ProjectInfo {
     }
 }
 impl ProjectInfo {
+    fn open_in_project_editor(
+        name: String,
+        path: PathBuf,
+        repo_info: Option<GitRepoInfo>,
+        window: &mut Window,
+        cx: &mut App,
+        app: WeakEntity<MyApp>,
+    ) {
+        if !path.is_dir() || !path.exists() {
+            window.open_alert_dialog(cx, |dialog, _, _| {
+                dialog
+                    .title(t!("title.project_invalid"))
+                    .description(t!("description.project_invalid"))
+                    .footer(
+                        div().h_flex().justify_end().child(
+                            Button::new("button.ok").label(t!("label.ok")).on_click(
+                                |_, window, cx| {
+                                    window.close_dialog(cx);
+                                },
+                            ),
+                        ),
+                    )
+            });
+            return;
+        }
+        let project_info = AppProjectInfo {
+            name: name.clone(),
+            path: path.to_string_lossy().to_string(),
+            last_accessed_datetime: 0,
+        };
+        project_info.update_lastaccess();
+        let is_git_repo = repo_info.is_some();
+        if let Some(app) = app.upgrade() {
+            let settings_view: AnyView = cx
+                .new(|cx| {
+                    EditPage::new(path.clone(), name, window, app.downgrade(), cx, is_git_repo)
+                })
+                .into();
+            app.update(cx, |app, cx| {
+                app.navigate_to(settings_view, cx);
+            });
+        }
+    }
+
     fn open_delete_dialog(&self, window: &mut Window, cx: &mut Context<Self>) {
         let name = self.name.clone();
         let entity = cx.entity().downgrade();
@@ -148,13 +194,9 @@ impl ProjectInfo {
         let name = self.name.clone();
         let path = self.path.clone();
         let index = self.index.clone();
-        let last_accessed = self.last_accessed.clone();
+        let last_accessed_datetime = self.last_accessed_datetime.clone();
         let app = self.app.clone();
-        let project_info = AppProjectInfo {
-            name: self.name.clone(),
-            path: self.path.to_string_lossy().to_string(),
-            last_accessed: 0,
-        };
+        let repo_info = self.repo_info.clone();
         div()
             .p_2()
             .v_flex()
@@ -182,8 +224,11 @@ impl ProjectInfo {
                             .p_2()
                             .child(AppIcons::RotateCcwClock)
                             .child(
-                                Label::new(t!("label.last_accessed", datetime = last_accessed))
-                                    .text_sm(),
+                                Label::new(t!(
+                                    "label.last_accessed_datetime",
+                                    datetime = last_accessed_datetime
+                                ))
+                                .text_sm(),
                             )
                             .bg(cx.theme().background)
                             .rounded_md(),
@@ -212,16 +257,44 @@ impl ProjectInfo {
                         Button::new(format!("open-in-editor-{}", index))
                             .label(t!("label.open_in_editor"))
                             .primary()
-                            .on_click(move |_, _, cx| {
-                                project_info.update_lastaccess();
-                                let name = name.clone();
-                                let path = path.clone();
-                                if let Some(app) = app.upgrade() {
-                                    let settings_view: AnyView =
-                                        cx.new(|cx| EditPage::new(path.clone(), name, app.downgrade(),cx)).into();
-                                    app.update(cx, |app, cx| {
-                                        app.navigate_to(settings_view, cx);
+                            .on_click(move |_, window, cx| {
+                                let is_dirty = repo_info.as_ref().map_or(false, |r| r.dirty);
+                                let app_config = AppConfig::load();
+                                if is_dirty && app_config.git_setting.auto_commit {
+                                    let name = name.clone();
+                                    let path = path.clone();
+                                    let repo_info = repo_info.clone();
+                                    let app = app.clone();
+                                    window.open_alert_dialog(cx, move |alert, _, _| {
+                                        let name = name.clone();
+                                        let path = path.clone();
+                                        let repo_info = repo_info.clone();
+                                        let app = app.clone();
+                                        alert
+                                            .title(t!("dialog.dirty_repo_title"))
+                                            .description(t!("dialog.dirty_repo_description"))
+                                            .show_cancel(true)
+                                            .on_ok(move |_, window, cx| {
+                                                Self::open_in_project_editor(
+                                                    name.clone(),
+                                                    path.clone(),
+                                                    repo_info.clone(),
+                                                    window,
+                                                    cx,
+                                                    app.clone(),
+                                                );
+                                                true // Return true to close dialog
+                                            })
                                     });
+                                } else {
+                                    Self::open_in_project_editor(
+                                        name.clone(),
+                                        path.clone(),
+                                        repo_info.clone(),
+                                        window,
+                                        cx,
+                                        app.clone(),
+                                    );
                                 }
                             }),
                     ),

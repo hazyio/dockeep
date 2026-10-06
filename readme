@@ -1,3 +1,6 @@
 > use gitignore and dockeepignore to skip paths, dockeepignore take precedence over gitignore
 # Roadmap
+- Add Tests
 - Demo chromiumoxide with screen casting.
+# fixes
+- fix /home/daniel/Projects/dockeep/src/files/files.rs not replacing extension when format changes

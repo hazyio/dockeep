@@ -1,13 +1,16 @@
 pub mod components;
+pub mod config;
 pub mod scenes;
 pub mod utils;
+pub mod files;
 use gpui_kit::component::*;
 use gpui_kit::*;
 use tracing_subscriber::EnvFilter;
 
 use crate::{
+    config::AppConfig,
     scenes::{app::MyApp, home::view::HomePage},
-    utils::{app_config::AppConfig, app_theme::AppTheme},
+    utils::app_theme::AppTheme,
 };
 #[macro_use]
 extern crate rust_i18n;
@@ -39,8 +42,10 @@ fn main() {
                         window_decorations: Some(WindowDecorations::Client), // no WM frame
                         titlebar: Some(TitlebarOptions {
                             title: Some(SharedString::new("DocKeep")),
+
                             ..Default::default()
                         }),
+                        is_resizable: true,
                         ..Default::default()
                     },
                     |window, cx| {

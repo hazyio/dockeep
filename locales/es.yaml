@@ -30,7 +30,7 @@ label:
   not_repo: No es un repositorio
   clean: Limpio
   dirty: Con cambios sin guardar
-  last_accessed: Último acceso %{datetime}
+  last_accessed_datetime: Último acceso %{datetime}
   screenshot_saved: Captura guardada
 dialog:
   select_tab: Seleccionar pestaña

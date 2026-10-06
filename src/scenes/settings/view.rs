@@ -1,126 +1,65 @@
 use crate::components::window_decor::WindowDecor;
-use crate::scenes::app::MyApp;
-use crate::scenes::home::view::HomePage;
-use crate::utils::app_config::AppConfig;
-use crate::utils::app_icons::AppIcons;
-use crate::utils::app_theme::AppTheme;
-use crate::utils::lanuages::Languages;
-use gpui_kit::component::button::*;
-use gpui_kit::component::setting::{
-    SettingField, SettingGroup, SettingItem, SettingPage, Settings,
-};
+use crate::config::AppConfig;
+use crate::scenes::settings::capture_page::CapturePage;
+use crate::scenes::settings::chrome_page::ChromePage;
+use crate::scenes::settings::general_page::GeneralPage;
+use crate::scenes::settings::git_page::GitPage;
+use crate::utils::save_debouncer::SaveDebouncer;
+use gpui_kit::component::group_box::GroupBoxVariant;
+use gpui_kit::component::setting::Settings;
 use gpui_kit::component::*;
 use gpui_kit::*;
 use rust_i18n::t;
-
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SettingDefaultOpen {
+    None,
+    General,
+    Chrome,
+    Capture,
+    Git,
+}
 pub struct SettingsPage {
-    app: WeakEntity<MyApp>,
+    debouncer: SaveDebouncer,
+    default_config: AppConfig,
+    default_open: SettingDefaultOpen,
 }
 impl SettingsPage {
-    pub fn new(app: WeakEntity<MyApp>) -> Self {
-        Self { app }
+    pub fn new(default_open: SettingDefaultOpen) -> Self {
+        Self {
+            debouncer: SaveDebouncer::new(AppConfig::load()),
+            default_config: AppConfig::default(),
+            default_open,
+        }
     }
 }
 impl Render for SettingsPage {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        let config = AppConfig::load();
-        let current_theme_name: SharedString = config.theme.name().into();
-        let current_language: SharedString = config.language.name_short().into();
-        let current_chrome_path = config.chrome_path.clone();
-        let app = self.app.clone();
+        let debouncer = self.debouncer.clone();
+        let default_open = self.default_open.clone();
 
         div()
             .v_flex()
             .gap_2()
             .size_full()
-            .child(
-                WindowDecor::new(t!("title.settings")).before_decor(
-                    Button::new("done")
-                        .child(AppIcons::Check)
-                        .label(t!("label.done"))
-                        .on_click(move |_, window, cx| {
-                            if let Some(app) = app.upgrade() {
-                                let home_view: AnyView = cx
-                                    .new(|cx| HomePage::new(app.downgrade(), window, cx))
-                                    .into();
-                                app.update(cx, |app, cx| {
-                                    app.navigate_to(home_view, cx);
-                                });
-                            }
-                        }),
-                ),
-            )
+            .child(WindowDecor::new(t!("title.settings")))
             .child(
                 Settings::new("my-settings")
+                    .with_group_variant(GroupBoxVariant::Fill)
                     .page(
-                        SettingPage::new(t!("title.general")).group(
-                            SettingGroup::new()
-                                .title(t!("title.appearance"))
-                                .item(SettingItem::new(
-                                    t!("label.language"),
-                                    SettingField::dropdown(
-                                        Languages::all()
-                                            .iter()
-                                            .map(|lang| {
-                                                (lang.name_short().into(), lang.name_long().into())
-                                            })
-                                            .collect(),
-                                        move |_cx: &App| current_language.clone(),
-                                        move |val: SharedString, cx: &mut App| {
-                                            if let Some(lang) = Languages::all()
-                                                .iter()
-                                                .find(|t| t.name_short() == val.as_ref())
-                                            {
-                                                let mut config = AppConfig::load();
-                                                config.language = *lang;
-                                                config.save();
-                                                lang.set_for_app(cx);
-                                            }
-                                        },
-                                    )
-                                    .default_value(config.language.name_short()),
-                                ))
-                                .item(SettingItem::new(
-                                    t!("label.theme"),
-                                    SettingField::dropdown(
-                                        AppTheme::all()
-                                            .iter()
-                                            .map(|theme| (theme.name().into(), theme.name().into()))
-                                            .collect(),
-                                        move |_cx: &App| current_theme_name.clone(),
-                                        move |val: SharedString, cx: &mut App| {
-                                            if let Some(theme) = AppTheme::all()
-                                                .iter()
-                                                .find(|t| t.name() == val.as_ref())
-                                            {
-                                                let mut config = AppConfig::load();
-                                                config.theme = *theme;
-                                                config.save();
-                                                theme.switch_to(cx);
-                                            }
-                                        },
-                                    )
-                                    .default_value(config.theme.name()),
-                                )),
-                        ),
+                        GeneralPage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::General),
                     )
                     .page(
-                        SettingPage::new(t!("title.chrome")).group(
-                            SettingGroup::new().title(t!("label.chrome_path")).item(
-                                SettingItem::new(
-                                    t!("label.path"),
-                                    SettingField::input(
-                                        move |_| SharedString::from(current_chrome_path.clone()),
-                                        |val: SharedString, _: &mut App| {
-                                            let mut config = AppConfig::load();
-                                            config.chrome_path = val.to_string();
-                                            config.save();
-                                        },
-                                    )
-                                    .default_value(config.chrome_path.clone()),
-                                ),
-                            ),
-                        ),
+                        ChromePage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Chrome),
+                    )
+                    .page(
+                        CapturePage::page(debouncer.clone(), &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Capture),
+                    )
+                    .page(
+                        GitPage::page(debouncer, &self.default_config)
+                            .default_open(default_open == SettingDefaultOpen::Git),
                     ),
             )
     }

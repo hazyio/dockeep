@@ -30,7 +30,7 @@ label:
   not_repo: Kein Repository
   clean: Sauber
   dirty: Geändert
-  last_accessed: Zuletzt aufgerufen %{datetime}
+  last_accessed_datetime: Zuletzt aufgerufen %{datetime}
   screenshot_saved: Screenshot gespeichert
 dialog:
   select_tab: Tab auswählen

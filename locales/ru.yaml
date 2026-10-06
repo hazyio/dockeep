@@ -30,7 +30,7 @@ label:
   not_repo: Не репозиторий
   clean: Чистый
   dirty: Изменен
-  last_accessed: Последний доступ %{datetime}
+  last_accessed_datetime: Последний доступ %{datetime}
   screenshot_saved: Снимок экрана сохранён
 dialog:
   select_tab: Выбрать вкладку
