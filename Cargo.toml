@@ -3,6 +3,7 @@ name = "dockeep"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "Short one-line description of Dockeep"
 
 [dependencies]
 anyhow = "1.0.104"
