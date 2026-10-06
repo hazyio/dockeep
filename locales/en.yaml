@@ -144,3 +144,4 @@ error:
   failed_to_start_browser: Failed to start browser, if use attach is checked, make sure the browser is running before starting
   failed_to_select_save_to: Failed to select save to folder
   selected_folder_not_in_project: Selected folder is not in the project
+  cannot_save_to_existing_file: Cannot save to existing file

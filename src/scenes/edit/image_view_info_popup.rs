@@ -13,8 +13,8 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
 use crate::config::AppConfig;
-use crate::utils::app_icons::AppIcons;
 use crate::files::files::{self, read_capture_url};
+use crate::utils::app_icons::AppIcons;
 use crate::utils::{date_format::DateFormat, time_format::TimeFormat};
 pub enum ImageViewInfoPopupEvents {
     OpenUrl(String),
@@ -22,7 +22,7 @@ pub enum ImageViewInfoPopupEvents {
 }
 pub struct ImageViewInfoPopup {
     index: usize,
-  pub  path: PathBuf,
+    pub path: PathBuf,
     edit_name: Option<Entity<InputState>>,
     last_modified: String,
     created: String,
@@ -119,12 +119,12 @@ impl ImageViewInfoPopup {
             }
         }
     }
-    pub fn refresh(&mut self) {
-        let path = &self.path;
-        let capture_url = Self::get_capture_url(path);
-        let (created, modified) = Self::get_metadata(path);
-        let dimensions = Self::get_dimensions(path);
-        let size = Self::get_size(path);
+    pub fn refresh(&mut self, path: PathBuf) {
+        self.path = path;
+        let capture_url = Self::get_capture_url(&self.path);
+        let (created, modified) = Self::get_metadata(&self.path);
+        let dimensions = Self::get_dimensions(&self.path);
+        let size = Self::get_size(&self.path);
         self.dimensions = dimensions;
         self.capture_url = capture_url;
         self.created = created;

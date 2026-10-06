@@ -94,8 +94,10 @@
         btn.addEventListener('click', () => {
             const rect = box.getBoundingClientRect();
             window.__dockeep_selection_0replace_key0 = {
-                x: rect.left, y: rect.top,
-                width: rect.width, height: rect.height
+                x: rect.left + window.scrollX,
+                y: rect.top  + window.scrollY,
+                width: rect.width,
+                height: rect.height
             };
             reset();
         });

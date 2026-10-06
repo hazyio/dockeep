@@ -2,7 +2,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{fs, time::SystemTime};
 
-use crate::config::{AppConfig, ImageFormat};
+use crate::config::ImageFormat;
+use crate::config::project_settings_data::ProjectSettingsData;
 use anyhow::{Error, Result};
 use img_parts::{
     Bytes,
@@ -18,6 +19,8 @@ pub struct SaveScreenshotResult {
     pub saved: bool,
     pub is_replaced: bool,
     pub save_path: PathBuf,
+    pub path_id: PathBuf,
+    pub error: Option<String>,
 }
 pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
@@ -148,19 +151,50 @@ pub fn save_screenshot(
     replace_path: Option<PathBuf>,
     working_dir: PathBuf,
     capture_url: &str,
+    tab_title: &str,
 ) -> SaveScreenshotResult {
-    let save_format = AppConfig::load().capture_setting.image_format;
-
-    let (save_path, is_replace) = match replace_path {
-        Some(rp) => (rp, true),
+    let project_settings = ProjectSettingsData::load(&working_dir);
+    let tab_title = tab_title.replace("/", "-").replace("\\", "-");
+    let save_format = project_settings.save_format;
+    let (new_save_path, replace_path) = match replace_path {
+        Some(rp) => {
+            if rp.extension().unwrap_or_default() != save_format.to_value() {
+                // if the extension doesn't match, replace it with the save format
+                let new_path = rp.with_extension(save_format.to_value());
+                (new_path, Some(rp))
+            } else {
+                (rp.clone(), Some(rp))
+            }
+        }
         None => {
             let working_dir = working_dir.clone();
-
-            let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
-            let filename = format!("Screenshot_{}.{}", timestamp, save_format.to_value());
-            (working_dir.join(&filename), false)
+            let filename = if project_settings.save_with_tab_title && !tab_title.is_empty() {
+                format!("{}", tab_title.replace(" ", "-"))
+            } else {
+                let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+                format!("Screenshot_{}", timestamp)
+            };
+            let mut new_path = working_dir
+                .join(project_settings.save_to_dir)
+                .join(filename);
+            new_path.add_extension(save_format.to_value());
+            (new_path, None)
         }
     };
+    if new_save_path.exists() && replace_path.is_none() {
+        tracing::error!(
+            "An existing file already exists at the save path: {:?}",
+            new_save_path
+        );
+        // if replace_path is None, this is a new save, this means it is a new file that should not exist yet so we exist.
+        return SaveScreenshotResult {
+            saved: false,
+            is_replaced: replace_path.is_some(),
+            save_path: new_save_path.clone(),
+            path_id: replace_path.unwrap_or(new_save_path),
+            error: Some(t!("error.cannot_save_to_existing_file").to_string()),
+        };
+    }
     match data {
         Ok(data) => {
             let try_embed = match embed_capture_url(data.clone(), save_format, capture_url) {
@@ -170,31 +204,47 @@ pub fn save_screenshot(
                     data
                 }
             };
-            if let Err(e) = std::fs::write(&save_path, &try_embed) {
-                tracing::error!("Failed to save screenshot to {:?}: {}", save_path, e);
-                if is_replace {
+            if let Err(e) = std::fs::write(&new_save_path, &try_embed) {
+                tracing::error!("Failed to save screenshot to {:?}: {}", new_save_path, e);
+                // If is_replace is Some and the save_path is different from the old path, this means the extension was changed, so remove the created file
+                if replace_path.is_some() && new_save_path != replace_path.clone().unwrap() {
                     // remove the created file
-                    std::fs::remove_file(&save_path).ok();
+                    std::fs::remove_file(&new_save_path).ok();
                 }
                 return SaveScreenshotResult {
                     saved: false,
-                    is_replaced: is_replace,
-                    save_path,
+                    is_replaced: replace_path.is_some(),
+                    save_path: new_save_path.clone(),
+                    path_id: replace_path.unwrap_or(new_save_path),
+                    error: Some(t!("error.failed_to_save_screenshot").to_string()),
                 };
+            }
+
+            if replace_path.is_some() {
+                let old_path = replace_path.clone().unwrap();
+                // remove the old file if the extension was changed
+                if old_path != new_save_path {
+                    // remove the old file,
+                    std::fs::remove_file(&old_path).ok();
+                }
             }
 
             SaveScreenshotResult {
                 saved: true,
-                is_replaced: is_replace,
-                save_path,
+                is_replaced: replace_path.is_some(),
+                save_path: new_save_path.clone(),
+                path_id: replace_path.unwrap_or(new_save_path),
+                error: None,
             }
         }
         Err(e) => {
             tracing::error!("Failed to capture screenshot: {}", e);
             SaveScreenshotResult {
                 saved: false,
-                is_replaced: is_replace,
-                save_path,
+                is_replaced: replace_path.is_some(),
+                save_path: new_save_path.clone(),
+                path_id: replace_path.unwrap_or(new_save_path),
+                error: Some(t!("error.failed_to_save_screenshot").to_string()),
             }
         }
     }

@@ -4,6 +4,7 @@ pub mod capture_sizing;
 pub mod chrome_config;
 pub mod git_setting;
 pub mod image_format;
+pub mod project_settings_data;
 
 pub use app_config::AppConfig;
 pub use capture_setting::CaptureSetting;

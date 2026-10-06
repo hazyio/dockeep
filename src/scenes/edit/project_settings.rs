@@ -1,7 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 use gpui_kit::{
-    base::{IndexPath, StyledExt, input::InputState},
+    base::{Disableable, IndexPath, StyledExt, input::InputState},
     component::{
         ActiveTheme, WindowExt,
         button::{Button, ButtonVariants},
@@ -14,67 +14,12 @@ use gpui_kit::{
     prelude::FluentBuilder,
     *,
 };
+use std::sync::Arc;
+
 use rfd::FileDialog;
-use serde::{Deserialize, Serialize};
 
-use crate::utils::app_icons::AppIcons;
+use crate::{config::project_settings_data::ProjectSettingsData, utils::app_icons::AppIcons};
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct ProjectSettingsData {
-    pub save_format: crate::config::ImageFormat,
-    pub save_with_tab_title: bool,
-    pub auto_commit: bool,
-    /// relative path to project root
-    pub save_to_dir: PathBuf,
-}
-impl Default for ProjectSettingsData {
-    fn default() -> Self {
-        let app_config = crate::config::AppConfig::default();
-        Self {
-            save_format: app_config.capture_setting.image_format,
-            auto_commit: app_config.git_setting.auto_commit,
-            save_with_tab_title: app_config.capture_setting.save_with_tab_title,
-            save_to_dir: PathBuf::from(""),
-        }
-    }
-}
-impl ProjectSettingsData {
-    fn save(&self, project_path: &PathBuf) {
-        let config_path = project_path.join(".dockeep");
-        let contents = serde_json::to_string(self).unwrap();
-        fs::write(&config_path, contents).unwrap();
-    }
-    fn load(project_path: &PathBuf) -> Self {
-        let config_path = project_path.join(".dockeep");
-        if config_path.exists() {
-            match fs::read_to_string(&config_path) {
-                Ok(contents) => match serde_json::from_str(&contents) {
-                    Ok(config) => {
-                        return config;
-                    }
-                    Err(error) => {
-                        tracing::warn!(
-                            ?error,
-                            path = %config_path.display(),
-                            "Could not parse app config; using defaults"
-                        );
-                    }
-                },
-
-                Err(error) => {
-                    tracing::warn!(
-                        ?error,
-                        path = %config_path.display(),
-                        "Could not read app config; using defaults"
-                    );
-                }
-            }
-        }
-        tracing::info!("Loaded default project settings ",);
-        // any error, or config not found, return default
-        return Self::default();
-    }
-}
 pub struct ProjectSettings {
     project_path: PathBuf,
     data: ProjectSettingsData,
@@ -122,8 +67,12 @@ impl ProjectSettings {
 
         let save_to = self.save_to.update(cx, |input, _| input.value().clone());
         let save_format = self.save_format_state.read(cx).selected_value().unwrap();
+        let rel_path = PathBuf::from(save_to.as_str())
+            .strip_prefix(&project_path)
+            .unwrap()
+            .to_path_buf();
         let settings = ProjectSettingsData {
-            save_to_dir: PathBuf::from(save_to.to_string()),
+            save_to_dir: rel_path,
             save_format: crate::config::ImageFormat::from_value(save_format.as_str()),
             save_with_tab_title: self.data.save_with_tab_title,
             auto_commit: self.data.auto_commit,
@@ -132,6 +81,7 @@ impl ProjectSettings {
         self.data = settings;
         cx.notify();
     }
+
     fn select_save_to(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match FileDialog::new()
             .set_directory(&self.project_path)
@@ -143,13 +93,13 @@ impl ProjectSettings {
                     self.error = Some(t!("error.selected_folder_not_in_project").to_string());
                     return;
                 }
-                let rel_path = folder
-                    .strip_prefix(&project_path)
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string();
+
                 self.save_to.update(cx, |input, cx| {
-                    input.set_value(SharedString::from(rel_path), window, cx);
+                    input.set_value(
+                        SharedString::from(folder.to_string_lossy().to_string()),
+                        window,
+                        cx,
+                    );
                 });
                 self.error = None;
             }
@@ -167,10 +117,12 @@ impl Render for ProjectSettings {
         Dialog::new(cx)
             .trigger(Button::new("open-project-settings").child(AppIcons::Settings))
             .content(move |content, _, cx| {
+                let entity = Arc::new(entity.clone());
                 // read current state at the time the dialog renders
                 let data = entity.read(cx).data.clone();
                 let save_with_tab_title_check = data.save_with_tab_title;
                 let error = entity.read(cx).error.clone();
+                let save_disabled = error.is_some();
                 let auto_commit_check = data.auto_commit;
                 let save_format_state = entity.read(cx).save_format_state.clone();
                 let entity1 = entity.clone();
@@ -254,6 +206,7 @@ impl Render for ProjectSettings {
                                 Button::new("save-project-settings")
                                     .primary()
                                     .label(t!("label.save"))
+                                    .disabled(save_disabled)
                                     .on_click(move |_, window, cx| {
                                         save_entity.update(cx, |this, cx| {
                                             this.save_settings(cx);

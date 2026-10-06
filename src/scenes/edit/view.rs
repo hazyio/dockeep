@@ -19,6 +19,7 @@ use rust_i18n::t;
 use crate::components::sort_button::{SortButton, SortButtonEvent};
 use crate::components::window_decor::WindowDecor;
 use crate::config::AppConfig;
+use crate::config::project_settings_data::ProjectSettingsData;
 use crate::files::files;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};
@@ -108,6 +109,7 @@ impl EditPage {
             self.close_full_view(cx);
             return;
         }
+        // check if there are any pending image replacements
         let was_replacing = self.browser_action.update(cx, |action, cx| {
             let had = action.replace_path.is_some();
             if had {
@@ -118,6 +120,7 @@ impl EditPage {
         });
 
         if was_replacing {
+            // cancel any pending image replacements
             for item in &self.items {
                 item.update(cx, |item, cx| {
                     if item.is_replacing {
@@ -200,9 +203,9 @@ impl EditPage {
             entity,
             window,
             move |this, _, event: &BrowserActionsEvents, window, cx| {
-                let app_config = AppConfig::load();
                 let repo_path = this.path.clone();
                 let is_git_repo = this.is_git_repo;
+                let project_config = ProjectSettingsData::load(&repo_path);
                 match event {
                     BrowserActionsEvents::Add(p) => {
                         tracing::debug!("Adding Image: {:?}", p);
@@ -210,7 +213,7 @@ impl EditPage {
                         let subscription = this.build_image_subscription(window, &entity, cx);
                         this._image_action_subscription.push(subscription);
                         this.items.push(entity);
-                        if app_config.git_setting.auto_commit && is_git_repo {
+                        if project_config.auto_commit && is_git_repo {
                             // if auto-commit is enabled, make a new commit for the added image
                             if let Err(e) =
                                 add_path_and_commit(&repo_path, p, "description.add_screenshot")
@@ -221,9 +224,9 @@ impl EditPage {
                         // apply sort after adding the image
                         this.apply_sort(cx);
                     }
-                    BrowserActionsEvents::Replace(p) => {
+                    BrowserActionsEvents::Replace(p, path_id) => {
                         tracing::debug!("Replacing Image: {:?}", p);
-                        if app_config.git_setting.auto_commit && is_git_repo {
+                        if project_config.auto_commit && is_git_repo {
                             // if auto-commit is enabled, make a new commit for the replacement image
                             if let Err(e) =
                                 add_path_and_commit(&repo_path, p, "description.replace_screenshot")
@@ -232,11 +235,10 @@ impl EditPage {
                             }
                         };
                         if let Some(entity) =
-                            this.items.iter().find(|item| item.read(cx).path == *p)
+                            this.items.iter().find(|item| item.read(cx).path == *path_id)
                         {
                             entity.update(cx, |image_view, cx| {
-                                // Replace the cache so the next render picks up the new file contents.
-                                image_view.bust_cache(cx);
+                                image_view.reload(p.clone(), cx);
                                 cx.notify();
                             });
                         }
@@ -277,6 +279,7 @@ impl EditPage {
                         });
                         image_view.update(cx, |item, cx| {
                             item.is_replacing = true;
+
                             cx.notify();
                         });
 

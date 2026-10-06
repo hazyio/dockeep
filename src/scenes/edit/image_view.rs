@@ -8,9 +8,9 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
+use crate::files::files;
 use crate::scenes::edit::image_view_info_popup::{ImageViewInfoPopup, ImageViewInfoPopupEvents};
 use crate::utils::app_icons::AppIcons;
-use crate::files::files;
 use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
     Replace(PathBuf),
@@ -27,7 +27,7 @@ pub struct ImageView {
     pub last_modified_timestamp: u64,
     image_cache: Entity<RetainAllImageCache>,
     image_view_popup: Entity<ImageViewInfoPopup>,
-    _popup_subscription: Option<Subscription>,
+    popup_subscription: Option<Subscription>,
 }
 
 impl ImageView {
@@ -44,7 +44,7 @@ impl ImageView {
             is_replacing: false,
             last_modified_timestamp,
             image_view_popup: cx.new(|_| ImageViewInfoPopup::new(index, path)),
-            _popup_subscription: None,
+            popup_subscription: None,
         }
     }
 }
@@ -54,11 +54,20 @@ impl EventEmitter<ImageViewEvents> for ImageView {}
 impl ImageView {
     /// Replaces the image cache so the next render reloads the file from disk.
     pub fn bust_cache(&mut self, cx: &mut Context<Self>) {
+        let path = self.path.clone();
+
         self.image_cache = RetainAllImageCache::new(cx);
         // reload popup metadata, e.g. last modified timestamp
-        self.image_view_popup.update(cx, |info, _| info.refresh());
+        self.image_view_popup
+            .update(cx, |info, _| info.refresh(path));
         // update the last modified timestamp
         self.update_last_modified_with_now();
+    }
+    pub fn reload(&mut self, path: PathBuf, cx: &mut Context<Self>) {
+        self.path = path;
+        self.bust_cache(cx);
+
+        cx.notify();
     }
     pub fn update_last_modified(&mut self, last_modified_timestamp: u64) {
         self.last_modified_timestamp = last_modified_timestamp;
@@ -113,9 +122,9 @@ impl ImageView {
 
 impl Render for ImageView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        if self._popup_subscription.is_none() {
+        if self.popup_subscription.is_none() {
             // Subscribe to popup events when the view is first rendered
-            self._popup_subscription = Some(Self::build_popup_subscription(
+            self.popup_subscription = Some(Self::build_popup_subscription(
                 &self.image_view_popup,
                 window,
                 cx,

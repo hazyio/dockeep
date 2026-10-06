@@ -11,14 +11,17 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use headless_chrome::protocol::cdp::Emulation::{self};
-use headless_chrome::protocol::cdp::Page::{self};
+use headless_chrome::protocol::cdp::Page::{self, CaptureScreenshot};
 use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::config::AppConfig;
-use crate::utils::app_icons::AppIcons;
+use crate::config::project_settings_data::ProjectSettingsData;
 use crate::files::files::save_screenshot;
+use crate::utils::app_icons::AppIcons;
 use crate::utils::random::random_string;
+use base64::{Engine, engine::general_purpose::STANDARD};
 use gpui_kit::component::WindowExt;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BrowserActionsState {
     Stopped,
@@ -48,7 +51,8 @@ impl ScreenshotSize {
 }
 pub enum BrowserActionsEvents {
     Add(PathBuf),
-    Replace(PathBuf),
+    /// Notify that a screenshot has been replaced at the given path, first is new path, second is old path.
+    Replace(PathBuf, PathBuf),
 }
 
 pub struct BrowserActions {
@@ -70,8 +74,43 @@ impl BrowserActions {
             taking_cropped: false,
         }
     }
-    // fn is_browser_alive(browser: &Browser) -> bool {
-    //     browser.get_version().is_ok()
+
+    // fn browser_watch(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    //     cx.spawn_in(window, async move |this: WeakEntity<Self>, cx| {
+    //         let Some(browser) = this
+    //             .upgrade()
+    //             .and_then(|e| e.read_with(cx, |this, _| this.browser.clone()))
+    //         else {
+    //             return;
+    //         };
+
+    //         let bg = cx.background_executor().clone();
+    //         let dead = bg
+    //             .spawn({
+    //                 let bg = bg.clone();
+    //                 async move {
+    //                     loop {
+    //                         // blocking call, errors once the websocket is closed
+    //                         if let Err(e) = browser.get_version() {
+    //                             tracing::info!("browser is dead: {e}");
+    //                             return true;
+    //                         }
+    //                         tracing::info!("browser is alive");
+    //                         bg.timer(Duration::from_millis(1000)).await;
+    //                     }
+    //                 }
+    //             })
+    //             .await;
+
+    //         if dead {
+    //             this.update(cx, |this, cx| {
+    //                 this.browser = None;
+    //                 cx.notify();
+    //             })
+    //             .ok();
+    //         }
+    //     })
+    //     .detach();
     // }
     pub fn open_url(&mut self, url: &str, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(tab) = &self.get_first_tab(window, cx) {
@@ -81,6 +120,7 @@ impl BrowserActions {
     fn launch_browser(chrome_path: PathBuf) -> anyhow::Result<Browser> {
         let opts = LaunchOptionsBuilder::default()
             .headless(false)
+            .idle_browser_timeout(Duration::from_secs(60 * 60 * 24))
             .path(Some(chrome_path))
             .build()
             .map_err(anyhow::Error::from)?;
@@ -100,7 +140,10 @@ impl BrowserActions {
             .ok_or_else(|| anyhow::anyhow!("webSocketDebuggerUrl missing in /json/version"))?
             .to_string();
 
-        Ok(Browser::connect(ws_url)?)
+        Ok(Browser::connect_with_timeout(
+            ws_url,
+            Duration::from_secs(60 * 60 * 24),
+        )?)
     }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
@@ -232,7 +275,6 @@ impl BrowserActions {
             }
         }
     }
-
     fn get_active_tab(
         &mut self,
         window: &mut Window,
@@ -292,14 +334,30 @@ impl BrowserActions {
             };
         }
     }
-    fn capture_screenshot(tab: &Tab, clip: Option<Page::Viewport>) -> Result<Vec<u8>> {
+    fn capture_screenshot(
+        tab: &Tab,
+        clip: Option<Page::Viewport>,
+        project_path: PathBuf,
+        croped: bool,
+    ) -> Result<Vec<u8>> {
+        let project_settings = ProjectSettingsData::load(&project_path);
         let app_config = AppConfig::load();
-        tab.capture_screenshot(
-            app_config.capture_setting.image_format.to_cdp_format(),
-            Some(app_config.capture_setting.quality as u32),
-            clip,
-            app_config.capture_setting.capture_from_surface,
-        )
+
+        let data = tab
+            .call_method(CaptureScreenshot {
+                format: Some(project_settings.save_format.to_cdp_format()),
+                quality: Some(app_config.capture_setting.quality as u32),
+                // only clip for cropped captures; None = current viewport
+                clip: clip,
+                from_surface: Some(app_config.capture_setting.capture_from_surface),
+                // true only for cropped, since the clip uses document coordinates
+                // and may sit outside the visible area
+                capture_beyond_viewport: Some(croped),
+                optimize_for_speed: None,
+            })?
+            .data;
+
+        Ok(STANDARD.decode(data)?)
     }
     pub fn queue_replace_path(&mut self, path: PathBuf) {
         self.replace_path = Some(path);
@@ -312,6 +370,7 @@ impl BrowserActions {
         let replace_path = self.replace_path.clone();
         let working_dir = self.working_dir.clone();
         let entity = cx.entity().downgrade(); // grab it here, while we still have Context<Self>
+        let window_handle = window.window_handle();
         self.get_active_tab(window, cx, move |tab, window, cx| {
             let replace_path = replace_path.clone();
             let working_dir = working_dir.clone();
@@ -339,6 +398,7 @@ impl BrowserActions {
                 });
                 let m_tab = tab.clone();
                 let m_full_evaluation = full_evaluation.clone();
+                let tab_title = tab.get_title().unwrap_or_default();
                 // listen for selection update
                 let selection = cx
                     .background_spawn(async move {
@@ -403,6 +463,7 @@ impl BrowserActions {
                     tracing::error!("failed to get value for {}", full_evaluation.clone());
                     return;
                 };
+                tracing::info!("selection: {:?}", selection);
 
                 let clip = Page::Viewport {
                     x: selection["x"].as_f64().unwrap(),
@@ -411,20 +472,32 @@ impl BrowserActions {
                     height: selection["height"].as_f64().unwrap(),
                     scale: 1.0,
                 };
-
-                let capture_data = Self::capture_screenshot(&tab, Some(clip));
+                let capture_data =
+                    Self::capture_screenshot(&tab, Some(clip), working_dir.clone(), true);
                 let capture_url = tab.get_url();
                 let saved = save_screenshot(
                     capture_data,
                     replace_path,
                     working_dir.clone(),
                     &capture_url,
+                    &tab_title,
                 );
+                if let Some(error) = saved.error {
+                    cx.update_window(window_handle, |_, window, cx| {
+                        window.push_notification(error, cx);
+                    })
+                    .ok();
+
+                    return;
+                }
 
                 let update = entity.update(cx, |_, cx| {
                     if saved.saved {
                         if saved.is_replaced {
-                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
+                            cx.emit(BrowserActionsEvents::Replace(
+                                saved.save_path.clone(),
+                                saved.path_id.clone(),
+                            ));
                         } else {
                             cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
                         }
@@ -445,7 +518,7 @@ impl BrowserActions {
         let replace_path = self.replace_path.clone();
         let working_dir = self.working_dir.clone();
 
-        self.get_active_tab(window, cx, move |tab, _window, cx| {
+        self.get_active_tab(window, cx, move |tab, window, cx| {
             let working_dir = working_dir.clone();
             let replace_path = replace_path.clone();
 
@@ -470,7 +543,7 @@ impl BrowserActions {
                 device_posture: None,
             }) {
                 tracing::error!("Failed to set device metrics override: {:?}", e);
-                // window.push_notification(t!("error.failed_to_set_device_metrics_override"), cx);
+                window.push_notification(t!("error.failed_to_set_device_metrics_override"), cx);
                 return;
             }
 
@@ -478,23 +551,33 @@ impl BrowserActions {
 
             cx.spawn(async move |cx| {
                 let capture_url = tab.get_url();
+                let working_dir2 = working_dir.clone();
+                let tab_title = tab.get_title().unwrap_or_default();
 
                 let result = cx
                     .background_spawn(async move {
-                        let capture_data = Self::capture_screenshot(&tab, None);
-
+                        let capture_data =
+                            Self::capture_screenshot(&tab, None, working_dir2.clone(), false);
                         // reset device metrics override
                         let _ = tab.call_method(Emulation::ClearDeviceMetricsOverride(None));
                         capture_data
                     })
                     .await;
 
-                let saved =
-                    save_screenshot(result, replace_path, working_dir.clone(), &capture_url);
+                let saved = save_screenshot(
+                    result,
+                    replace_path,
+                    working_dir.clone(),
+                    &capture_url,
+                    &tab_title,
+                );
                 if saved.saved {
                     if let Err(e) = entity.update(cx, |_, cx| {
                         if saved.is_replaced {
-                            cx.emit(BrowserActionsEvents::Replace(saved.save_path.clone()));
+                            cx.emit(BrowserActionsEvents::Replace(
+                                saved.save_path.clone(),
+                                saved.path_id.clone(),
+                            ));
                         } else {
                             cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
                         }
