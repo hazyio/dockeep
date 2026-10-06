@@ -20,7 +20,10 @@ headless_chrome = "1.0.22"
 futures = "0.3.34"
 chrono = "0.4.45"
 img-parts = "0.4.0"
+tempfile = "3.27.0"
 imagesize = "0.15.0"
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "webp"] }
+
 ureq = { version = "3.4.2", features = ["json"] }
 
 # Fast iteration: skip most optimization, keep debug info light,

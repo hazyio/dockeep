@@ -2,6 +2,7 @@ pub mod components;
 pub mod config;
 pub mod scenes;
 pub mod utils;
+pub mod files;
 use gpui_kit::component::*;
 use gpui_kit::*;
 use tracing_subscriber::EnvFilter;

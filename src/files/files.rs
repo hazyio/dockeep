@@ -228,7 +228,7 @@ pub fn read_images(path: &PathBuf) -> Vec<PathBuf> {
 }
 
 /// Reads the first bytes of `path` and checks for a known image magic number.
-fn has_image_header(path: &Path) -> bool {
+pub(super) fn has_image_header(path: &Path) -> bool {
     let Ok(mut file) = std::fs::File::open(path) else {
         return false;
     };
@@ -284,7 +284,7 @@ pub fn read_dir(path: &PathBuf) -> Vec<PathBuf> {
 }
 
 /// Loads ignore patterns from `.dockeepignore` (preferred) or `.gitignore`.
-fn load_ignore_patterns(root: &Path) -> Vec<String> {
+pub(super) fn load_ignore_patterns(root: &Path) -> Vec<String> {
     let dockeepignore = root.join(".dockeepignore");
     let gitignore = root.join(".gitignore");
 
@@ -310,7 +310,7 @@ fn load_ignore_patterns(root: &Path) -> Vec<String> {
 }
 
 /// Returns `true` when `path` (relative to the project root) matches any ignore pattern.
-fn is_ignored(path: &Path, patterns: &[String]) -> bool {
+pub(super) fn is_ignored(path: &Path, patterns: &[String]) -> bool {
     let path_str = path.to_string_lossy();
     // Also check just the file/dir name for simple patterns like "*.log" or "node_modules"
     let name_str = path
@@ -324,7 +324,7 @@ fn is_ignored(path: &Path, patterns: &[String]) -> bool {
 }
 
 /// Converts a gitignore-style glob pattern into a [`Regex`] and tests it against `text`.
-fn glob_matches(pattern: &str, text: &str) -> bool {
+pub(super) fn glob_matches(pattern: &str, text: &str) -> bool {
     // Strip a trailing slash that marks directory-only patterns; we still match
     // the name so that the WalkDir filter_entry can prune the whole subtree.
     let pattern = pattern.trim_end_matches('/');
@@ -350,7 +350,7 @@ fn glob_matches(pattern: &str, text: &str) -> bool {
 /// - `*`   → matches any sequence of characters except `/`
 /// - `?`   → matches any single character except `/`
 /// - All other regex meta-characters are escaped.
-fn glob_to_regex(pattern: &str) -> String {
+pub(super) fn glob_to_regex(pattern: &str) -> String {
     let mut regex = String::from("(?i)^");
     let mut chars = pattern.chars().peekable();
 

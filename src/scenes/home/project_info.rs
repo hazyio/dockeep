@@ -47,7 +47,7 @@ impl Render for ProjectInfo {
     }
 }
 impl ProjectInfo {
-    fn open_editor(
+    fn open_in_project_editor(
         name: String,
         path: PathBuf,
         repo_info: Option<GitRepoInfo>,
@@ -55,6 +55,23 @@ impl ProjectInfo {
         cx: &mut App,
         app: WeakEntity<MyApp>,
     ) {
+        if !path.is_dir() || !path.exists() {
+            window.open_alert_dialog(cx, |dialog, _, _| {
+                dialog
+                    .title(t!("title.project_invalid"))
+                    .description(t!("description.project_invalid"))
+                    .footer(
+                        div().h_flex().justify_end().child(
+                            Button::new("button.ok").label(t!("label.ok")).on_click(
+                                |_, window, cx| {
+                                    window.close_dialog(cx);
+                                },
+                            ),
+                        ),
+                    )
+            });
+            return;
+        }
         let project_info = AppProjectInfo {
             name: name.clone(),
             path: path.to_string_lossy().to_string(),
@@ -258,7 +275,7 @@ impl ProjectInfo {
                                             .description(t!("dialog.dirty_repo_description"))
                                             .show_cancel(true)
                                             .on_ok(move |_, window, cx| {
-                                                Self::open_editor(
+                                                Self::open_in_project_editor(
                                                     name.clone(),
                                                     path.clone(),
                                                     repo_info.clone(),
@@ -270,7 +287,7 @@ impl ProjectInfo {
                                             })
                                     });
                                 } else {
-                                    Self::open_editor(
+                                    Self::open_in_project_editor(
                                         name.clone(),
                                         path.clone(),
                                         repo_info.clone(),

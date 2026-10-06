@@ -16,7 +16,7 @@ use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::config::AppConfig;
 use crate::utils::app_icons::AppIcons;
-use crate::utils::files::save_screenshot;
+use crate::files::files::save_screenshot;
 use crate::utils::random::random_string;
 use gpui_kit::component::WindowExt;
 #[derive(Debug, Clone, PartialEq)]

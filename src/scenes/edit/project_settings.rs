@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use gpui_kit::{
     base::{IndexPath, StyledExt, input::InputState},
@@ -39,13 +39,40 @@ impl Default for ProjectSettingsData {
     }
 }
 impl ProjectSettingsData {
+    fn save(&self, project_path: &PathBuf) {
+        let config_path = project_path.join(".dockeep");
+        let contents = serde_json::to_string(self).unwrap();
+        fs::write(&config_path, contents).unwrap();
+    }
     fn load(project_path: &PathBuf) -> Self {
-        Self {
-            save_format: crate::config::ImageFormat::default(),
-            auto_commit: false,
-            save_with_tab_title: false,
-            save_to_dir: PathBuf::from(""),
+        let config_path = project_path.join(".dockeep");
+        if config_path.exists() {
+            match fs::read_to_string(&config_path) {
+                Ok(contents) => match serde_json::from_str(&contents) {
+                    Ok(config) => {
+                        return config;
+                    }
+                    Err(error) => {
+                        tracing::warn!(
+                            ?error,
+                            path = %config_path.display(),
+                            "Could not parse app config; using defaults"
+                        );
+                    }
+                },
+
+                Err(error) => {
+                    tracing::warn!(
+                        ?error,
+                        path = %config_path.display(),
+                        "Could not read app config; using defaults"
+                    );
+                }
+            }
         }
+        tracing::info!("Loaded default project settings ",);
+        // any error, or config not found, return default
+        return Self::default();
     }
 }
 pub struct ProjectSettings {
@@ -90,15 +117,39 @@ impl ProjectSettings {
             error: None,
         }
     }
+    fn save_settings(&mut self, cx: &mut Context<Self>) {
+        let project_path = self.project_path.clone();
+
+        let save_to = self.save_to.update(cx, |input, _| input.value().clone());
+        let save_format = self.save_format_state.read(cx).selected_value().unwrap();
+        let settings = ProjectSettingsData {
+            save_to_dir: PathBuf::from(save_to.to_string()),
+            save_format: crate::config::ImageFormat::from_value(save_format.as_str()),
+            save_with_tab_title: self.data.save_with_tab_title,
+            auto_commit: self.data.auto_commit,
+        };
+        settings.save(&project_path);
+        self.data = settings;
+        cx.notify();
+    }
     fn select_save_to(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        match FileDialog::new().set_directory("/").pick_folder() {
+        match FileDialog::new()
+            .set_directory(&self.project_path)
+            .pick_folder()
+        {
             Some(folder) => {
+                let project_path = self.project_path.clone();
+                if !folder.starts_with(&project_path) {
+                    self.error = Some(t!("error.selected_folder_not_in_project").to_string());
+                    return;
+                }
+                let rel_path = folder
+                    .strip_prefix(&project_path)
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string();
                 self.save_to.update(cx, |input, cx| {
-                    input.set_value(
-                        SharedString::from(folder.to_string_lossy().to_string()),
-                        window,
-                        cx,
-                    );
+                    input.set_value(SharedString::from(rel_path), window, cx);
                 });
                 self.error = None;
             }
@@ -125,6 +176,7 @@ impl Render for ProjectSettings {
                 let entity1 = entity.clone();
                 let entity2 = entity.clone();
                 let entity3 = entity.clone();
+                let save_entity = entity.clone();
                 let save_to = entity.read(cx).save_to.clone();
 
                 content
@@ -201,7 +253,13 @@ impl Render for ProjectSettings {
                             .child(
                                 Button::new("save-project-settings")
                                     .primary()
-                                    .label(t!("label.save")),
+                                    .label(t!("label.save"))
+                                    .on_click(move |_, window, cx| {
+                                        save_entity.update(cx, |this, cx| {
+                                            this.save_settings(cx);
+                                            window.close_dialog(cx);
+                                        });
+                                    }),
                             ),
                     )
             })

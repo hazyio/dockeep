@@ -86,35 +86,37 @@ impl HomePage {
         cx.subscribe_in(
             entity,
             window,
-            move |this, _button, event: &SortButtonEvent, _window, cx| match event {
-                SortButtonEvent::SortNameAscending => {
-                    this.apply_sort(cx, |info| info.name.to_lowercase(), true);
-                }
-                SortButtonEvent::SortNameDescending => {
-                    this.apply_sort(cx, |info| info.name.to_lowercase(), false);
-                }
-                SortButtonEvent::SortLastAccessedAscending => {
-                    this.apply_sort(cx, |info| info.last_accessed_timestamp, true);
-                }
-                SortButtonEvent::SortLastAccessedDescending => {
-                    this.apply_sort(cx, |info| info.last_accessed_timestamp, false);
-                }
-            },
+            move |this, _button, _: &SortButtonEvent, _window, cx| this.apply_sort(cx),
         )
     }
-
     /// Sorts `projects` in place using `key`, then notifies the view.
-    fn apply_sort<K, F>(&mut self, cx: &mut Context<Self>, key: F, ascending: bool)
-    where
-        K: Ord,
-        F: Fn(&ProjectInfo) -> K,
-    {
-        let mut keyed: Vec<(K, Entity<ProjectInfo>)> = self
-            .projects
-            .iter()
-            .map(|project| (key(project.read(cx)), project.clone()))
-            .collect();
-        keyed.sort_by(|a, b| {
+    fn apply_sort(&mut self, cx: &mut Context<Self>) {
+        let current_sort = self.sort_button.read(cx).current_sort();
+        let ascending = match current_sort {
+            SortButtonEvent::SortNameAscending | SortButtonEvent::SortLastAccessedAscending => true,
+            SortButtonEvent::SortNameDescending | SortButtonEvent::SortLastAccessedDescending => {
+                false
+            }
+        };
+        let mut keyed: Vec<(String, Entity<ProjectInfo>)> =
+            self.projects
+                .iter()
+                .map(|project| {
+                    let project_enitty = project.read(cx);
+                    let key = match current_sort {
+                        SortButtonEvent::SortNameAscending
+                        | SortButtonEvent::SortNameDescending => project_enitty.name.to_lowercase(),
+                        SortButtonEvent::SortLastAccessedAscending
+                        | SortButtonEvent::SortLastAccessedDescending => {
+                            project_enitty.last_accessed_timestamp.to_string()
+                        }
+                    };
+
+                    (key, project.clone())
+                })
+                .collect();
+
+        keyed.sort_by(move |a, b| {
             if ascending {
                 a.0.cmp(&b.0)
             } else {
@@ -124,6 +126,7 @@ impl HomePage {
         self.projects = keyed.into_iter().map(|(_, project)| project).collect();
         cx.notify();
     }
+
     fn load_projects(app: WeakEntity<MyApp>, cx: &mut Context<Self>) {
         cx.spawn(async move |entity, cx| {
             // start loading
@@ -187,7 +190,7 @@ impl HomePage {
                     this.loading = false;
                     this.error = result.1;
                     // apply default sort, cx.notify() is called automatically
-                    this.apply_sort(cx, |info| info.name.to_lowercase(), true);
+                    this.apply_sort(cx);
                 })
                 .ok();
         })

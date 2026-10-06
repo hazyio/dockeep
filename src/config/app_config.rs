@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     config::GitSetting,
@@ -34,8 +37,14 @@ impl AppConfig {
         Self::config_dir().join(Self::CONFIG_FILE)
     }
     pub fn load() -> Self {
+        Self::load_from(&Self::config_path())
+    }
+
+    pub fn save(&self) {
+        self.save_to(&Self::config_path());
+    }
+    fn load_from(config_path: &Path) -> Self {
         tracing::info!("Loading app config");
-        let config_path = Self::config_path();
 
         match fs::read_to_string(&config_path) {
             Ok(contents) => match serde_json::from_str(&contents) {
@@ -67,12 +76,11 @@ impl AppConfig {
         }
     }
 
-    pub fn save(&self) {
+    fn save_to(&self, config_path: &Path) {
         let app_dir = Self::config_dir();
-        let config_path = Self::config_path();
         if let Err(error) = fs::create_dir_all(app_dir)
             .and_then(|_| serde_json::to_string_pretty(self).map_err(std::io::Error::other))
-            .and_then(|contents| fs::write(config_path.clone(), contents))
+            .and_then(|contents| fs::write(config_path, contents))
         {
             tracing::warn!(
                 ?error,
@@ -80,5 +88,156 @@ impl AppConfig {
                 "Could not save app config"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{json, Value};
+    use tempfile::tempdir;
+
+    // Compare via JSON so the tests don't need PartialEq on the nested types.
+    fn as_json(config: &AppConfig) -> Value {
+        serde_json::to_value(config).unwrap()
+    }
+
+    #[test]
+    fn missing_file_returns_defaults_and_creates_file() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+        assert!(path.exists(), "default config should be persisted");
+    }
+
+    #[test]
+    fn save_then_load_roundtrips() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+
+        let original = AppConfig::default();
+        original.save_to(&path);
+        let loaded = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&loaded), as_json(&original));
+    }
+
+    #[test]
+    fn save_creates_missing_parent_dirs() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("a/b/c/app_config.json");
+
+        AppConfig::default().save_to(&path);
+
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn saved_file_is_pretty_printed_json() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+
+        AppConfig::default().save_to(&path);
+        let contents = fs::read_to_string(&path).unwrap();
+
+        assert!(contents.contains('\n'), "expected pretty-printed output");
+        assert!(serde_json::from_str::<Value>(&contents).is_ok());
+    }
+
+    #[test]
+    fn invalid_json_returns_defaults_and_rewrites_file() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+        fs::write(&path, "{ not valid json").unwrap();
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+        let rewritten = fs::read_to_string(&path).unwrap();
+        assert!(serde_json::from_str::<Value>(&rewritten).is_ok());
+    }
+
+    #[test]
+    fn empty_object_falls_back_to_defaults() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+        fs::write(&path, "{}").unwrap();
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+    }
+
+    #[test]
+    fn missing_fields_use_defaults_via_serde_default() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+
+        let mut value = as_json(&AppConfig::default());
+        value.as_object_mut().unwrap().remove("language");
+        fs::write(&path, value.to_string()).unwrap();
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+    }
+
+    #[test]
+    fn unknown_fields_are_ignored() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+
+        let mut value = as_json(&AppConfig::default());
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("removed_in_v2".into(), json!(true));
+        fs::write(&path, value.to_string()).unwrap();
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+    }
+
+    #[test]
+    fn unreadable_path_returns_defaults_without_overwriting() {
+        let dir = tempdir().unwrap();
+        // A directory where the file should be: read_to_string fails with
+        // an error that is not NotFound.
+        let path = dir.path().join("app_config.json");
+        fs::create_dir(&path).unwrap();
+
+        let config = AppConfig::load_from(&path);
+
+        assert_eq!(as_json(&config), as_json(&AppConfig::default()));
+        assert!(path.is_dir(), "load must not clobber the path on read errors");
+    }
+
+    #[test]
+    fn save_failure_does_not_panic() {
+        let dir = tempdir().unwrap();
+        // Parent is a regular file, so create_dir_all must fail.
+        let blocker = dir.path().join("blocker");
+        fs::write(&blocker, "x").unwrap();
+        let path = blocker.join("app_config.json");
+
+        AppConfig::default().save_to(&path); // should just log a warning
+
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn save_overwrites_existing_file() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("app_config.json");
+        fs::write(&path, "garbage").unwrap();
+
+        AppConfig::default().save_to(&path);
+
+        let contents = fs::read_to_string(&path).unwrap();
+        assert!(serde_json::from_str::<Value>(&contents).is_ok());
     }
 }

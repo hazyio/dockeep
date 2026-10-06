@@ -19,13 +19,13 @@ use rust_i18n::t;
 use crate::components::sort_button::{SortButton, SortButtonEvent};
 use crate::components::window_decor::WindowDecor;
 use crate::config::AppConfig;
+use crate::files::files;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
 use crate::scenes::edit::project_settings::ProjectSettings;
 use crate::scenes::home::view::HomePage;
 use crate::utils::app_icons::AppIcons;
-use crate::utils::files;
 use crate::utils::git::{add_path_and_commit, remove_path_and_commit};
 
 pub struct EditPage {
@@ -66,7 +66,7 @@ impl EditPage {
             cx.new(|cx| InputState::new(window, cx).placeholder(t!("label.search_images")));
         // Sort button
         let sort_button =
-            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedDescending, true));
+            cx.new(|_| SortButton::new(SortButtonEvent::SortLastAccessedDescending, false));
         let _sort_button_subscription =
             Self::build_sort_button_subscription(&sort_button, window, cx);
         // bind escape key to handle_esc

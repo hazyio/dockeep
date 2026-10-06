@@ -10,7 +10,7 @@ use gpui_kit::*;
 
 use crate::scenes::edit::image_view_info_popup::{ImageViewInfoPopup, ImageViewInfoPopupEvents};
 use crate::utils::app_icons::AppIcons;
-use crate::utils::files;
+use crate::files::files;
 use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
     Replace(PathBuf),

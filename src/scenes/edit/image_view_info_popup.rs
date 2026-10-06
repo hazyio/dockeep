@@ -14,7 +14,7 @@ use gpui_kit::*;
 
 use crate::config::AppConfig;
 use crate::utils::app_icons::AppIcons;
-use crate::utils::files::{self, read_capture_url};
+use crate::files::files::{self, read_capture_url};
 use crate::utils::{date_format::DateFormat, time_format::TimeFormat};
 pub enum ImageViewInfoPopupEvents {
     OpenUrl(String),
