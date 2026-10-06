@@ -24,7 +24,7 @@ pub struct ProjectSettingsData {
     pub save_format: crate::config::ImageFormat,
     pub save_with_tab_title: bool,
     pub auto_commit: bool,
-    // relative path to project root
+    /// relative path to project root
     pub save_to_dir: PathBuf,
 }
 impl Default for ProjectSettingsData {
@@ -39,7 +39,7 @@ impl Default for ProjectSettingsData {
     }
 }
 impl ProjectSettingsData {
-    fn load() -> Self {
+    fn load(project_path: &PathBuf) -> Self {
         Self {
             save_format: crate::config::ImageFormat::default(),
             auto_commit: false,
@@ -58,7 +58,7 @@ pub struct ProjectSettings {
 
 impl ProjectSettings {
     pub fn new(project_path: &PathBuf, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let project_settings = ProjectSettingsData::load();
+        let project_settings = ProjectSettingsData::load(project_path);
         let save_value = crate::config::ImageFormat::all()
             .iter()
             .map(|lang| lang.to_value().to_string())
