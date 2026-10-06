@@ -4,6 +4,7 @@ use super::{capture_sizing::CaptureSizing, image_format::ImageFormat};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureSetting {
+    pub save_with_tab_title: bool,
     pub quality: u8,
     pub capture_from_surface: bool,
     pub image_format: ImageFormat,
@@ -15,6 +16,7 @@ pub struct CaptureSetting {
 impl Default for CaptureSetting {
     fn default() -> Self {
         Self {
+            save_with_tab_title: true,
             quality: 100,
             capture_from_surface: true,
             image_format: ImageFormat::Png,

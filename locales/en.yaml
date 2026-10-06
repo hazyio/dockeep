@@ -18,6 +18,8 @@ title:
   git: Git
   commit: Commit
   project_settings: Project Settings
+  save_with_tab_title: Save with Tab Title
+
 label:
   save_image_to: Save Image to
   image_save_format: Image Save Format
@@ -139,3 +141,4 @@ error:
   failed_to_update_browser_actions: Failed to update browser actions
   failed_to_rename_file: Failed to rename file
   failed_to_start_browser: Failed to start browser, if use attach is checked, make sure the browser is running before starting
+  failed_to_select_save_to: Failed to select save to folder

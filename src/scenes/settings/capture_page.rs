@@ -20,6 +20,34 @@ impl CapturePage {
             .group(
                 SettingGroup::new()
                     .title(t!("title.screenshot_settings"))
+                    .item(SettingItem::new(
+                        t!("title.save_with_tab_title"),
+                        SettingField::switch(
+                            {
+                                let debouncer = debouncer.clone();
+                                move |_: &App| {
+                                    debouncer
+                                        .config
+                                        .borrow()
+                                        .capture_setting
+                                        .save_with_tab_title
+                                }
+                            },
+                            {
+                                let debouncer = debouncer.clone();
+                                move |val: bool, cx: &mut App| {
+                                    debouncer
+                                        .config
+                                        .borrow_mut()
+                                        .capture_setting
+                                        .save_with_tab_title = val;
+
+                                    debouncer.schedule(cx);
+                                }
+                            },
+                        )
+                        .default_value(capture_setting_defaults.save_with_tab_title),
+                    ))
                     .item(
                         SettingItem::new(
                             t!("title.capture_from_surface"),
@@ -49,7 +77,7 @@ impl CapturePage {
                             )
                             .default_value(capture_setting_defaults.capture_from_surface),
                         )
-                        .description(t!("description.capture_from_surface", min = 10).to_string()),
+                        .description(t!("description.capture_from_surface").to_string()),
                     )
                     .item(SettingItem::new(
                         t!("label.format"),

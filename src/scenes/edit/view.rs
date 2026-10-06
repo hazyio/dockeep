@@ -75,7 +75,7 @@ impl EditPage {
                 this.handle_esc(cx);
             }
         });
-        let project_settings = cx.new(|cx| ProjectSettings::new(window, cx));
+        let project_settings = cx.new(|cx| ProjectSettings::new(&path, window, cx));
 
         Self {
             search,
