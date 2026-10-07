@@ -1,3 +1,5 @@
+use std::fmt;
+
 use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
 use serde::{Deserialize, Serialize};
 
@@ -41,7 +43,13 @@ impl ImageFormat {
             _ => ImageFormat::Png,
         }
     }
-    pub fn to_string(&self) -> String {
-        self.to_value().to_uppercase()
+    // pub fn to_string(&self) -> String {
+    //     self.to_value().to_uppercase().clone()
+    // }
+}
+
+impl fmt::Display for ImageFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_value().to_uppercase())
     }
 }

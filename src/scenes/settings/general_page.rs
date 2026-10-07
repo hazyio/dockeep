@@ -10,7 +10,7 @@ use gpui_kit::{
     div,
 };
 
-use crate::files::files::open_in_file_explorer;
+use crate::files::prelude::open_in_file_explorer;
 use crate::utils::logging;
 use crate::{
     config::AppConfig,

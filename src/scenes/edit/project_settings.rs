@@ -14,6 +14,7 @@ use gpui_kit::{
     prelude::FluentBuilder,
     *,
 };
+use std::path::Path;
 use std::sync::Arc;
 
 use rfd::FileDialog;
@@ -29,7 +30,7 @@ pub struct ProjectSettings {
 }
 
 impl ProjectSettings {
-    pub fn new(project_path: &PathBuf, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(project_path: &Path, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let project_settings = ProjectSettingsData::load(project_path);
         let save_value = crate::config::ImageFormat::all()
             .iter()
@@ -47,15 +48,13 @@ impl ProjectSettings {
                 cx,
             )
         });
-        let make_save_to = project_path
-            .clone()
-            .join(project_settings.save_to_dir.clone());
+        let make_save_to = project_path.join(project_settings.save_to_dir.clone());
         let save_to = cx.new(|cx| {
             InputState::new(window, cx).default_value(make_save_to.to_string_lossy().to_string())
         });
 
         Self {
-            project_path: project_path.clone(),
+            project_path: project_path.to_path_buf(),
             data: project_settings,
             save_format_state: state,
             save_to,

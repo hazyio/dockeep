@@ -16,7 +16,7 @@ use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::config::AppConfig;
 use crate::config::project_settings_data::ProjectSettingsData;
-use crate::files::files::save_screenshot;
+use crate::files::prelude::save_screenshot;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::random::random_string;
 use base64::{Engine, engine::general_purpose::STANDARD};
@@ -140,10 +140,7 @@ impl BrowserActions {
             .ok_or_else(|| anyhow::anyhow!("webSocketDebuggerUrl missing in /json/version"))?
             .to_string();
 
-        Browser::connect_with_timeout(
-            ws_url,
-            Duration::from_secs(60 * 60 * 24),
-        )
+        Browser::connect_with_timeout(ws_url, Duration::from_secs(60 * 60 * 24))
     }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
@@ -328,10 +325,11 @@ impl BrowserActions {
     }
     fn focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(tab) = self.get_first_tab(window, cx)
-            && let Err(e) = tab.bring_to_front() {
-                tracing::error!("Failed to bring tab to front: {:?}", e);
-                window.push_notification(t!("error.failed_to_bring_to_front"), cx);
-            };
+            && let Err(e) = tab.bring_to_front()
+        {
+            tracing::error!("Failed to bring tab to front: {:?}", e);
+            window.push_notification(t!("error.failed_to_bring_to_front"), cx);
+        };
     }
     fn capture_screenshot(
         tab: &Tab,
@@ -405,7 +403,6 @@ impl BrowserActions {
                         let crop_timeout = AppConfig::load().capture_setting.crop_timeout;
                         tracing::info!("waiting for selector {}", m_full_evaluation.clone());
 
-                        
                         loop {
                             if Instant::now() - started_at > Duration::from_secs(crop_timeout) {
                                 tracing::error!("Timed out waiting for selector");
@@ -581,9 +578,10 @@ impl BrowserActions {
                             cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
                         }
                         cx.notify();
-                    }) {
-                        tracing::error!("failed to emit event: {:?}", e);
-                    }
+                    })
+                {
+                    tracing::error!("failed to emit event: {:?}", e);
+                }
             })
             .detach();
         });

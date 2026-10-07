@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -22,12 +25,12 @@ impl Default for ProjectSettingsData {
     }
 }
 impl ProjectSettingsData {
-    pub fn save(&self, project_path: &PathBuf) {
+    pub fn save(&self, project_path: &Path) {
         let config_path = project_path.join(".dockeep");
         let contents = serde_json::to_string(self).unwrap();
         fs::write(&config_path, contents).unwrap();
     }
-    pub fn load(project_path: &PathBuf) -> Self {
+    pub fn load(project_path: &Path) -> Self {
         let config_path = project_path.join(".dockeep");
         if config_path.exists() {
             match fs::read_to_string(&config_path) {

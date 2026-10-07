@@ -15,12 +15,14 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use gpui_kit::{px, size};
 use rust_i18n::t;
+use std::path::Path;
+use std::sync::Arc;
 
 use crate::components::sort_button::{SortButton, SortButtonEvent};
 use crate::components::window_decor::WindowDecor;
 use crate::config::AppConfig;
 use crate::config::project_settings_data::ProjectSettingsData;
-use crate::files::files;
+use crate::files::prelude as files;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::browser_actions::{BrowserActions, BrowserActionsEvents};
 use crate::scenes::edit::image_view::{ImageView, ImageViewEvents};
@@ -294,20 +296,23 @@ impl EditPage {
                     ImageViewEvents::Delete(path) => {
                         tracing::debug!("Deleting Image: {:?}", path);
                         this.items.retain(|item| item.read(cx).path != *path);
-                        if app_config.git_setting.auto_commit && is_git_repo
+                        if app_config.git_setting.auto_commit
+                            && is_git_repo
                             && let Err(e) = remove_path_and_commit(
                                 &repo_path,
                                 path.clone().as_path(),
                                 "description.delete_screenshot",
-                            ) {
-                                tracing::error!("Failed to commit image: {:?}", e);
-                            };
+                            )
+                        {
+                            tracing::error!("Failed to commit image: {:?}", e);
+                        };
                         this.browser_action.update(cx, |action, cx| {
                             // cancel replace if the path matches
                             if let Some(replace_path) = &action.replace_path
-                                && replace_path.as_os_str() == path.as_os_str() {
-                                    action.cancel_replace();
-                                }
+                                && replace_path.as_os_str() == path.as_os_str()
+                            {
+                                action.cancel_replace();
+                            }
                             cx.notify();
                         });
                         cx.notify();
@@ -335,26 +340,26 @@ impl EditPage {
     /// Builds an image entity for the given `path` and `index`.
     fn build_image_entity(
         &mut self,
-        path: &PathBuf,
+        path: &Path,
         index: usize,
         cx: &mut Context<Self>,
     ) -> Entity<ImageView> {
-        let path = path.clone();
-        let last_modified_timestamp = files::last_modified(&path).unwrap_or(SystemTime::UNIX_EPOCH);
+        let last_modified_timestamp = files::last_modified(path).unwrap_or(SystemTime::UNIX_EPOCH);
         let last_modified_timestamp = last_modified_timestamp
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        cx.new(move |cx| ImageView::new(path, last_modified_timestamp, index, cx))
+        cx.new(move |cx| ImageView::new(path.to_path_buf(), last_modified_timestamp, index, cx))
     }
     fn refresh_project(&mut self, cx: &mut Context<Self>) {
         Self::load_project(cx, &self.path);
     }
     /// Loads the project at `path` and populates `self.items` with the images.
-    fn load_project(cx: &mut Context<Self>, path: &PathBuf) {
-        let path = path.clone();
+    fn load_project(cx: &mut Context<Self>, path: &Path) {
+        let path = Arc::new(path.to_path_buf());
 
         cx.spawn(async move |entity, cx| {
+            let path = path.clone();
             // Runs on a background thread, why? UI stays responsive.
             entity
                 .update(cx, |entity, cx| {

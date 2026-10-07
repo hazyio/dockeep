@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Error, Result};
 use serde::{Deserialize, Serialize};
@@ -123,7 +123,7 @@ impl AppProjects {
     pub fn set_projects(&mut self, projects: Vec<AppProjectInfo>) {
         self.projects = projects;
     }
-    pub fn remove_project(path: &PathBuf) -> Result<(), AppProjectError> {
+    pub fn remove_project(path: &Path) -> Result<(), AppProjectError> {
         let (mut projects, error) = Self::load();
         if let Some(error) = error {
             return Err(AppProjectError::Other(error));

@@ -22,11 +22,11 @@ pub struct SaveScreenshotResult {
     pub path_id: PathBuf,
     pub error: Option<String>,
 }
-pub fn last_modified(path: &PathBuf) -> std::io::Result<SystemTime> {
+pub fn last_modified(path: &Path) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
 }
 const KEY: &str = "dockeep_capture_url";
-pub fn rename_file(path: &PathBuf, new_name: &str) -> Result<PathBuf> {
+pub fn rename_file(path: &Path, new_name: &str) -> Result<PathBuf> {
     let parent = path.parent().unwrap_or(Path::new(""));
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     let new_path = parent.join(format!("{new_name}.{ext}"));
@@ -36,13 +36,13 @@ pub fn rename_file(path: &PathBuf, new_name: &str) -> Result<PathBuf> {
     fs::rename(path, &new_path)?;
     Ok(new_path)
 }
-pub fn file_name_with_extension(path: &PathBuf) -> String {
+pub fn file_name_with_extension(path: &Path) -> String {
     path.file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("")
         .to_string()
 }
-pub fn file_name_without_extension(path: &PathBuf) -> String {
+pub fn file_name_without_extension(path: &Path) -> String {
     path.file_stem()
         .and_then(|n| n.to_str())
         .unwrap_or("")
@@ -249,7 +249,7 @@ pub fn save_screenshot(
         }
     }
 }
-pub fn read_images(path: &PathBuf) -> Vec<PathBuf> {
+pub fn read_images(path: &Path) -> Vec<PathBuf> {
     read_dir(path)
         .into_iter()
         .filter(|p| {
@@ -308,7 +308,7 @@ pub(super) fn has_image_header(path: &Path) -> bool {
     false
 }
 
-pub fn read_dir(path: &PathBuf) -> Vec<PathBuf> {
+pub fn read_dir(path: &Path) -> Vec<PathBuf> {
     let root = path;
     let ignore_patterns = load_ignore_patterns(root);
 
