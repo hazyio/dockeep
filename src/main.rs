@@ -42,12 +42,11 @@ fn main() {
                         window_decorations: Some(WindowDecorations::Client), // no WM frame
                         titlebar: Some(TitlebarOptions {
                             title: Some(SharedString::new("DocKeep")),
-
+                            appears_transparent: true, // hides the native bar on Windows/macOS
                             ..Default::default()
                         }),
                         is_resizable: true,
                         app_id: Some("dockeep".into()),
-
                         ..Default::default()
                     },
                     |window, cx| {

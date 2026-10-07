@@ -23,11 +23,10 @@ pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: 
             window_decorations: Some(WindowDecorations::Client), // no WM frame
             titlebar: Some(TitlebarOptions {
                 title: Some(SharedString::new("DocKeep Settings")),
-
+                appears_transparent: true, // hides the native bar on Windows/macOS
                 ..Default::default()
             }),
             app_id: Some("dockeep".into()),
-
             is_resizable: true,
             ..Default::default()
         },
