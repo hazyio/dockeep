@@ -3,22 +3,57 @@ theme:
   ayu_light: Ayu Light
   ayu_dark: Ayu Dark
 title:
-  home: Главная Dockeep
-  settings: Настройки
+  home: Dockeep Главная
+  settings: Dockeep Настройки
   appearance: Внешний вид
   general: Общие
   add_new_project: Добавить новый проект
+  chrome: Chrome
+  use_settings: Настройки подключения
+  desktop_capture_settings: Захват рабочего стола
+  mobile_capture_settings: Мобильный захват
+  capture: Захват
+  screenshot_settings: Снимок экрана
+  capture_from_surface: Захват с поверхности
+  git: Git
+  commit: Коммит
+  project_settings: Настройки проекта
+  save_with_tab_title: Сохранять с заголовком вкладки
+  project_invalid: Недействительный проект
 label:
+  save_image_to: Сохранить изображение в
+  image_save_format: Формат сохранения изображения
+  save_with_tab_title: Сохранять с заголовком вкладки
+  file_name: Имя файла
+  captured_from: Источник захвата
+  created_at: Создано
+  updated_at: Обновлено
+  use_selected: Использовать выбранный ( %{lang} )
+  commit_lanuage: Язык коммита
+  auto_commit: Автокоммит
+  crop_timeout: Таймаут кадрирования
+  chrome_path: Путь к исполняемому файлу Chrome
+  format: Формат
+  quality: Качество
+  width: Ширина
+  height: Высота
+  path: Путь
   close: Закрыть
+  done: Готово
   delete: Удалить
   theme: Тема
+  time_format: Формат времени
+  date_format: Формат даты
   back: Назад
   save: Сохранить
+  open_url_in_browser: Открыть URL в браузере
+  size: Размер
+  dimensions: Разрешение
   search_projects: Поиск проектов
   add_project: Добавить проект
   no_projects: Проекты не найдены
   loading_projects: Загрузка проектов...
-  no_projects_found: Проекты не найдены. Используйте кнопку «Добавить», чтобы создать проект.
+  no_projects_found: Проекты не найдены. Используйте кнопку «Добавить проект», чтобы добавить новый, или измените поисковый запрос.
   select_project_folder: Выберите папку проекта
   project_name: Название проекта
   project_path: Путь к проекту
@@ -28,18 +63,88 @@ label:
   open_in_editor: Открыть в редакторе
   open_in_file_manager: Открыть в файловом менеджере
   not_repo: Не репозиторий
-  clean: Чистый
-  dirty: Изменен
-  last_accessed_datetime: Последний доступ %{datetime}
-  screenshot_saved: Снимок экрана сохранён
+  clean: Без изменений
+  dirty: Есть изменения
+  last_accessed_datetime: "Последний доступ: %{datetime}"
+  loading_project: "Загрузка проекта..."
+  editing_project: Редактирование %{name}
+  opening_in_file_manager: Открытие в файловом менеджере
+  open_image_info: Открыть информацию об изображении
+  edit_image: Редактировать изображение
+  close_popup: Закрыть всплывающее окно
+  open_in_fullscreen: Открыть на весь экран
+  add_screenshot: Добавить снимок экрана
+  add_screenrecord: Добавить запись экрана
+  take_screenshot: Сделать снимок экрана
+  take_screenrecord: Начать запись экрана
+  start_browser: Запустить браузер
+  stop_browser: Остановить браузер
+  restart_browser: Перезапустить браузер
+  focus_browser: Сфокусировать браузер
+  take_desktop_screenshot: Сделать снимок рабочего стола
+  take_mobile_screenshot: Сделать мобильный снимок
+  take_crop_screenshot: Сделать снимок области
+  screenshot_saved: Снимок экрана сохранен
+  replacing_path: Вы заменяете путь «%{path}», найдите и отмените.
+  capturing_crop: Выполняется выделение области для снимка, нажмите для отмены
+  use_attach: Подключиться к существующему
+  port: Порт
+  replace_image: Заменить изображение
+  cancel_replace: Отменить замену
+  name: Имя
+  last_accessed: Последний доступ
+  last_modified: Последнее изменение
+  search_images: Поиск изображений
+  file_type: Тип файла
+  ok: ОК
+  export_logs: Экспорт логов
+  download: Скачать
+description:
+  use_attach: Подключиться к уже запущенному браузеру вместо запуска нового. Используйте этот режим, если нужно применить специфические настройки браузера.
+  min_height: Высота должна быть больше %{min}.
+  min_width: Ширина должна быть больше %{min}.
+  min_port: Порт должен быть больше %{min}.
+  min_quality: Качество должно быть больше %{min}.
+  capture_from_surface: Захватывает срендеренное содержимое страницы напрямую (рекомендуется) вместо исходной поверхности окна ОС.
+  crop_timeout: Таймаут для операции кадрирования в секундах.
+  add_screenshot: Добавить снимок экрана %{path}
+  renamed_screenshot: Переименовать снимок экрана %{path}
+  delete_screenshot: Удалить снимок экрана %{path}
+  replace_screenshot: Заменить снимок экрана %{path}
+  project_invalid: Этот проект недействителен. Возможно, он не существует или не является валидной директорией проекта.
 dialog:
-  select_tab: Выбрать вкладку
+  select_tab: Выберите вкладку
   delete_title: Удалить проект?
-  delete_description: Это удалит «%{name}» из списка ваших проектов, файлы удалены не будут.
+  delete_description: Это удалит «%{name}» из списка ваших проектов. Файлы на диске удалены не будут.
+  add_project_folder_missing: Что-то пошло не так. Закройте диалоговое окно и попробуйте снова.
+  delete_file: Удалить файл
+  delete_file_confirmation: Вы уверены, что хотите удалить этот файл? Это действие нельзя отменить.
+  dirty_repo_title: Незафиксированные изменения
+  dirty_repo_description: В этом проекте есть незафиксированные изменения, а автокоммит включен. Желаете продолжить?
 error:
   name_cannot_be_empty: Имя не может быть пустым
   name_too_short: Имя должно содержать не менее 2 символов
-  project_already_exists: "Проект с таким путем уже существует: %{name}"
+  project_already_exists: "«Проект с таким путем уже существует: %{name}»"
   unknown_error: Неизвестная ошибка
+  no_image_found: Изображение не найдено.
+  browser_not_running: Браузер не запущен
+  browser_is_starting: Браузер запускается
+  browser_is_stopped: Браузер остановлен
+  browser_already_running: Браузер уже запущен
+  browser_is_not_running: Браузер не запущен
+  chrome_path_not_found: Путь к исполняемому файлу Chrome не найден. Откройте настройки, чтобы указать его
+  no_active_tab: Нет активной вкладки
+  failed_to_bring_to_front: Не удалось сфокусировать вкладку
   failed_to_save_screenshot: Не удалось сохранить снимок экрана
   failed_to_capture_screenshot: Не удалось сделать снимок экрана
+  browser_already_closed: Браузер уже закрыт
+  failed_to_set_device_metrics_override: Не удалось переопределить параметры устройства
+  crop_not_found: Область кадрирования не найдена
+  failed_to_inject_selector: Не удалось внедрить селектор
+  failed_to_update_browser_actions: Не удалось обновить действия браузера
+  failed_to_rename_file: Не удалось переименовать файл
+  failed_to_start_browser: Не удалось запустить браузер. Если включена опция «Подключиться к существующему», убедитесь, что браузер запущен перед стартом
+  failed_to_select_save_to: Не удалось выбрать папку для сохранения
+  selected_folder_not_in_project: Выбранная папка не находится внутри проекта
+  cannot_save_to_existing_file: Невозможно сохранить в уже существующий файл
+  failed_to_export_logs: Не удалось экспортировать логи

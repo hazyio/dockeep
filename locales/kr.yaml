@@ -1,24 +1,59 @@
 theme:
-  aurora_light: 오로라 라이트
-  ayu_light: 아유 라이트
-  ayu_dark: 아유 다크
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
 title:
   home: Dockeep 홈
-  settings: 설정
+  settings: Dockeep 설정
   appearance: 화면 설정
   general: 일반
   add_new_project: 새 프로젝트 추가
+  chrome: Chrome
+  use_settings: 디버깅 연결 설정
+  desktop_capture_settings: 데스크톱 캡처
+  mobile_capture_settings: 모바일 캡처
+  capture: 캡처
+  screenshot_settings: 스크린샷
+  capture_from_surface: 서피스 직접 캡처
+  git: Git
+  commit: 커밋
+  project_settings: 프로젝트 설정
+  save_with_tab_title: 탭 제목으로 저장
+  project_invalid: 유효하지 않은 프로젝트
 label:
+  save_image_to: 이미지 저장 위치
+  image_save_format: 이미지 저장 형식
+  save_with_tab_title: 탭 제목으로 저장
+  file_name: 파일 이름
+  captured_from: 캡처 출처
+  created_at: 생성 일시
+  updated_at: 수정 일시
+  use_selected: 선택한 언어 사용 ( %{lang} )
+  commit_lanuage: 커밋 언어
+  auto_commit: 자동 커밋
+  crop_timeout: 자르기 제한 시간
+  chrome_path: Chrome 실행 파일 경로
+  format: 형식
+  quality: 화질
+  width: 너비
+  height: 높이
+  path: 경로
   close: 닫기
+  done: 완료
   delete: 삭제
   theme: 테마
+  time_format: 시간 형식
+  date_format: 날짜 형식
   back: 뒤로
   save: 저장
+  open_url_in_browser: 브라우저에서 URL 열기
+  size: 크기
+  dimensions: 해상도
   search_projects: 프로젝트 검색
   add_project: 프로젝트 추가
   no_projects: 프로젝트를 찾을 수 없습니다
-  loading_projects: 프로젝트 로딩 중...
-  no_projects_found: 발견된 프로젝트가 없습니다. 추가 버튼을 사용해 프로젝트를 추가하세요.
+  loading_projects: 프로젝트 불러오는 중...
+  no_projects_found: 프로젝트를 찾을 수 없습니다. '프로젝트 추가' 버튼을 눌러 추가하거나 검색어를 변경해 주세요.
   select_project_folder: 프로젝트 폴더 선택
   project_name: 프로젝트 이름
   project_path: 프로젝트 경로
@@ -27,19 +62,89 @@ label:
   loading: 로딩 중...
   open_in_editor: 에디터에서 열기
   open_in_file_manager: 파일 관리자에서 열기
-  not_repo: 저장소 아님
+  not_repo: Git 저장소 아님
   clean: 변경 사항 없음
   dirty: 변경 사항 있음
-  last_accessed_datetime: 마지막 접근 %{datetime}
-  screenshot_saved: 스크린샷 저장됨
+  last_accessed_datetime: "최근 접근 일시: %{datetime}"
+  loading_project: "프로젝트 불러오는 중..."
+  editing_project: "%{name} 편집 중"
+  opening_in_file_manager: "파일 관리자에서 열어보는 중"
+  open_image_info: 이미지 정보 열기
+  edit_image: 이미지 편집
+  close_popup: 팝업 닫기
+  open_in_fullscreen: 전체 화면으로 열기
+  add_screenshot: 스크린샷 추가
+  add_screenrecord: 화면 녹화 추가
+  take_screenshot: 스크린샷 캡처
+  take_screenrecord: 화면 녹화 시작
+  start_browser: 브라우저 시작
+  stop_browser: 브라우저 중지
+  restart_browser: 브라우저 재시작
+  focus_browser: 브라우저 창 활성화
+  take_desktop_screenshot: 데스크톱 스크린샷 캡처
+  take_mobile_screenshot: 모바일 스크린샷 캡처
+  take_crop_screenshot: 영역 지정 스크린샷 캡처
+  screenshot_saved: 스크린샷이 저장되었습니다
+  replacing_path: 경로 "%{path}"를 교체하는 중입니다. 확인 후 취소해 주세요.
+  capturing_crop: 스크린샷 영역을 지정하는 중입니다. 취소하려면 클릭해 주세요
+  use_attach: 실행 중인 브라우저에 연결
+  port: 포트
+  replace_image: 이미지 교체
+  cancel_replace: 교체 취소
+  name: 이름
+  last_accessed: 최근 접근
+  last_modified: 최근 수정
+  search_images: 이미지 검색
+  file_type: 파일 형식
+  ok: 확인
+  export_logs: 로그 내보내기
+  download: 다운로드
+description:
+  use_attach: 새 브라우저를 시작하는 대신 이미 실행 중인 브라우저에 연결합니다. 특정 브라우저 설정을 유지하려는 경우 이 모드를 사용해 주세요.
+  min_height: 높이는 %{min}보다 커야 합니다.
+  min_width: 너비는 %{min}보다 커야 합니다.
+  min_port: 포트는 %{min}보다 커야 합니다.
+  min_quality: 화질은 %{min}보다 커야 합니다.
+  capture_from_surface: OS 창 전체 대신 렌더링된 페이지 콘텐츠를 직접 캡처합니다(권장).
+  crop_timeout: 영역 자르기 작업 제한 시간(초)입니다.
+  add_screenshot: 스크린샷 %{path} 추가
+  renamed_screenshot: 스크린샷 %{path} 이름 변경
+  delete_screenshot: 스크린샷 %{path} 삭제
+  replace_screenshot: 스크린샷 %{path} 교체
+  project_invalid: 유효하지 않은 프로젝트입니다. 존재하지 않거나 올바른 프로젝트 디렉터리가 아닙니다.
 dialog:
   select_tab: 탭 선택
   delete_title: 프로젝트를 삭제하시겠습니까?
-  delete_description: 프로젝트 목록에서 "%{name}"을(를) 제거합니다. 실제 파일은 삭제되지 않습니다.
+  delete_description: 프로젝트 목록에서 "%{name}"이(가) 제거됩니다. 실제 파일은 삭제되지 않습니다.
+  add_project_folder_missing: 오류가 발생했습니다. 대화 상자를 닫고 다시 시도해 주세요.
+  delete_file: 파일 삭제
+  delete_file_confirmation: 이 파일을 정말 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.
+  dirty_repo_title: 커밋되지 않은 변경 사항
+  dirty_repo_description: 이 프로젝트에 커밋되지 않은 변경 사항이 있으며 자동 커밋이 활성화되어 있습니다. 계속하시겠습니까?
 error:
-  name_cannot_be_empty: 이름을 입력해야 합니다
+  name_cannot_be_empty: 이름을 입력해 주세요
   name_too_short: 이름은 최소 2자 이상이어야 합니다
   project_already_exists: "해당 경로의 프로젝트가 이미 존재합니다: %{name}"
   unknown_error: 알 수 없는 오류
-  failed_to_save_screenshot: 스크린샷 저장 실패
-  failed_to_capture_screenshot: 스크린샷 캡처 실패
+  no_image_found: 이미지를 찾을 수 없습니다.
+  browser_not_running: 브라우저가 실행 중이 아닙니다
+  browser_is_starting: 브라우저를 시작하는 중입니다
+  browser_is_stopped: 브라우저가 중지되었습니다
+  browser_already_running: 브라우저가 이미 실행 중입니다
+  browser_is_not_running: 브라우저가 실행 중이 아닙니다
+  chrome_path_not_found: Chrome 실행 파일 경로를 찾을 수 없습니다. 설정에서 경로를 지정해 주세요
+  no_active_tab: 활성화된 탭이 없습니다
+  failed_to_bring_to_front: 탭을 활성화하지 못했습니다
+  failed_to_save_screenshot: 스크린샷을 저장하지 못했습니다
+  failed_to_capture_screenshot: 스크린샷을 캡처하지 못했습니다
+  browser_already_closed: 브라우저가 이미 닫혀 있습니다
+  failed_to_set_device_metrics_override: 기기 해상도 재정의 설정에 실패했습니다
+  crop_not_found: 지정한 영역을 찾을 수 없습니다
+  failed_to_inject_selector: 선택자(Selector) 주입에 실패했습니다
+  failed_to_update_browser_actions: 브라우저 작업을 업데이트하지 못했습니다
+  failed_to_rename_file: 파일 이름을 변경하지 못했습니다
+  failed_to_start_browser: 브라우저를 시작하지 못했습니다. '실행 중인 브라우저에 연결'이 선택된 경우 시작 전 대상 브라우저가 실행 중인지 확인해 주세요
+  failed_to_select_save_to: 저장할 폴더를 선택하지 못했습니다
+  selected_folder_not_in_project: 선택한 폴더가 프로젝트 내에 존재하지 않습니다
+  cannot_save_to_existing_file: 이미 존재하는 파일에는 저장할 수 없습니다
+  failed_to_export_logs: 로그를 내보내지 못했습니다
