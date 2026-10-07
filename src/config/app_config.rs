@@ -56,32 +56,34 @@ impl AppConfig {
                         "Could not parse app config; using defaults"
                     );
                     let config = Self::default();
-                    config.save();
+                    config.save_to(config_path);
                     config
                 }
             },
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                let config = Self::default();
-                config.save();
-                config
-            }
+
             Err(error) => {
                 tracing::warn!(
                     ?error,
                     path = %config_path.display(),
                     "Could not read app config; using defaults"
                 );
-                Self::default()
+                let config = Self::default();
+                config.save_to(config_path);
+                config
             }
         }
     }
 
     fn save_to(&self, config_path: &Path) {
-        let app_dir = Self::config_dir();
-        if let Err(error) = fs::create_dir_all(app_dir)
-            .and_then(|_| serde_json::to_string_pretty(self).map_err(std::io::Error::other))
-            .and_then(|contents| fs::write(config_path, contents))
-        {
+        let result = (|| -> std::io::Result<()> {
+            if let Some(parent) = config_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            let contents = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
+            fs::write(config_path, contents)
+        })();
+
+        if let Err(error) = result {
             tracing::warn!(
                 ?error,
                 path = %config_path.display(),

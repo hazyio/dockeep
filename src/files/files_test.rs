@@ -11,7 +11,6 @@ mod tests {
     use crate::config::ImageFormat;
     use crate::files::files::*;
 
-    use super::*;
     use image::{DynamicImage, ImageFormat as ImgFmt};
     use std::collections::BTreeSet;
     use std::fs;
