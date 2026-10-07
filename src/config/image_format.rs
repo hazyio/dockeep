@@ -17,7 +17,7 @@ impl ImageFormat {
             ImageFormat::Webp => CaptureScreenshotFormatOption::Webp,
         }
     }
-   
+
     pub fn all_str() -> &'static [&'static str] {
         &["png", "jpeg", "webp"]
     }
@@ -25,7 +25,7 @@ impl ImageFormat {
     pub fn all() -> &'static [ImageFormat] {
         &[ImageFormat::Png, ImageFormat::Jpeg, ImageFormat::Webp]
     }
-  
+
     pub fn to_value(&self) -> &str {
         match self {
             ImageFormat::Png => "png",

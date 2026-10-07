@@ -234,8 +234,10 @@ impl EditPage {
                                 tracing::error!("Failed to commit image: {:?}", e);
                             }
                         };
-                        if let Some(entity) =
-                            this.items.iter().find(|item| item.read(cx).path == *path_id)
+                        if let Some(entity) = this
+                            .items
+                            .iter()
+                            .find(|item| item.read(cx).path == *path_id)
                         {
                             entity.update(cx, |image_view, cx| {
                                 image_view.reload(p.clone(), cx);

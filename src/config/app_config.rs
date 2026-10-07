@@ -94,7 +94,7 @@ impl AppConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
     use tempfile::tempdir;
 
     // Compare via JSON so the tests don't need PartialEq on the nested types.
@@ -213,7 +213,10 @@ mod tests {
         let config = AppConfig::load_from(&path);
 
         assert_eq!(as_json(&config), as_json(&AppConfig::default()));
-        assert!(path.is_dir(), "load must not clobber the path on read errors");
+        assert!(
+            path.is_dir(),
+            "load must not clobber the path on read errors"
+        );
     }
 
     #[test]

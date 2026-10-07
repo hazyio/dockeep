@@ -1,2 +1,2 @@
-mod files_test;
 pub mod files;
+mod files_test;
