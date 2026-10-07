@@ -3,43 +3,147 @@ theme:
   ayu_light: Ayu Light
   ayu_dark: Ayu Dark
 title:
-  home: Dockeep Home
-  settings: Einstellungen
+  home: Dockeep Startseite
+  settings: Dockeep Einstellungen
   appearance: Erscheinungsbild
   general: Allgemein
   add_new_project: Neues Projekt hinzufügen
+  chrome: Chrome
+  use_settings: Einstellungen anhängen
+  desktop_capture_settings: Desktop-Erfassung
+  mobile_capture_settings: Mobile Erfassung
+  capture: Erfassen
+  screenshot_settings: Screenshot
+  capture_from_surface: Von Oberfläche erfassen
+  git: Git
+  commit: Commit
+  project_settings: Projekteinstellungen
+  save_with_tab_title: Mit Tab-Titel speichern
+  project_invalid: Ungültiges Projekt
 label:
+  save_image_to: Bild speichern unter
+  image_save_format: Bild-Speicherformat
+  save_with_tab_title: Mit Tab-Titel speichern
+  file_name: Dateiname
+  captured_from: Erfasst von
+  created_at: Erstellt am
+  updated_at: Aktualisiert am
+  use_selected: Ausgewählte verwenden ( %{lang} )
+  commit_lanuage: Commit-Sprache
+  auto_commit: Auto-Commit
+  crop_timeout: Zuschneide-Zeitüberschreitung
+  chrome_path: Pfad zur ausführbaren Chrome-Datei
+  format: Format
+  quality: Qualität
+  width: Breite
+  height: Höhe
+  path: Pfad
   close: Schließen
+  done: Fertig
   delete: Löschen
   theme: Design
+  time_format: Zeitformat
+  date_format: Datumsformat
   back: Zurück
   save: Speichern
+  open_url_in_browser: URL im Browser öffnen
+  size: Größe
+  dimensions: Abmessungen
   search_projects: Projekte suchen
   add_project: Projekt hinzufügen
   no_projects: Keine Projekte gefunden
   loading_projects: Projekte werden geladen...
-  no_projects_found: Keine Projekte gefunden, benutze die Hinzufügen-Schaltfläche, um eines hinzuzufügen.
+  no_projects_found: Keine Projekte gefunden. Verwenden Sie die Schaltfläche „Projekt hinzufügen“, um eins hinzuzufügen, oder ändern Sie die Suchanfrage.
   select_project_folder: Projektordner auswählen
   project_name: Projektname
   project_path: Projektpfad
   language: Sprache
   cancel: Abbrechen
-  loading: Wird geladen...
+  loading: Laden...
   open_in_editor: Im Editor öffnen
   open_in_file_manager: Im Dateimanager öffnen
   not_repo: Kein Repository
   clean: Sauber
   dirty: Geändert
-  last_accessed_datetime: Zuletzt aufgerufen %{datetime}
+  last_accessed_datetime: Zuletzt zugegriffen am %{datetime}
+  loading_project: Projekt wird geladen...
+  editing_project: %{name} wird bearbeitet
+  opening_in_file_manager: Wird im Dateimanager geöffnet
+  open_image_info: Bildinformationen öffnen
+  edit_image: Bild bearbeiten
+  close_popup: Pop-up schließen
+  open_in_fullscreen: Im Vollbildmodus öffnen
+  add_screenshot: Screenshot hinzufügen
+  add_screenrecord: Bildschirmaufnahme hinzufügen
+  take_screenshot: Screenshot erstellen
+  take_screenrecord: Bildschirmaufnahme starten
+  start_browser: Browser starten
+  stop_browser: Browser stoppen
+  restart_browser: Browser neu starten
+  focus_browser: Browser fokussieren
+  take_desktop_screenshot: Desktop-Screenshot erstellen
+  take_mobile_screenshot: Mobilen Screenshot erstellen
+  take_crop_screenshot: Zugeschnittenen Screenshot erstellen
   screenshot_saved: Screenshot gespeichert
+  replacing_path: Sie ersetzen den Pfad „%{path}“. Suchen und abbrechen.
+  capturing_crop: Sie erstellen gerade einen zugeschnittenen Screenshot. Zum Abbrechen klicken.
+  use_attach: Anheften verwenden
+  port: Port
+  replace_image: Bild ersetzen
+  cancel_replace: Ersetzen abbrechen
+  name: Name
+  last_accessed: Zuletzt zugegriffen
+  last_modified: Zuletzt geändert
+  search_images: Bilder suchen
+  file_type: Dateityp
+  ok: OK
+  export_logs: Protokolle exportieren
+  download: Herunterladen
+description:
+  use_attach: An einen laufenden Browser anheften, anstatt einen neuen Browser zu starten. Nutzen Sie diesen Modus, wenn spezifische Browsereinstellungen angewendet werden sollen.
+  min_height: Die Höhe muss größer als %{min} sein.
+  min_width: Die Breite muss größer als %{min} sein.
+  min_port: Der Port muss größer als %{min} sein.
+  min_quality: Die Qualität muss größer als %{min} sein.
+  capture_from_surface: Erfasst den gerenderten Inhalt der Seite direkt (empfohlen) statt der rohen OS-Fensteröberfläche.
+  crop_timeout: Zeitüberschreitung für den Zuschneidevorgang in Sekunden.
+  add_screenshot: Screenshot %{path} hinzufügen
+  renamed_screenshot: Screenshot %{path} umbenennen
+  delete_screenshot: Screenshot %{path} löschen
+  replace_screenshot: Screenshot %{path} ersetzen
+  project_invalid: Dieses Projekt ist ungültig. Es existiert wahrscheinlich nicht oder ist kein gültiges Projektverzeichnis.
 dialog:
   select_tab: Tab auswählen
   delete_title: Projekt löschen?
-  delete_description: Dadurch wird "%{name}" aus deinen Projekten entfernt, es werden keine Dateien gelöscht.
+  delete_description: Dadurch wird „%{name}“ aus Ihren Projekten entfernt. Es werden keine Dateien gelöscht.
+  add_project_folder_missing: Etwas ist schiefgelaufen. Schließen Sie den Dialog und versuchen Sie es erneut.
+  delete_file: Datei löschen
+  delete_file_confirmation: Sind Sie sicher, dass Sie diese Datei löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+  dirty_repo_title: Uncommitted Änderungen
+  dirty_repo_description: Dieses Projekt enthält uncommitted Änderungen und Auto-Commit ist aktiviert. Möchten Sie fortfahren?
 error:
-  name_cannot_be_empty: Name darf nicht leer sein
-  name_too_short: Name muss mindestens 2 Zeichen lang sein
-  project_already_exists: "Ein Projekt mit diesem Pfad existiert bereits: %{name}"
+  name_cannot_be_empty: Der Name darf nicht leer sein
+  name_too_short: Der Name muss mindestens 2 Zeichen lang sein
+  project_already_exists: „Ein Projekt mit diesem Pfad existiert bereits: %{name}“
   unknown_error: Unbekannter Fehler
+  no_image_found: Kein Bild gefunden.
+  browser_not_running: Browser läuft nicht
+  browser_is_starting: Browser startet
+  browser_is_stopped: Browser ist gestoppt
+  browser_already_running: Browser läuft bereits
+  browser_is_not_running: Browser läuft nicht
+  chrome_path_not_found: Pfad zur ausführbaren Chrome-Datei nicht gefunden. Öffnen Sie die Einstellungen, um ihn festzulegen.
+  no_active_tab: Kein aktiver Tab
+  failed_to_bring_to_front: Tab konnte nicht fokussiert werden
   failed_to_save_screenshot: Screenshot konnte nicht gespeichert werden
-  failed_to_capture_screenshot: Screenshot konnte nicht aufgenommen werden
+  failed_to_capture_screenshot: Screenshot konnte nicht erfasst werden
+  browser_already_closed: Browser bereits geschlossen
+  failed_to_set_device_metrics_override: Überschreibung der Gerätemetriken fehlgeschlagen
+  failed_to_inject_selector: Selektor konnte nicht injiziert werden
+  failed_to_update_browser_actions: Browser-Aktionen konnten nicht aktualisiert werden
+  failed_to_rename_file: Datei konnte nicht umbenannt werden
+  failed_to_start_browser: Browser konnte nicht gestartet werden. Wenn „Anheften verwenden“ aktiviert ist, stellen Sie sicher, dass der Browser vor dem Start läuft.
+  failed_to_select_save_to: Zielordner zum Speichern konnte nicht ausgewählt werden
+  selected_folder_not_in_project: Der ausgewählte Ordner befindet sich nicht im Projekt
+  cannot_save_to_existing_file: Speichern in eine bereits vorhandene Datei nicht möglich
+  failed_to_export_logs: Protokolle konnten nicht exportiert werden

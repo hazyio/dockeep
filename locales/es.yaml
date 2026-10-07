@@ -4,42 +4,147 @@ theme:
   ayu_dark: Ayu Dark
 title:
   home: Inicio de Dockeep
-  settings: Configuración
+  settings: Configuración de Dockeep
   appearance: Apariencia
   general: General
   add_new_project: Añadir nuevo proyecto
+  chrome: Chrome
+  use_settings: Configuración de acoplamiento
+  desktop_capture_settings: Captura de escritorio
+  mobile_capture_settings: Captura móvil
+  capture: Capturar
+  screenshot_settings: Captura de pantalla
+  capture_from_surface: Capturar desde superficie
+  git: Git
+  commit: Commit
+  project_settings: Configuración del proyecto
+  save_with_tab_title: Guardar con título de pestaña
+  project_invalid: Proyecto no válido
 label:
+  save_image_to: Guardar imagen en
+  image_save_format: Formato de guardado de imagen
+  save_with_tab_title: Guardar con título de pestaña
+  file_name: Nombre de archivo
+  captured_from: Capturado desde
+  created_at: Creado el
+  updated_at: Actualizado el
+  use_selected: Usar seleccionado ( %{lang} )
+  commit_lanuage: Idioma del commit
+  auto_commit: Auto commit
+  crop_timeout: Tiempo de espera de recorte
+  chrome_path: Ruta del ejecutable de Chrome
+  format: Formato
+  quality: Calidad
+  width: Ancho
+  height: Alto
+  path: Ruta
   close: Cerrar
+  done: Hecho
   delete: Eliminar
   theme: Tema
-  back: Volver
+  time_format: Formato de hora
+  date_format: Formato de fecha
+  back: Atrás
   save: Guardar
+  open_url_in_browser: Abrir URL en navegador
+  size: Tamaño
+  dimensions: Dimensiones
   search_projects: Buscar proyectos
   add_project: Añadir proyecto
   no_projects: No se encontraron proyectos
   loading_projects: Cargando proyectos...
-  no_projects_found: No se encontraron proyectos, usa el botón de añadir para agregar uno.
+  no_projects_found: No se encontraron proyectos, use el botón Añadir proyecto para agregar uno o cambie la búsqueda.
   select_project_folder: Seleccionar carpeta del proyecto
   project_name: Nombre del proyecto
   project_path: Ruta del proyecto
   language: Idioma
   cancel: Cancelar
   loading: Cargando...
-  open_in_editor: Abrir en el editor
-  open_in_file_manager: Abrir en el administrador de archivos
+  open_in_editor: Abrir en editor
+  open_in_file_manager: Abrir en gestor de archivos
   not_repo: No es un repositorio
   clean: Limpio
-  dirty: Con cambios sin guardar
-  last_accessed_datetime: Último acceso %{datetime}
-  screenshot_saved: Captura guardada
+  dirty: Con cambios
+  last_accessed_datetime: Último acceso el %{datetime}
+  loading_project: Cargando proyecto ...
+  editing_project: Editando %{name}
+  opening_in_file_manager: Abriendo en gestor de archivos
+  open_image_info: Abrir información de imagen
+  edit_image: Editar imagen
+  close_popup: Cerrar ventana emergente
+  open_in_fullscreen: Abrir en pantalla completa
+  add_screenshot: Añadir captura de pantalla
+  add_screenrecord: Añadir grabación de pantalla
+  take_screenshot: Tomar captura de pantalla
+  take_screenrecord: Iniciar grabación de pantalla
+  start_browser: Iniciar navegador
+  stop_browser: Detener navegador
+  restart_browser: Reiniciar navegador
+  focus_browser: Enfocar navegador
+  take_desktop_screenshot: Tomar captura de escritorio
+  take_mobile_screenshot: Tomar captura móvil
+  take_crop_screenshot: Tomar captura recortada
+  screenshot_saved: Captura de pantalla guardada
+  replacing_path: Está reemplazando la ruta "%{path}", busque y cancele.
+  capturing_crop: Está tomando una captura recortada, haga clic para cancelar
+  use_attach: Usar acoplamiento
+  port: Puerto
+  replace_image: Reemplazar imagen
+  cancel_replace: Cancelar reemplazo
+  name: Nombre
+  last_accessed: Último acceso
+  last_modified: Última modificación
+  search_images: Buscar imágenes
+  file_type: Tipo de archivo
+  ok: Aceptar
+  export_logs: Exportar registros
+  download: Descargar
+description:
+  use_attach: Acoplar a un navegador en ejecución en lugar de iniciar uno nuevo; es posible que desee usar este modo si desea aplicar configuraciones específicas del navegador.
+  min_height: La altura debe ser mayor que %{min}.
+  min_width: El ancho debe ser mayor que %{min}.
+  min_port: El puerto debe ser mayor que %{min}.
+  min_quality: La calidad debe ser mayor que %{min}.
+  capture_from_surface: Captura directamente el contenido renderizado de la página (recomendado) en lugar de la superficie básica de la ventana del SO.
+  crop_timeout: Tiempo de espera para la operación de recorte en segundos.
+  add_screenshot: Añadir captura de pantalla %{path}
+  renamed_screenshot: Renombrar captura de pantalla %{path}
+  delete_screenshot: Eliminar captura de pantalla %{path}
+  replace_screenshot: Reemplazar captura de pantalla %{path}
+  project_invalid: Este proyecto no es válido, probablemente no existe o no es un directorio de proyecto válido.
 dialog:
-  select_tab: Seleccionar pestaña
+  select_tab: Seleccionar una pestaña
   delete_title: ¿Eliminar proyecto?
-  delete_description: Esto eliminará "%{name}" de tus proyectos, no se borrará ningún archivo.
+  delete_description: Esto eliminará "%{name}" de sus proyectos, no se eliminará ningún archivo.
+  add_project_folder_missing: Algo salió mal, cierre el cuadro de diálogo e intente de nuevo.
+  delete_file: Eliminar archivo
+  delete_file_confirmation: ¿Está seguro de que desea eliminar este archivo? Esta acción no se puede deshacer.
+  dirty_repo_title: Cambios sin confirmar
+  dirty_repo_description: Este proyecto tiene cambios sin confirmar y auto-commit está habilitado. ¿Desea continuar?
 error:
   name_cannot_be_empty: El nombre no puede estar vacío
   name_too_short: El nombre debe tener al menos 2 caracteres
   project_already_exists: "Ya existe un proyecto con esa ruta: %{name}"
   unknown_error: Error desconocido
-  failed_to_save_screenshot: No se pudo guardar la captura de pantalla
-  failed_to_capture_screenshot: No se pudo realizar la captura de pantalla
+  no_image_found: No se encontró ninguna imagen .
+  browser_not_running: El navegador no está en ejecución
+  browser_is_starting: El navegador se está iniciando
+  browser_is_stopped: El navegador está detenido
+  browser_already_running: El navegador ya está en ejecución
+  browser_is_not_running: El navegador no está en ejecución
+  chrome_path_not_found: No se encontró la ruta del ejecutable de Chrome, abra la configuración para establecerla
+  no_active_tab: Sin pestaña activa
+  failed_to_bring_to_front: Error al enfocar la pestaña
+  failed_to_save_screenshot: Error al guardar la captura de pantalla
+  failed_to_capture_screenshot: Error al tomar la captura de pantalla
+  browser_already_closed: El navegador ya está cerrado
+  failed_to_set_device_metrics_override: Error al establecer la superposición de métricas del dispositivo
+  crop_not_found: Recorte no encontrado
+  failed_to_inject_selector: Error al inyectar el selector
+  failed_to_update_browser_actions: Error al actualizar las acciones del navegador
+  failed_to_rename_file: Error al renombrar el archivo
+  failed_to_start_browser: Error al iniciar el navegador; si "Usar acoplamiento" está marcado, asegúrese de que el navegador esté en ejecución antes de iniciar
+  failed_to_select_save_to: Error al seleccionar la carpeta de destino
+  selected_folder_not_in_project: La carpeta seleccionada no está en el proyecto
+  cannot_save_to_existing_file: No se puede guardar en un archivo existente
+  failed_to_export_logs: Error al exportar los registros

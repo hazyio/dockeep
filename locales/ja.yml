@@ -1,27 +1,62 @@
 theme:
-  aurora_light: オーロラライト
-  ayu_light: Ayu ライト
-  ayu_dark: Ayu ダーク
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
 title:
   home: Dockeep ホーム
-  settings: 設定
+  settings: Dockeep 設定
   appearance: 外観
   general: 一般
-  add_new_project: 新規プロジェクトの追加
+  add_new_project: 新しいプロジェクトを追加
+  chrome: Chrome
+  use_settings: 設定をアタッチ
+  desktop_capture_settings: デスクトップキャプチャ
+  mobile_capture_settings: モバイルキャプチャ
+  capture: キャプチャ
+  screenshot_settings: スクリーンショット
+  capture_from_surface: サーフェスからキャプチャ
+  git: Git
+  commit: コミット
+  project_settings: プロジェクト設定
+  save_with_tab_title: タブのタイトルで保存
+  project_invalid: 無効なプロジェクト
 label:
+  save_image_to: 画像の保存先
+  image_save_format: 画像保存フォーマット
+  save_with_tab_title: タブのタイトルで保存
+  file_name: ファイル名
+  captured_from: キャプチャ元
+  created_at: 作成日時
+  updated_at: 更新日時
+  use_selected: 選択した言語を使用 ( %{lang} )
+  commit_lanuage: コミットメッセージの言語
+  auto_commit: 自動コミット
+  crop_timeout: 切り抜きタイムアウト
+  chrome_path: Chrome実行ファイルのパス
+  format: フォーマット
+  quality: 画質
+  width: 幅
+  height: 高さ
+  path: パス
   close: 閉じる
+  done: 完了
   delete: 削除
   theme: テーマ
+  time_format: 時刻フォーマット
+  date_format: 日付フォーマット
   back: 戻る
   save: 保存
+  open_url_in_browser: ブラウザでURLを開く
+  size: サイズ
+  dimensions: 解像度
   search_projects: プロジェクトを検索
   add_project: プロジェクトを追加
   no_projects: プロジェクトが見つかりません
   loading_projects: プロジェクトを読み込み中...
-  no_projects_found: プロジェクトが見つかりません。追加ボタンから追加してください。
+  no_projects_found: プロジェクトが見つかりません。「プロジェクトを追加」ボタンを使用するか、検索ワードを変更してください。
   select_project_folder: プロジェクトフォルダを選択
   project_name: プロジェクト名
-  project_path: プロジェクトパス
+  project_path: プロジェクトのパス
   language: 言語
   cancel: キャンセル
   loading: 読み込み中...
@@ -30,16 +65,64 @@ label:
   not_repo: リポジトリではありません
   clean: クリーン
   dirty: 変更あり
-  last_accessed_datetime: 最終アクセス日時 %{datetime}
+  last_accessed_datetime: 最終アクセス日時: %{datetime}
+  loading_project: プロジェクトを読み込み中...
+  editing_project: %{name} を編集中のプロジェクト
+  opening_in_file_manager: ファイルマネージャーで開いています
+  open_image_info: 画像情報を開く
+  edit_image: 画像を編集
+  close_popup: ポップアップを閉じる
+  open_in_fullscreen: 全画面表示で開く
+  add_screenshot: スクリーンショットを追加
+  add_screenrecord: 画面録画を追加
+  take_screenshot: スクリーンショットを撮影
+  take_screenrecord: 画面録画を開始
+  start_browser: ブラウザを起動
+  stop_browser: ブラウザを停止
+  restart_browser: ブラウザを再起動
+  focus_browser: ブラウザをフォーカス
+  take_desktop_screenshot: デスクトップスクリーンショットを撮影
+  take_mobile_screenshot: モバイルスクリーンショットを撮影
+  take_crop_screenshot: 領域指定スクリーンショットを撮影
   screenshot_saved: スクリーンショットを保存しました
+  replacing_path: パス「%{path}」を置換中です。確認してキャンセルしてください。
+  capturing_crop: 領域切り抜き処理中です。クリックしてキャンセルします。
+  use_attach: アタッチモードを使用
+  port: ポート
+  replace_image: 画像を置換
+  cancel_replace: 置換をキャンセル
+  name: 名前
+  last_accessed: 最終アクセス
+  last_modified: 最終更新
+  search_images: 画像を検索
+  file_type: ファイル形式
+  ok: OK
+  export_logs: ログをエクスポート
+  download: ダウンロード
+description:
+  use_attach: 新しいブラウザを起動する代わりに、既に実行中のブラウザにアタッチします。特定のブラウザ設定を適用したい場合にこのモードを使用してください。
+  min_height: 高さは %{min} より大きくする必要があります。
+  min_width: 幅は %{min} より大きくする必要があります。
+  min_port: ポートは %{min} より大きくする必要があります。
+  min_quality: 画質は %{min} より大きくする必要があります。
+  capture_from_surface: OSのウィンドウサーフェス全体ではなく、レンダリングされたページコンテンツを直接キャプチャします（推奨）。
+  crop_timeout: 切り抜き操作のタイムアウト時間（秒）。
+  add_screenshot: スクリーンショット %{path} を追加
+  renamed_screenshot: スクリーンショット %{path} の名前を変更
+  delete_screenshot: スクリーンショット %{path} を削除
+  replace_screenshot: スクリーンショット %{path} を置換
+  project_invalid: このプロジェクトは無効です。存在しないか、有効なプロジェクトディレクトリではありません。
 dialog:
   select_tab: タブを選択
   delete_title: プロジェクトを削除しますか？
-  delete_description: プロジェクトから "%{name}" を削除します（ファイルは削除されません）。
+  delete_description: 「%{name}」をプロジェクト一覧から削除します。実際のファイルは削除されません。
+  add_project_folder_missing: エラーが発生しました。ダイアログを閉じてやり直してください。
+  delete_file: ファイルを削除
+  delete_file_confirmation: 本当にこのファイルを削除しますか？この操作は取り消せません。
+  dirty_repo_title: 未コミットの変更
+  dirty_repo_description: このプロジェクトには未コミットの変更があり、自動コミットが有効になっています。続行しますか？
 error:
   name_cannot_be_empty: 名前を入力してください
   name_too_short: 名前は2文字以上で入力してください
-  project_already_exists: "このパスのプロジェクトは既に存在します: %{name}"
+  project_already_exists: 「このパスのプロジェクトは既に存在します: %{name}」
   unknown_error: 不明なエラー
-  failed_to_save_screenshot: スクリーンショットの保存に失敗しました
-  failed_to_capture_screenshot: スクリーンショットの取得に失敗しました

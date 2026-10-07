@@ -1,24 +1,59 @@
 theme:
-  aurora_light: 极光浅色
-  ayu_light: Ayu 浅色
-  ayu_dark: Ayu 深色
+  aurora_light: Aurora Light
+  ayu_light: Ayu Light
+  ayu_dark: Ayu Dark
 title:
-  home: Dockeep 主页
-  settings: 设置
+  home: Dockeep 首页
+  settings: Dockeep 设置
   appearance: 外观
   general: 常规
   add_new_project: 添加新项目
+  chrome: Chrome
+  use_settings: 附加调试设置
+  desktop_capture_settings: 桌面捕获
+  mobile_capture_settings: 移动端捕获
+  capture: 捕获
+  screenshot_settings: 截图
+  capture_from_surface: 从页面表面捕获
+  git: Git
+  commit: 提交
+  project_settings: 项目设置
+  save_with_tab_title: 按标签页标题保存
+  project_invalid: 项目无效
 label:
+  save_image_to: 图像保存位置
+  image_save_format: 图像保存格式
+  save_with_tab_title: 按标签页标题保存
+  file_name: 文件名
+  captured_from: 捕获来源
+  created_at: 创建时间
+  updated_at: 更新时间
+  use_selected: 使用选定语言 ( %{lang} )
+  commit_lanuage: 提交信息语言
+  auto_commit: 自动提交
+  crop_timeout: 裁剪超时时间
+  chrome_path: Chrome 可执行文件路径
+  format: 格式
+  quality: 质量
+  width: 宽度
+  height: 高度
+  path: 路径
   close: 关闭
+  done: 完成
   delete: 删除
   theme: 主题
+  time_format: 时间格式
+  date_format: 日期格式
   back: 返回
   save: 保存
+  open_url_in_browser: 在浏览器中打开 URL
+  size: 大小
+  dimensions: 尺寸
   search_projects: 搜索项目
   add_project: 添加项目
   no_projects: 未找到项目
   loading_projects: 正在加载项目...
-  no_projects_found: 未找到项目，请使用添加按钮创建一个。
+  no_projects_found: 未找到项目，请使用“添加项目”按钮添加，或更改搜索关键词。
   select_project_folder: 选择项目文件夹
   project_name: 项目名称
   project_path: 项目路径
@@ -28,18 +63,88 @@ label:
   open_in_editor: 在编辑器中打开
   open_in_file_manager: 在文件管理器中打开
   not_repo: 非 Git 仓库
-  clean: 干净
-  dirty: 有未提交更改
-  last_accessed_datetime: 上次访问 %{datetime}
+  clean: 无变更
+  dirty: 有变更
+  last_accessed_datetime: 上次访问于 %{datetime}
+  loading_project: 正在加载项目...
+  editing_project: 正在编辑 %{name}
+  opening_in_file_manager: 正在文件管理器中打开
+  open_image_info: 打开图像信息
+  edit_image: 编辑图像
+  close_popup: 关闭弹窗
+  open_in_fullscreen: 全屏打开
+  add_screenshot: 添加截图
+  add_screenrecord: 添加屏幕录像
+  take_screenshot: 截取屏幕
+  take_screenrecord: 开始屏幕录像
+  start_browser: 启动浏览器
+  stop_browser: 停止浏览器
+  restart_browser: 重启浏览器
+  focus_browser: 聚焦浏览器窗口
+  take_desktop_screenshot: 截取桌面截图
+  take_mobile_screenshot: 截取移动端截图
+  take_crop_screenshot: 截取区域截图
   screenshot_saved: 截图已保存
+  replacing_path: 您正在替换路径 "%{path}"，请确认或取消。
+  capturing_crop: 正处于区域截图模式，点击即可取消
+  use_attach: 使用附加模式
+  port: 端口
+  replace_image: 替换图像
+  cancel_replace: 取消替换
+  name: 名称
+  last_accessed: 上次访问
+  last_modified: 上次修改
+  search_images: 搜索图像
+  file_type: 文件类型
+  ok: 确定
+  export_logs: 导出日志
+  download: 下载
+description:
+  use_attach: 附加到正在运行的浏览器，而不是启动新的浏览器实例。如果您需要应用特定的浏览器配置，可以使用此模式。
+  min_height: 高度必须大于 %{min}。
+  min_width: 宽度必须大于 %{min}。
+  min_port: 端口必须大于 %{min}。
+  min_quality: 质量必须大于 %{min}。
+  capture_from_surface: 直接捕获页面渲染的内容（推荐），而不是原始的操作系统窗口表面。
+  crop_timeout: 裁剪操作的超时时间（秒）。
+  add_screenshot: 添加截图 %{path}
+  renamed_screenshot: 重命名截图 %{path}
+  delete_screenshot: 删除截图 %{path}
+  replace_screenshot: 替换截图 %{path}
+  project_invalid: 此项目无效，可能不存在或不是有效的项目目录。
 dialog:
   select_tab: 选择标签页
   delete_title: 删除项目？
-  delete_description: 这将从您的项目中移除 "%{name}"，不会删除任何文件。
+  delete_description: 这将把 "%{name}" 从您的项目列表中移除，不会删除任何实际文件。
+  add_project_folder_missing: 出错了，请关闭对话框后重试。
+  delete_file: 删除文件
+  delete_file_confirmation: 确定要删除此文件吗？此操作无法撤销。
+  dirty_repo_title: 未提交的变更
+  dirty_repo_description: 此项目包含未提交的变更且已启用自动提交。是否继续？
 error:
   name_cannot_be_empty: 名称不能为空
   name_too_short: 名称长度必须至少为 2 个字符
-  project_already_exists: "该路径下已存在项目: %{name}"
+  project_already_exists: "该路径下已存在同名项目: %{name}"
   unknown_error: 未知错误
-  failed_to_save_screenshot: 截图保存失败
-  failed_to_capture_screenshot: 截图失败
+  no_image_found: 未找到图像。
+  browser_not_running: 浏览器未运行
+  browser_is_starting: 浏览器正在启动
+  browser_is_stopped: 浏览器已停止
+  browser_already_running: 浏览器已在运行
+  browser_is_not_running: 浏览器未运行
+  chrome_path_not_found: 未找到 Chrome 可执行文件路径，请打开设置进行配置
+  no_active_tab: 没有活动标签页
+  failed_to_bring_to_front: 聚焦标签页失败
+  failed_to_save_screenshot: 保存截图失败
+  failed_to_capture_screenshot: 捕获截图失败
+  browser_already_closed: 浏览器已关闭
+  failed_to_set_device_metrics_override: 设置设备指标重写失败
+  crop_not_found: 未找到裁剪区域
+  failed_to_inject_selector: 注入选择器失败
+  failed_to_update_browser_actions: 更新浏览器操作失败
+  failed_to_rename_file: 重命名文件失败
+  failed_to_start_browser: 启动浏览器失败。如果勾选了“使用附加模式”，请在启动前确认目标浏览器已在运行
+  failed_to_select_save_to: 选择保存文件夹失败
+  selected_folder_not_in_project: 所选文件夹不在当前项目中
+  cannot_save_to_existing_file: 无法保存到已存在的文件
+  failed_to_export_logs: 导出日志失败
