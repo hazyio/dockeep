@@ -65,10 +65,10 @@ label:
   not_repo: リポジトリではありません
   clean: クリーン
   dirty: 変更あり
-  last_accessed_datetime: 最終アクセス日時: %{datetime}
-  loading_project: プロジェクトを読み込み中...
-  editing_project: %{name} を編集中のプロジェクト
-  opening_in_file_manager: ファイルマネージャーで開いています
+  last_accessed_datetime: "最終アクセス日時: %{datetime}"
+  loading_project: "プロジェクトを読み込み中..."
+  editing_project: "%{name} を編集中のプロジェクト"
+  opening_in_file_manager: "ファイルマネージャーで開いています"
   open_image_info: 画像情報を開く
   edit_image: 画像を編集
   close_popup: ポップアップを閉じる
@@ -124,5 +124,5 @@ dialog:
 error:
   name_cannot_be_empty: 名前を入力してください
   name_too_short: 名前は2文字以上で入力してください
-  project_already_exists: 「このパスのプロジェクトは既に存在します: %{name}」
+  project_already_exists: "「このパスのプロジェクトは既に存在します: %{name}」"
   unknown_error: 不明なエラー
