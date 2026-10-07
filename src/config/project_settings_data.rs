@@ -55,6 +55,6 @@ impl ProjectSettingsData {
         }
         tracing::info!("Loaded default project settings ",);
         // any error, or config not found, return default
-        return Self::default();
+        Self::default()
     }
 }

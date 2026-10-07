@@ -18,7 +18,7 @@ pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: 
     let win_size = window.bounds().size.div(1.5);
     let open_result = cx.open_window(
         WindowOptions {
-            window_bounds: Some(WindowBounds::centered(win_size, &cx)),
+            window_bounds: Some(WindowBounds::centered(win_size, cx)),
             window_decorations: Some(WindowDecorations::Client), // no WM frame
             titlebar: Some(TitlebarOptions {
                 title: Some(SharedString::new("DocKeep Settings")),

@@ -169,7 +169,7 @@ pub fn save_screenshot(
         None => {
             let working_dir = working_dir.clone();
             let filename = if project_settings.save_with_tab_title && !tab_title.is_empty() {
-                format!("{}", tab_title.replace(" ", "-"))
+                tab_title.replace(" ", "-").to_string()
             } else {
                 let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
                 format!("Screenshot_{}", timestamp)
@@ -310,16 +310,16 @@ pub(super) fn has_image_header(path: &Path) -> bool {
 
 pub fn read_dir(path: &PathBuf) -> Vec<PathBuf> {
     let root = path;
-    let ignore_patterns = load_ignore_patterns(&root);
+    let ignore_patterns = load_ignore_patterns(root);
 
-    WalkDir::new(&root)
+    WalkDir::new(root)
         .into_iter()
         .filter_entry(|entry| {
             // Always descend into the root itself
             if entry.depth() == 0 {
                 return true;
             }
-            let relative = entry.path().strip_prefix(&root).unwrap_or(entry.path());
+            let relative = entry.path().strip_prefix(root).unwrap_or(entry.path());
             !is_ignored(relative, &ignore_patterns)
         })
         .filter_map(|entry| {

@@ -129,7 +129,7 @@ impl Assets {
 }
 impl AssetSource for Assets {
     fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
-        if path.len() < 1 {
+        if path.is_empty() {
             return Ok(None);
         }
         let bytes = match self.find(path) {

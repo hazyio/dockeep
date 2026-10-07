@@ -103,7 +103,7 @@ impl CapturePage {
                                 let debouncer = debouncer.clone();
                                 move |val: SharedString, cx: &mut App| {
                                     debouncer.config.borrow_mut().capture_setting.image_format =
-                                        ImageFormat::from_value(&val.to_string());
+                                        ImageFormat::from_value(val.as_ref());
 
                                     debouncer.schedule(cx);
                                 }

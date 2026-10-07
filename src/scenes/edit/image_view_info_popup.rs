@@ -59,7 +59,7 @@ impl ImageViewInfoPopup {
             .to_string()
     }
     fn get_capture_url(path: &PathBuf) -> Option<String> {
-        match std::fs::read(&path) {
+        match std::fs::read(path) {
             Ok(data) => {
                 if let Some(url) = read_capture_url(&data) {
                     println!("captured from {url}");

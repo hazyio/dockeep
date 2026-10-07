@@ -95,7 +95,7 @@ impl EditPage {
                 window,
                 cx,
             ),
-            browser_action: browser_action,
+            browser_action,
             fullscreen_image_cache: RetainAllImageCache::new(cx),
             sort_button,
             _sort_button_subscription,
@@ -129,7 +129,6 @@ impl EditPage {
                     }
                 });
             }
-            return;
         }
     }
     fn close_full_view(&mut self, cx: &mut Context<Self>) {
@@ -295,22 +294,20 @@ impl EditPage {
                     ImageViewEvents::Delete(path) => {
                         tracing::debug!("Deleting Image: {:?}", path);
                         this.items.retain(|item| item.read(cx).path != *path);
-                        if app_config.git_setting.auto_commit && is_git_repo {
-                            if let Err(e) = remove_path_and_commit(
+                        if app_config.git_setting.auto_commit && is_git_repo
+                            && let Err(e) = remove_path_and_commit(
                                 &repo_path,
                                 path.clone().as_path(),
                                 "description.delete_screenshot",
                             ) {
                                 tracing::error!("Failed to commit image: {:?}", e);
-                            }
-                        };
+                            };
                         this.browser_action.update(cx, |action, cx| {
                             // cancel replace if the path matches
-                            if let Some(replace_path) = &action.replace_path {
-                                if replace_path.as_os_str() == path.as_os_str() {
+                            if let Some(replace_path) = &action.replace_path
+                                && replace_path.as_os_str() == path.as_os_str() {
                                     action.cancel_replace();
                                 }
-                            }
                             cx.notify();
                         });
                         cx.notify();
@@ -327,7 +324,7 @@ impl EditPage {
                     }
                     ImageViewEvents::OpenUrlInBrowser(url) => {
                         this.browser_action.update(cx, |action, cx| {
-                            action.open_url(&url, window, cx);
+                            action.open_url(url, window, cx);
                             cx.notify();
                         });
                     }
@@ -425,7 +422,7 @@ impl Render for EditPage {
             .collect();
         let error = self.error.as_ref().map(|error| error.to_string());
         let sizing = images_to_show.len();
-        let rows = (sizing + cols - 1) / cols; // ceil division
+        let rows = sizing.div_ceil(cols); // ceil division
         let row_height = px(250.);
         let col_width = width.div(cols as f32).sub(px(12.)); //remove gap
 

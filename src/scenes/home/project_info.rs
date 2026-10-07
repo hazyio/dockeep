@@ -170,7 +170,7 @@ impl ProjectInfo {
     }
     fn title(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let name = self.name.clone();
-        let index = self.index.clone();
+        let index = self.index;
         let danger = cx.theme().danger;
         div().child(
             div()
@@ -193,7 +193,7 @@ impl ProjectInfo {
     fn body(&self, cx: &mut App) -> impl IntoElement {
         let name = self.name.clone();
         let path = self.path.clone();
-        let index = self.index.clone();
+        let index = self.index;
         let last_accessed_datetime = self.last_accessed_datetime.clone();
         let app = self.app.clone();
         let repo_info = self.repo_info.clone();
@@ -258,7 +258,7 @@ impl ProjectInfo {
                             .label(t!("label.open_in_editor"))
                             .primary()
                             .on_click(move |_, window, cx| {
-                                let is_dirty = repo_info.as_ref().map_or(false, |r| r.dirty);
+                                let is_dirty = repo_info.as_ref().is_some_and(|r| r.dirty);
                                 let app_config = AppConfig::load();
                                 if is_dirty && app_config.git_setting.auto_commit {
                                     let name = name.clone();

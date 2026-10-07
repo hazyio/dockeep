@@ -129,7 +129,7 @@ fn parse_message(message: &str) -> String {
         )
         .to_string();
     }
-    return t!(message, locales = app_config.language.name_short()).to_string();
+    t!(message, locales = app_config.language.name_short()).to_string()
 }
 /// Adds a path to the git index and creates a commit with the specified message.
 ///

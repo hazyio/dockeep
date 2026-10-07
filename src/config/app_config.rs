@@ -49,7 +49,7 @@ impl AppConfig {
     fn load_from(config_path: &Path) -> Self {
         tracing::info!("Loading app config");
 
-        match fs::read_to_string(&config_path) {
+        match fs::read_to_string(config_path) {
             Ok(contents) => match serde_json::from_str(&contents) {
                 Ok(config) => config,
                 Err(error) => {
