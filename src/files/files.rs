@@ -428,8 +428,6 @@ pub(super) fn glob_to_regex(pattern: &str) -> String {
     regex
 }
 
-
-
 pub fn open_in_file_explorer(path: &Path) -> std::io::Result<()> {
     #[cfg(target_os = "windows")]
     {

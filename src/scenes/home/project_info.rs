@@ -8,12 +8,12 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
 use crate::config::AppConfig;
+use crate::files::files::open_in_file_explorer;
 use crate::scenes::app::MyApp;
 use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjectInfo;
 use crate::utils::git::GitRepoInfo;
-use crate::files::files::open_in_file_explorer;
 pub enum ProjectInfoEvent {
     Delete(PathBuf),
 }
