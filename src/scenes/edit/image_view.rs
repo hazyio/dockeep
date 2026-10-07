@@ -11,7 +11,7 @@ use gpui_kit::*;
 use crate::files::files;
 use crate::scenes::edit::image_view_info_popup::{ImageViewInfoPopup, ImageViewInfoPopupEvents};
 use crate::utils::app_icons::AppIcons;
-use crate::utils::prelude::open_in_file_explorer;
+use crate::files::files::open_in_file_explorer;
 pub enum ImageViewEvents {
     Replace(PathBuf),
     OpenInFullscreen(PathBuf),

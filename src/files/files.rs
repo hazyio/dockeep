@@ -427,3 +427,37 @@ pub(super) fn glob_to_regex(pattern: &str) -> String {
     regex.push('$');
     regex
 }
+
+
+
+pub fn open_in_file_explorer(path: &Path) -> std::io::Result<()> {
+    #[cfg(target_os = "windows")]
+    {
+        // /select, highlights the file itself instead of just opening the folder
+        Command::new("explorer")
+            .args(["/select,", &path.to_string_lossy()])
+            .spawn()?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .args(["-R", &path.to_string_lossy()])
+            .spawn()?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Linux has no universal "reveal and select" — fall back to opening the containing folder
+
+        use std::process::Command;
+        let dir = if path.is_dir() {
+            path
+        } else {
+            path.parent().unwrap_or(path)
+        };
+        Command::new("xdg-open").arg(dir).spawn()?;
+    }
+
+    Ok(())
+}

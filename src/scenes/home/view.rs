@@ -240,7 +240,9 @@ impl Render for HomePage {
                         .ghost()
                         .child(AppIcons::Settings)
                         .on_click(move |_, window, cx| {
-                            open_settings(SettingDefaultOpen::General, window, cx);
+                            window.defer(cx, |window, cx| {
+                                open_settings(SettingDefaultOpen::General, window, cx);
+                            });
                         }),
                 ),
             )

@@ -1,6 +1,5 @@
-use std::ops::Div;
-use std::process::Command;
 use std::{
+    ops::Div,
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -17,7 +16,7 @@ use crate::utils::time_format::TimeFormat;
 
 pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: &mut App) -> bool {
     let win_size = window.bounds().size.div(1.5);
-    cx.open_window(
+    let open_result = cx.open_window(
         WindowOptions {
             window_bounds: Some(WindowBounds::centered(win_size, &cx)),
             window_decorations: Some(WindowDecorations::Client), // no WM frame
@@ -34,8 +33,14 @@ pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: 
             let view = cx.new(|_| SettingsPage::new(default_open));
             cx.new(|cx| Root::new(view, window, cx).bordered(false))
         },
-    )
-    .is_ok()
+    );
+    match open_result {
+        Ok(_) => true,
+        Err(e) => {
+            tracing::error!("Failed to open settings window: {:?}", e);
+            false
+        }
+    }
 }
 
 pub fn path_exists_or_none(path: &str) -> Option<PathBuf> {
@@ -110,34 +115,4 @@ fn timestamp_to_parts(ts: u64) -> (i32, u32, u32, u32, u32) {
     let year = yoe as i32 + era as i32 * 400 + if month <= 2 { 1 } else { 0 };
 
     (year, month, day, hour, minute)
-}
-
-pub fn open_in_file_explorer(path: &Path) -> std::io::Result<()> {
-    #[cfg(target_os = "windows")]
-    {
-        // /select, highlights the file itself instead of just opening the folder
-        Command::new("explorer")
-            .args(["/select,", &path.to_string_lossy()])
-            .spawn()?;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("open")
-            .args(["-R", &path.to_string_lossy()])
-            .spawn()?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        // Linux has no universal "reveal and select" — fall back to opening the containing folder
-        let dir = if path.is_dir() {
-            path
-        } else {
-            path.parent().unwrap_or(path)
-        };
-        Command::new("xdg-open").arg(dir).spawn()?;
-    }
-
-    Ok(())
 }

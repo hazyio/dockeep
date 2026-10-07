@@ -9,3 +9,4 @@ pub mod prelude;
 pub mod random;
 pub mod save_debouncer;
 pub mod time_format;
+pub mod logging;

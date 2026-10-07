@@ -13,7 +13,7 @@ use crate::scenes::edit::view::EditPage;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::app_projects::AppProjectInfo;
 use crate::utils::git::GitRepoInfo;
-use crate::utils::prelude::open_in_file_explorer;
+use crate::files::files::open_in_file_explorer;
 pub enum ProjectInfoEvent {
     Delete(PathBuf),
 }

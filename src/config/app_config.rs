@@ -39,6 +39,9 @@ impl AppConfig {
     pub fn load() -> Self {
         Self::load_from(&Self::config_path())
     }
+    pub fn log_dir() -> PathBuf {
+        Self::config_dir().join("logs")
+    }
 
     pub fn save(&self) {
         self.save_to(&Self::config_path());

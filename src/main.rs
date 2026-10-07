@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 pub mod components;
 pub mod config;
 pub mod files;
@@ -5,12 +6,11 @@ pub mod scenes;
 pub mod utils;
 use gpui_kit::component::*;
 use gpui_kit::*;
-use tracing_subscriber::EnvFilter;
 
 use crate::{
     config::AppConfig,
     scenes::{app::MyApp, home::view::HomePage},
-    utils::app_theme::AppTheme,
+    utils::{app_theme::AppTheme, logging::init_logging},
 };
 #[macro_use]
 extern crate rust_i18n;
@@ -25,12 +25,9 @@ fn setup(cx: &mut App) {
 }
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .init();
-
+    let log_dir = AppConfig::log_dir();
+    std::fs::create_dir_all(&log_dir).ok();
+    let _guard = init_logging(&log_dir); // bind it as _guard it lives until main returns
     gpui_kit::application()
         .with_assets(utils::asset_source::Assets)
         .run(move |cx| {
