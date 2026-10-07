@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{fs, time::SystemTime};
+use std::{io, process::Command};
 
 use crate::config::ImageFormat;
 use crate::config::project_settings_data::ProjectSettingsData;
@@ -22,6 +23,7 @@ pub struct SaveScreenshotResult {
     pub path_id: PathBuf,
     pub error: Option<String>,
 }
+
 pub fn last_modified(path: &Path) -> std::io::Result<SystemTime> {
     fs::metadata(path)?.modified()
 }
@@ -428,32 +430,35 @@ pub(super) fn glob_to_regex(pattern: &str) -> String {
     regex
 }
 
-pub fn open_in_file_explorer(path: &Path) -> std::io::Result<()> {
+pub fn open_in_file_explorer(path: &Path) -> io::Result<()> {
+    if !path.exists() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("Path does not exist: {}", path.display()),
+        ));
+    }
+
     #[cfg(target_os = "windows")]
     {
-        // /select, highlights the file itself instead of just opening the folder
-        Command::new("explorer")
-            .args(["/select,", &path.to_string_lossy()])
-            .spawn()?;
+        // explorer.exe expects /select,<path> as ONE argument.
+        let argument = format!("/select,{}", path.display());
+
+        Command::new("explorer.exe").arg(argument).spawn()?;
     }
 
     #[cfg(target_os = "macos")]
     {
-        Command::new("open")
-            .args(["-R", &path.to_string_lossy()])
-            .spawn()?;
+        Command::new("open").args(["-R"]).arg(path).spawn()?;
     }
 
     #[cfg(target_os = "linux")]
     {
-        // Linux has no universal "reveal and select" — fall back to opening the containing folder
-
-        use std::process::Command;
         let dir = if path.is_dir() {
             path
         } else {
             path.parent().unwrap_or(path)
         };
+
         Command::new("xdg-open").arg(dir).spawn()?;
     }
 
