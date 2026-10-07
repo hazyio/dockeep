@@ -9,6 +9,8 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
