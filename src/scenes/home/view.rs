@@ -71,7 +71,7 @@ impl HomePage {
             loading: true,
             projects: Vec::new(),
             error: None,
-            add_project_dialog: add_project_dialog,
+            add_project_dialog,
             _project_saved_subscription,
             _project_delete_subscriptions: Vec::new(),
             _sort_button_subscription,
@@ -150,7 +150,7 @@ impl HomePage {
 
                         let path = std::path::Path::new(&project.path).to_path_buf();
                         ProjectInfo {
-                            app: app,
+                            app,
                             index: index as u16,
                             name: project.name.clone(),
                             repo_info: get_git_repo_info(&path),
@@ -240,7 +240,9 @@ impl Render for HomePage {
                         .ghost()
                         .child(AppIcons::Settings)
                         .on_click(move |_, window, cx| {
-                            open_settings(SettingDefaultOpen::General, window, cx);
+                            window.defer(cx, |window, cx| {
+                                open_settings(SettingDefaultOpen::General, window, cx);
+                            });
                         }),
                 ),
             )

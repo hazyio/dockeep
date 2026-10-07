@@ -9,9 +9,8 @@
 mod tests {
 
     use crate::config::ImageFormat;
-    use crate::files::files::*;
+    use crate::files::prelude::*;
 
-    use super::*;
     use image::{DynamicImage, ImageFormat as ImgFmt};
     use std::collections::BTreeSet;
     use std::fs;
@@ -30,7 +29,10 @@ mod tests {
     }
 
     fn names(paths: Vec<PathBuf>) -> BTreeSet<String> {
-        paths.iter().map(file_name_with_extension).collect()
+        paths
+            .iter()
+            .map(|ee| file_name_with_extension(ee))
+            .collect()
     }
 
     const URL: &str = "https://example.com/page?a=1&b=2";
@@ -329,7 +331,7 @@ mod tests {
         fs::write(dir.path().join("sub/b.txt"), b"").unwrap();
         fs::write(dir.path().join("sub/deeper/c.txt"), b"").unwrap();
 
-        let got = names(read_dir(&dir.path().to_path_buf()));
+        let got = names(read_dir(dir.path()));
         assert_eq!(
             got,
             ["a.txt", "b.txt", "c.txt"]
@@ -347,7 +349,7 @@ mod tests {
         fs::write(dir.path().join("keep.png"), b"").unwrap();
         fs::write(dir.path().join(".dockeepignore"), "skip\n").unwrap();
 
-        let got = names(read_dir(&dir.path().to_path_buf()));
+        let got = names(read_dir(dir.path()));
         assert!(got.contains("keep.png"));
         assert!(!got.contains("hidden.png"));
     }
@@ -359,7 +361,7 @@ mod tests {
         fs::write(dir.path().join("b.tmp"), b"").unwrap();
         fs::write(dir.path().join(".gitignore"), "*.tmp\n").unwrap();
 
-        let got = names(read_dir(&dir.path().to_path_buf()));
+        let got = names(read_dir(dir.path()));
         assert!(got.contains("a.png"));
         assert!(!got.contains("b.tmp"));
     }
@@ -386,7 +388,7 @@ mod tests {
         fs::write(p.join("anim.gif"), b"GIF89a....").unwrap(); // header ok, ext not allowed
         fs::write(p.join("noext"), encoded(ImgFmt::Png)).unwrap(); // no ext
 
-        let got = names(read_images(&p.to_path_buf()));
+        let got = names(read_images(p));
         let want: BTreeSet<String> = [
             "real.png",
             "real.jpg",
@@ -408,7 +410,7 @@ mod tests {
         fs::write(dir.path().join("y.png"), encoded(ImgFmt::Png)).unwrap();
         fs::write(dir.path().join(".dockeepignore"), "cache\n").unwrap();
 
-        let got = names(read_images(&dir.path().to_path_buf()));
+        let got = names(read_images(dir.path()));
         assert_eq!(got, ["y.png".to_string()].into_iter().collect());
     }
 }

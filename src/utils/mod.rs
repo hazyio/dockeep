@@ -5,6 +5,7 @@ pub mod asset_source;
 pub mod date_format;
 pub mod git;
 pub mod lanuages;
+pub mod logging;
 pub mod prelude;
 pub mod random;
 pub mod save_debouncer;

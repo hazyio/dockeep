@@ -97,6 +97,8 @@ label:
   search_images: Search Images
   file_type: File Type
   ok: OK
+  export_logs: Export Logs
+  download: Download
 description:
   use_attach: Attach to running browser instead of starting a new browser, you might want to use this mode if you want specific browser settings to be applied.
   min_height: Height must be greater than %{min}.
@@ -145,3 +147,4 @@ error:
   failed_to_select_save_to: Failed to select save to folder
   selected_folder_not_in_project: Selected folder is not in the project
   cannot_save_to_existing_file: Cannot save to existing file
+  failed_to_export_logs: Failed to export logs

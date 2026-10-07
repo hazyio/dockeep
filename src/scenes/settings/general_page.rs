@@ -1,8 +1,17 @@
+use gpui_kit::component::{Sizable, WindowExt};
+use gpui_kit::*;
 use gpui_kit::{
-    App, SharedString,
-    component::setting::{SettingField, SettingGroup, SettingItem, SettingPage},
+    App, ParentElement, SharedString, Styled,
+    base::StyledExt,
+    component::{
+        button::Button,
+        setting::{SettingField, SettingGroup, SettingItem, SettingPage},
+    },
+    div,
 };
 
+use crate::files::prelude::open_in_file_explorer;
+use crate::utils::logging;
 use crate::{
     config::AppConfig,
     utils::{
@@ -134,7 +143,34 @@ impl GeneralPage {
                             },
                         )
                         .default_value(app_config_default.date_format.id()),
-                    )),
+                    ))
+                    .item(SettingItem::render(|options, _, _| {
+                        div()
+                            .h_flex()
+                            .w_full()
+                            .justify_between()
+                            .child(t!("label.export_logs"))
+                            .child(
+                                Button::new("action")
+                                    .label(t!("label.download"))
+                                    .with_size(options.size())
+                                    .on_click(|_, window, cx| match logging::export_logs() {
+                                        Ok(path) => {
+                                            window
+                                                .push_notification(t!("success.logs_exported"), cx);
+                                            let _ = open_in_file_explorer(&path);
+                                        }
+                                        Err(e) => {
+                                            tracing::error!("{:?}", e);
+                                            window.push_notification(
+                                                t!("error.failed_to_export_logs"),
+                                                cx,
+                                            );
+                                        }
+                                    }),
+                            )
+                            .into_any_element()
+                    })),
             )
     }
 }

@@ -16,7 +16,7 @@ use headless_chrome::{Browser, LaunchOptionsBuilder, Tab};
 
 use crate::config::AppConfig;
 use crate::config::project_settings_data::ProjectSettingsData;
-use crate::files::files::save_screenshot;
+use crate::files::prelude::save_screenshot;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::random::random_string;
 use base64::{Engine, engine::general_purpose::STANDARD};
@@ -69,7 +69,7 @@ impl BrowserActions {
         Self {
             state: BrowserActionsState::Stopped,
             browser: None,
-            working_dir: working_dir,
+            working_dir,
             replace_path: None,
             taking_cropped: false,
         }
@@ -124,7 +124,7 @@ impl BrowserActions {
             .path(Some(chrome_path))
             .build()
             .map_err(anyhow::Error::from)?;
-        Ok(Browser::new(opts)?)
+        Browser::new(opts)
     }
 
     fn attach_browser(port: u16) -> anyhow::Result<Browser> {
@@ -140,10 +140,7 @@ impl BrowserActions {
             .ok_or_else(|| anyhow::anyhow!("webSocketDebuggerUrl missing in /json/version"))?
             .to_string();
 
-        Ok(Browser::connect_with_timeout(
-            ws_url,
-            Duration::from_secs(60 * 60 * 24),
-        )?)
+        Browser::connect_with_timeout(ws_url, Duration::from_secs(60 * 60 * 24))
     }
     fn start(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.state {
@@ -260,7 +257,7 @@ impl BrowserActions {
                 self.state = BrowserActionsState::Stopped;
                 cx.notify();
                 window.push_notification(t!("error.browser_is_not_running"), cx);
-                return None;
+                None
             }
         }
     }
@@ -327,12 +324,12 @@ impl BrowserActions {
         }
     }
     fn focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(tab) = self.get_first_tab(window, cx) {
-            if let Err(e) = tab.bring_to_front() {
-                tracing::error!("Failed to bring tab to front: {:?}", e);
-                window.push_notification(t!("error.failed_to_bring_to_front"), cx);
-            };
-        }
+        if let Some(tab) = self.get_first_tab(window, cx)
+            && let Err(e) = tab.bring_to_front()
+        {
+            tracing::error!("Failed to bring tab to front: {:?}", e);
+            window.push_notification(t!("error.failed_to_bring_to_front"), cx);
+        };
     }
     fn capture_screenshot(
         tab: &Tab,
@@ -348,7 +345,7 @@ impl BrowserActions {
                 format: Some(project_settings.save_format.to_cdp_format()),
                 quality: Some(app_config.capture_setting.quality as u32),
                 // only clip for cropped captures; None = current viewport
-                clip: clip,
+                clip,
                 from_surface: Some(app_config.capture_setting.capture_from_surface),
                 // true only for cropped, since the clip uses document coordinates
                 // and may sit outside the visible area
@@ -406,7 +403,7 @@ impl BrowserActions {
                         let crop_timeout = AppConfig::load().capture_setting.crop_timeout;
                         tracing::info!("waiting for selector {}", m_full_evaluation.clone());
 
-                        let rr = loop {
+                        loop {
                             if Instant::now() - started_at > Duration::from_secs(crop_timeout) {
                                 tracing::error!("Timed out waiting for selector");
                                 break Err(anyhow::anyhow!("Timed out waiting for selector"));
@@ -454,8 +451,7 @@ impl BrowserActions {
                                     ));
                                 }
                             }
-                        };
-                        rr
+                        }
                     })
                     .await;
                 let Ok(selection) = selection else {
@@ -571,8 +567,8 @@ impl BrowserActions {
                     &capture_url,
                     &tab_title,
                 );
-                if saved.saved {
-                    if let Err(e) = entity.update(cx, |_, cx| {
+                if saved.saved
+                    && let Err(e) = entity.update(cx, |_, cx| {
                         if saved.is_replaced {
                             cx.emit(BrowserActionsEvents::Replace(
                                 saved.save_path.clone(),
@@ -582,9 +578,9 @@ impl BrowserActions {
                             cx.emit(BrowserActionsEvents::Add(saved.save_path.clone()));
                         }
                         cx.notify();
-                    }) {
-                        tracing::error!("failed to emit event: {:?}", e);
-                    }
+                    })
+                {
+                    tracing::error!("failed to emit event: {:?}", e);
                 }
             })
             .detach();

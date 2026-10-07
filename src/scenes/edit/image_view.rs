@@ -8,10 +8,10 @@ use gpui_kit::component::*;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 
-use crate::files::files;
+use crate::files::prelude as files;
+use crate::files::prelude::open_in_file_explorer;
 use crate::scenes::edit::image_view_info_popup::{ImageViewInfoPopup, ImageViewInfoPopupEvents};
 use crate::utils::app_icons::AppIcons;
-use crate::utils::prelude::open_in_file_explorer;
 pub enum ImageViewEvents {
     Replace(PathBuf),
     OpenInFullscreen(PathBuf),

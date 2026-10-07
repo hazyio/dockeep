@@ -11,9 +11,11 @@ use gpui_kit::component::label::Label;
 use gpui_kit::component::popover::Popover;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
+use std::path::Path;
 
 use crate::config::AppConfig;
-use crate::files::files::{self, read_capture_url};
+use crate::files::prelude as files;
+use crate::files::prelude::read_capture_url;
 use crate::utils::app_icons::AppIcons;
 use crate::utils::{date_format::DateFormat, time_format::TimeFormat};
 pub enum ImageViewInfoPopupEvents {
@@ -52,14 +54,14 @@ impl ImageViewInfoPopup {
             file_type,
         }
     }
-    fn get_file_type(path: &PathBuf) -> String {
+    fn get_file_type(path: &Path) -> String {
         path.extension()
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_string()
     }
-    fn get_capture_url(path: &PathBuf) -> Option<String> {
-        match std::fs::read(&path) {
+    fn get_capture_url(path: &Path) -> Option<String> {
+        match std::fs::read(path) {
             Ok(data) => {
                 if let Some(url) = read_capture_url(&data) {
                     println!("captured from {url}");
