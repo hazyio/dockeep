@@ -46,6 +46,8 @@ fn main() {
                             ..Default::default()
                         }),
                         is_resizable: true,
+                        app_id: Some("dockeep".into()),
+
                         ..Default::default()
                     },
                     |window, cx| {
