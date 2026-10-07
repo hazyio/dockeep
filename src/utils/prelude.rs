@@ -26,6 +26,8 @@ pub fn open_settings(default_open: SettingDefaultOpen, window: &mut Window, cx: 
 
                 ..Default::default()
             }),
+            app_id: Some("dockeep".into()),
+
             is_resizable: true,
             ..Default::default()
         },
